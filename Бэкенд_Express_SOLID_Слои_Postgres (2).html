@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Бэкенд · Express · SOLID · Слои · Postgres</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700;800&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+  :root{
+    --bg:#120e15; --bg2:#1a121c; --card:#241823; --card2:#2f1f2d; --line:#43293c;
+    --ink:#f3e9ef; --muted:#b291a4;
+    --acc:#e23b50; --acc2:#ff7a5c; --acc3:#ff5470; --acc-deep:#b1283b;
+    --kyle:#d98b54; --maxi:#46b877; --ren:#9aa6c0;
+    --yellow:#f7df1e; --blue:#61afef; --react:#61dafb; --ts:#5aa6f0;
+    --purple:#c678dd; --green:#98c379; --orange:#e5a35a; --red:#e06c75; --cyan:#56b6c2;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--ink);line-height:1.7;}
+  body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(circle, rgba(226,59,80,0.06) 1px, transparent 1px);background-size:34px 34px;}
+  .progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--acc-deep),var(--acc),var(--acc2));z-index:200;width:0;}
+
+  .topbar{position:sticky;top:0;z-index:100;background:rgba(18,14,21,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);}
+  .topbar-inner{max-width:1040px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:16px;height:62px;}
+  .brand{font-family:'Unbounded',sans-serif;font-weight:700;font-size:15px;white-space:nowrap;color:var(--acc2);}
+  .brand b{color:var(--acc3);}
+  .tabs{display:flex;gap:4px;margin-left:auto;overflow-x:auto;scrollbar-width:none;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;
+    background:transparent;border:1px solid transparent;border-radius:10px;padding:8px 13px;color:var(--muted);transition:all .15s;}
+  .tab:hover{color:var(--ink);background:var(--card);}
+  .tab.active{color:var(--ink);background:var(--card2);border-color:var(--acc);}
+  .tab .n{font-family:'JetBrains Mono',monospace;font-size:11px;opacity:.6;margin-right:6px;color:var(--acc2);}
+
+  .wrap{max-width:1040px;margin:0 auto;padding:0 20px;position:relative;z-index:1;}
+  .page{display:none;animation:fade .4s;}
+  .page.active{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+  .phero{padding:46px 0 30px;border-bottom:1px solid var(--line);margin-bottom:8px;}
+  .phero .kicker{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:3px;text-transform:uppercase;margin-bottom:14px;color:var(--acc2);}
+  .phero h1{font-family:'Unbounded',sans-serif;font-weight:800;font-size:clamp(30px,6vw,50px);line-height:1.06;margin-bottom:14px;}
+  .phero p{color:var(--muted);font-size:17px;max-width:640px;}
+
+  section{padding:30px 0;}
+  section + section{border-top:1px solid var(--line);}
+  .sec-num{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--acc);letter-spacing:2px;margin-bottom:8px;}
+  h2{font-family:'Unbounded',sans-serif;font-weight:700;font-size:clamp(23px,4vw,33px);margin-bottom:10px;line-height:1.14;}
+  h3{font-family:'Unbounded',sans-serif;font-weight:600;font-size:20px;margin:26px 0 10px;}
+  h4{font-family:'Unbounded',sans-serif;font-weight:600;font-size:15.5px;margin:18px 0 8px;color:var(--acc2);}
+  p{margin-bottom:14px;color:#dccad4;}
+  p strong{color:#fff;}
+  ul.plain{margin:0 0 16px 0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:8px;}
+  ul.plain li{padding-left:24px;position:relative;color:#dccad4;}
+  ul.plain li::before{content:"▸";position:absolute;left:4px;color:var(--acc);}
+  .lead{font-size:18px;color:#ecdde6;}
+  code:not(pre code){font-family:'JetBrains Mono',monospace;font-size:.87em;background:#3a2433;color:var(--acc2);padding:2px 7px;border-radius:6px;}
+
+  .say{display:flex;gap:13px;align-items:flex-start;margin:20px 0;}
+  .say .ava{flex-shrink:0;width:58px;height:58px;border-radius:15px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .say .ava svg{width:54px;height:54px;}
+  .say.kyle .ava{background:rgba(217,139,84,.16);border:1.5px solid rgba(217,139,84,.42);}
+  .say.maxi .ava{background:rgba(70,184,119,.16);border:1.5px solid rgba(70,184,119,.42);}
+  .say.ren .ava{background:rgba(154,166,192,.16);border:1.5px solid rgba(154,166,192,.42);}
+  .bubble{background:var(--card);border:1px solid var(--line);border-radius:5px 16px 16px 16px;padding:13px 17px;flex:1;}
+  .bubble .who{font-family:'Unbounded',sans-serif;font-weight:600;font-size:12.5px;margin-bottom:3px;}
+  .say.kyle .who{color:var(--kyle);} .say.maxi .who{color:var(--maxi);} .say.ren .who{color:var(--ren);}
+  .bubble p{margin:0;font-size:15px;color:#e6d6e0;}
+
+  .code{background:#1c1320;border:1px solid var(--line);border-radius:13px;margin:18px 0;overflow:hidden;}
+  .code-top{display:flex;align-items:center;gap:7px;padding:10px 14px;background:#160e19;border-bottom:1px solid var(--line);}
+  .code-top .dot{width:10px;height:10px;border-radius:50%;}
+  .dot.r{background:#ff5f57;}.dot.y{background:#febc2e;}.dot.g{background:#28c840;}
+  .code-top .fn{margin-left:6px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted);flex:1;}
+  .runbtn{font-family:'Nunito',sans-serif;font-weight:700;font-size:12.5px;cursor:pointer;
+    background:var(--acc);color:#fff;border:none;border-radius:8px;padding:6px 14px;display:flex;align-items:center;gap:6px;transition:all .15s;}
+  .runbtn:hover{filter:brightness(1.12);transform:translateY(-1px);}
+  .runbtn:active{transform:translateY(0);}
+  pre{margin:0;padding:16px 18px;overflow-x:auto;}
+  pre code{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.62;}
+  .tk{color:var(--purple);}.ts2{color:var(--green);}.tn{color:var(--orange);}.tc{color:#6b5566;font-style:italic;}
+  .tf{color:var(--blue);}.tp{color:var(--red);}.to{color:var(--cyan);}.ty{color:#e5c07b;}.tx{color:#cdbcca;}
+
+  .console{background:#0e0a11;border-top:1px solid var(--line);padding:0;max-height:0;overflow:hidden;transition:max-height .3s ease;}
+  .console.show{max-height:500px;overflow:auto;}
+  .console-inner{padding:14px 18px;font-family:'JetBrains Mono',monospace;font-size:12.5px;}
+  .console-label{color:#6b5566;font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+  .console-label::before{content:"▶";color:var(--acc);font-size:9px;}
+  .cline{color:#d8c6d2;white-space:pre-wrap;padding:1px 0;}
+  .cline.err{color:var(--red);}
+  .cline.dim{color:#6b5566;}
+
+  .box{border-radius:13px;padding:15px 18px;margin:18px 0;border-left:4px solid;}
+  .box .bt{font-family:'Unbounded',sans-serif;font-weight:600;font-size:13.5px;margin-bottom:5px;}
+  .box p{margin:0;font-size:14.5px;}
+  .box.tip{background:rgba(247,223,30,.07);border-color:var(--yellow);} .box.tip .bt{color:var(--yellow);}
+  .box.warn{background:rgba(224,108,117,.09);border-color:var(--red);} .box.warn .bt{color:var(--red);}
+  .box.info{background:rgba(226,59,80,.08);border-color:var(--acc);} .box.info .bt{color:var(--acc2);}
+  .box.ts{background:rgba(90,166,240,.1);border-color:var(--ts);} .box.ts .bt{color:#7bb4f0;}
+
+  .viz{background:linear-gradient(160deg,#241723,#1a121c);border:1px solid var(--line);border-radius:16px;padding:24px;margin:20px 0;}
+  .viz-title{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;text-align:center;margin-bottom:18px;}
+  .flow{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;}
+  .flow .pill{background:var(--card2);border-radius:11px;padding:11px 14px;font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--line);}
+  .flow .lbl{font-size:11px;color:var(--muted);margin-top:6px;font-family:'JetBrains Mono',monospace;text-align:center;}
+  .flow .op{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--acc2);background:rgba(255,122,92,.12);border:1px solid rgba(255,122,92,.3);border-radius:100px;padding:5px 11px;white-space:nowrap;}
+  .flow .arr-ico{color:var(--acc);font-size:20px;}
+
+  .meme-row{text-align:center;margin:22px 0;}
+  .meme{display:inline-flex;align-items:center;gap:9px;background:var(--card2);border:1px dashed var(--line);border-radius:100px;padding:5px 15px 5px 7px;margin:5px 4px;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--muted);}
+  .meme .mava{width:28px;height:28px;border-radius:50%;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+  .meme .mava svg{width:28px;height:28px;}
+
+  .cmp{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:13px;overflow:hidden;margin:18px 0;}
+  @media(max-width:640px){.cmp{grid-template-columns:1fr;}}
+  .cmp .ch{padding:10px 14px;font-family:'Unbounded',sans-serif;font-weight:600;font-size:13px;}
+  .cmp .ch.a{background:rgba(70,184,119,.14);color:var(--maxi);}
+  .cmp .ch.b{background:rgba(226,59,80,.16);color:var(--acc2);}
+  .cmp .cc{padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:12px;background:#1c1320;border-top:1px solid var(--line);white-space:pre-wrap;line-height:1.6;color:#cdbcca;}
+
+  /* ===== FILE TREE ===== */
+  .ftree{background:#160e19;border:1px solid var(--line);border-radius:12px;padding:16px 18px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.85;margin:18px 0;overflow-x:auto;}
+  .ftree .dir{color:var(--acc2);}
+  .ftree .fl{color:#c4b4c0;}
+  .ftree .cm{color:#6b5566;}
+
+  /* ===== HTTP STATUS EXPLORER ===== */
+  .stx{margin:20px 0;}
+  .stx-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+  .stx-chip{cursor:pointer;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;padding:9px 15px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);transition:all .15s;}
+  .stx-chip:hover{transform:translateY(-2px);}
+  .stx-chip.c2{border-color:#2faf6a;} .stx-chip.c3{border-color:#d6a13a;}
+  .stx-chip.c4{border-color:var(--acc);} .stx-chip.c5{border-color:#a03048;}
+  .stx-chip.active{background:var(--card2);box-shadow:0 0 0 2px var(--acc) inset;}
+  .stx-detail{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:18px 20px;min-height:90px;}
+  .stx-detail .stx-code{font-family:'Unbounded',sans-serif;font-weight:800;font-size:30px;}
+  .stx-detail .stx-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);margin-bottom:8px;}
+  .stx-detail .stx-desc{font-size:14.5px;color:#e6d6e0;}
+
+  /* ===== STORE / CART WIDGET ===== */
+  .widget{background:linear-gradient(160deg,#241723,#1a121c);border:1px solid var(--line);border-radius:16px;padding:20px;margin:20px 0;}
+  .widget-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:16px;}
+  @media(max-width:640px){.widget-grid{grid-template-columns:1fr;}}
+  .w-panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;}
+  .w-panel h5{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+  .shop-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .shop-item:last-child{border-bottom:none;}
+  .shop-item .nm{font-weight:700;font-size:14px;}
+  .shop-item .pr{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);}
+  .minibtn{cursor:pointer;font-family:'Nunito';font-weight:700;font-size:12.5px;border:none;border-radius:8px;padding:6px 12px;background:var(--acc);color:#fff;transition:all .12s;}
+  .minibtn:hover{filter:brightness(1.12);} .minibtn.ghost{background:var(--card2);color:var(--ink);border:1px solid var(--line);}
+  .state-json{font-family:'JetBrains Mono',monospace;font-size:12px;color:#cdbcca;white-space:pre-wrap;background:#160e19;border-radius:8px;padding:12px;min-height:80px;line-height:1.55;}
+  .state-json .k{color:var(--acc2);} .state-json .v{color:var(--green);} .state-json .num{color:var(--orange);}
+  .subs{display:flex;flex-direction:column;gap:8px;}
+  .sub-card{background:#160e19;border:1px solid var(--line);border-radius:9px;padding:9px 12px;font-size:13px;transition:all .2s;}
+  .sub-card.flash{box-shadow:0 0 0 2px var(--acc);}
+  .sub-card .tag{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);}
+
+  /* ===== ZOD PLAYGROUND ===== */
+  .zod{background:linear-gradient(160deg,#241723,#1a121c);border:1px solid var(--line);border-radius:16px;padding:20px;margin:20px 0;}
+  .zod textarea{width:100%;font-family:'JetBrains Mono',monospace;font-size:12.5px;background:#160e19;color:#cdbcca;border:1px solid var(--line);border-radius:10px;padding:12px;min-height:120px;resize:vertical;line-height:1.5;}
+  .zod .zrow{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;}
+  .zod-result{border-radius:10px;padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:12.5px;white-space:pre-wrap;min-height:50px;line-height:1.55;}
+  .zod-result.ok{background:rgba(70,184,119,.1);border:1px solid rgba(70,184,119,.4);color:#9fe0bb;}
+  .zod-result.bad{background:rgba(226,59,80,.1);border:1px solid rgba(226,59,80,.4);color:#f0a4b0;}
+  .zod-result.idle{background:#160e19;border:1px solid var(--line);color:var(--muted);}
+
+  /* ===== FETCH DEMO ===== */
+  .fetchout{background:#0e0a11;border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#cdbcca;white-space:pre-wrap;max-height:260px;overflow:auto;min-height:46px;line-height:1.5;}
+  .fetchout .k{color:var(--acc2);}.fetchout .v{color:var(--green);}.fetchout .num{color:var(--orange);}.fetchout .muted{color:#6b5566;}
+
+  /* ===== NETWORK ANIMATION ===== */
+  .net{background:linear-gradient(160deg,#241723,#1a121c);border:1px solid var(--line);border-radius:16px;padding:26px 20px;margin:20px 0;}
+  .net-stage{display:flex;align-items:center;justify-content:space-between;gap:10px;position:relative;}
+  .net-node{flex-shrink:0;text-align:center;width:120px;}
+  .net-node .nbox{font-size:32px;background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:14px 0;}
+  .net-node .nlbl{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-top:8px;}
+  .net-wire{flex:1;height:3px;background:var(--line);border-radius:2px;position:relative;margin:0 4px;align-self:flex-start;margin-top:36px;}
+  .net-packet{position:absolute;top:-7px;left:0;width:16px;height:16px;border-radius:4px;font-size:10px;display:flex;align-items:center;justify-content:center;opacity:0;}
+  .net-packet.req{background:var(--acc);}
+  .net-packet.res{background:var(--maxi);}
+  @keyframes flyR{0%{left:0;opacity:1;}100%{left:calc(100% - 16px);opacity:1;}}
+  @keyframes flyL{0%{left:calc(100% - 16px);opacity:1;}100%{left:0;opacity:1;}}
+  .net-packet.go-req{animation:flyR 1s ease forwards;}
+  .net-packet.go-res{animation:flyL 1s ease forwards;}
+  .net-log{margin-top:18px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#cdbcca;min-height:24px;}
+
+  /* ===== FSD CAKE (тортик) ===== */
+  .cake{display:flex;flex-direction:column;align-items:center;gap:0;margin:24px 0 8px;perspective:1000px;}
+  .cake-layer{width:100%;max-width:560px;color:#fff;border-radius:10px;padding:13px 20px;margin-top:-2px;cursor:pointer;transition:transform .2s, box-shadow .2s;
+    transform:rotateX(8deg);box-shadow:0 4px 0 rgba(0,0,0,.25);display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid rgba(255,255,255,.12);}
+  .cake-layer:hover{transform:rotateX(8deg) translateY(-3px) scale(1.015);box-shadow:0 10px 22px rgba(0,0,0,.4);}
+  .cake-layer .cl-name{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;}
+  .cake-layer .cl-tag{font-size:12px;opacity:.92;text-align:right;}
+  .cl-app{background:#c0392b;width:46%;} .cl-pages{background:#d96a2e;width:56%;}
+  .cl-widgets{background:#cf9a2c;width:66%;} .cl-features{background:#3a9a5e;width:76%;}
+  .cl-entities{background:#3a72b8;width:86%;} .cl-shared{background:#6b5a86;width:96%;}
+  .cake-detail{max-width:560px;margin:14px auto 0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;font-size:14px;color:#e6d6e0;min-height:60px;}
+  .cake-detail .cd-t{font-family:'Unbounded';font-weight:600;font-size:14px;margin-bottom:5px;}
+
+  /* ===== DATA PIPELINE (the payoff) ===== */
+  .pipe{background:linear-gradient(160deg,#241723,#1a121c);border:1px solid var(--line);border-radius:16px;padding:22px;margin:20px 0;}
+  .pipe-track{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;}
+  .pipe-step{flex:1;min-width:150px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 14px;margin:5px;transition:all .3s;opacity:.45;}
+  .pipe-step.lit{opacity:1;border-color:var(--acc);box-shadow:0 0 18px rgba(226,59,80,.3);transform:translateY(-3px);}
+  .pipe-step .ps-layer{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--acc2);margin-bottom:5px;}
+  .pipe-step .ps-t{font-weight:700;font-size:14px;margin-bottom:4px;}
+  .pipe-step .ps-d{font-size:12px;color:var(--muted);line-height:1.4;}
+  .pipe-step .ps-ico{font-size:20px;margin-bottom:6px;}
+
+  footer{text-align:center;padding:44px 20px 70px;border-top:1px solid var(--line);margin-top:24px;}
+  footer .big{font-family:'Unbounded',sans-serif;font-weight:700;font-size:22px;color:var(--acc2);margin-bottom:8px;}
+  footer p{color:var(--muted);}
+  .pager{display:flex;justify-content:space-between;gap:12px;padding:24px 0 8px;}
+  .pager button{font-family:'Nunito',sans-serif;font-weight:700;font-size:14px;cursor:pointer;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:12px 20px;transition:all .15s;}
+  .pager button:hover{border-color:var(--acc);color:var(--acc2);}
+  .pager button:disabled{opacity:.3;cursor:not-allowed;}
+  .pager button.next{margin-left:auto;}
+
+  /* pull-quote */
+  .qt{position:relative;background:linear-gradient(160deg,#2a1824,#1d131e);border:1px solid var(--line);border-left:4px solid var(--acc);border-radius:13px;padding:16px 20px 16px 54px;margin:22px 0;}
+  .qt::before{content:"\201C";position:absolute;left:14px;top:2px;font-family:'Unbounded',serif;font-size:50px;line-height:1;color:var(--acc);opacity:.85;}
+  .qt .qt-text{font-size:16px;font-style:italic;color:#ecdde6;line-height:1.5;}
+  .qt .qt-author{margin-top:9px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--acc2);}
+  .qt .qt-author::before{content:"— ";}
+
+  .ctrl-row{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;}
+  .ctrl-row .gl{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);align-self:center;margin-right:2px;}
+
+  /* ===== EXPRESS API PLAYGROUND ===== */
+  .api{background:linear-gradient(160deg,#241723,#1a121c);border:1px solid var(--line);border-radius:16px;padding:18px;margin:20px 0;}
+  .api-head{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+  .verb{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12.5px;border:none;border-radius:8px;padding:7px 12px;cursor:pointer;color:#fff;transition:all .12s;}
+  .verb:hover{filter:brightness(1.12);transform:translateY(-1px);}
+  .verb.get{background:#3a9a5e;} .verb.post{background:#d6a13a;color:#2a1c00;} .verb.del{background:var(--acc);} .verb.bad{background:#6b5566;}
+  .api-out{background:#0e0a11;border:1px solid var(--line);border-radius:11px;padding:0;margin-top:12px;overflow:hidden;}
+  .api-req{font-family:'JetBrains Mono',monospace;font-size:13px;padding:11px 14px;border-bottom:1px solid var(--line);color:#cdbcca;background:#160e19;}
+  .api-trace{padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted);border-bottom:1px solid var(--line);line-height:1.7;}
+  .api-trace .step{opacity:0;animation:traceIn .3s forwards;}
+  @keyframes traceIn{to{opacity:1;}}
+  .api-trace .ok{color:#7fce9e;} .api-trace .hit{color:var(--acc2);}
+  .api-resp{padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:12.5px;white-space:pre-wrap;line-height:1.55;color:#cdbcca;max-height:280px;overflow:auto;}
+  .api-status{display:inline-block;font-weight:700;border-radius:6px;padding:2px 9px;margin-bottom:8px;font-size:12px;}
+  .api-status.s2{background:rgba(47,175,106,.18);color:#7fce9e;}
+  .api-status.s4{background:rgba(226,59,80,.18);color:#f0a4b0;}
+  .api-resp .k{color:var(--acc2);} .api-resp .v{color:var(--green);} .api-resp .num{color:var(--orange);}
+
+  /* ===== SQL PLAYGROUND ===== */
+  .sqlbox{background:linear-gradient(160deg,#241723,#1a121c);border:1px solid var(--line);border-radius:16px;padding:18px;margin:20px 0;}
+  .sqlbox textarea{width:100%;font-family:'JetBrains Mono',monospace;font-size:13px;background:#160e19;color:#cdbcca;border:1px solid var(--line);border-radius:10px;padding:12px;min-height:64px;resize:vertical;line-height:1.5;}
+  .sql-out{margin-top:12px;}
+  .sqltable{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:12.5px;overflow:hidden;border-radius:10px;border:1px solid var(--line);}
+  .sqltable th{background:#2f1f2d;color:var(--acc2);text-align:left;padding:8px 12px;font-weight:700;border-bottom:1px solid var(--line);}
+  .sqltable td{padding:7px 12px;border-bottom:1px solid var(--line);color:#cdbcca;}
+  .sqltable tr:last-child td{border-bottom:none;}
+  .sqltable tr:nth-child(even) td{background:rgba(255,255,255,.02);}
+  .sql-meta{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-top:8px;}
+  .sql-err{background:rgba(226,59,80,.1);border:1px solid rgba(226,59,80,.4);color:#f0a4b0;border-radius:10px;padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:12.5px;white-space:pre-wrap;}
+
+  /* ===== LIBRARY CARDS ===== */
+  .libgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:18px 0;}
+  @media(max-width:600px){.libgrid{grid-template-columns:1fr;}}
+  .libcard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px;}
+  .libcard .ln{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;color:var(--acc2);}
+  .libcard .ld{font-size:13px;color:#c4b4c0;margin-top:4px;}
+
+  /* DB table schema viz */
+  .dbtable{display:inline-block;vertical-align:top;background:#160e19;border:1px solid var(--line);border-radius:12px;margin:8px 10px 8px 0;min-width:180px;overflow:hidden;}
+  .dbtable .tt{background:#3a72b8;color:#fff;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;padding:8px 12px;}
+  .dbtable .col{font-family:'JetBrains Mono',monospace;font-size:12px;padding:6px 12px;color:#c4b4c0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:14px;}
+  .dbtable .col:last-child{border-bottom:none;}
+  .dbtable .col .ty{color:var(--muted);} .dbtable .col .pk{color:var(--orange);font-size:10px;}
+</style>
+</head>
+<body>
+<div class="progress" id="prog"></div>
+<div class="topbar"><div class="topbar-inner">
+  <div class="brand">SERVER<b>·</b>SIDE</div>
+  <div class="tabs" id="tabs"><button class="tab active" data-page="intro"><span class="n">01</span>Бэкенд</button><button class="tab" data-page="routing"><span class="n">02</span>Роутинг</button><button class="tab" data-page="solid"><span class="n">03</span>SOLID</button><button class="tab" data-page="layers"><span class="n">04</span>Слои</button><button class="tab" data-page="db"><span class="n">05</span>Postgres</button></div>
+</div></div>
+<div class="wrap"><div id="PAGES">
+<div class="page active" id="page-intro"><div class="phero"><div class="kicker">Раздел 01 · Бэкенд</div><h1>Что такое бэкенд и первый сервер</h1><p>Фронт ты уже трогал. Теперь вторая половина: код, который живёт на сервере, держит бизнес-логику и базу данных, и с которым фронт переписывается по HTTP. Поднимем сервер на Express и разберём, кто кому что отвечает.</p></div><div class="say kyle"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="kFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#b87a48"/><stop offset="100%" stop-color="#9a6238"/></linearGradient><radialGradient id="kCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#e8957a" stop-opacity="0.5"/><stop offset="100%" stop-color="#e8957a" stop-opacity="0"/></radialGradient></defs><ellipse cx="58" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="142" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="64" cy="90" rx="22" ry="26" fill="#6e4426"/><ellipse cx="136" cy="90" rx="22" ry="26" fill="#6e4426"/><path d="M68 58 Q60 22 88 44 Q80 56 72 60 Z" fill="url(#kFur__U)"/><path d="M132 58 Q140 22 112 44 Q120 56 128 60 Z" fill="url(#kFur__U)"/><path d="M71 54 Q67 36 82 48 Z" fill="#3a3230"/><path d="M129 54 Q133 36 118 48 Z" fill="#3a3230"/><circle cx="100" cy="100" r="50" fill="url(#kFur__U)"/><path d="M100 56 Q62 62 60 104 Q100 92 140 104 Q138 62 100 56 Z" fill="#e8cfa8"/><ellipse cx="100" cy="98" rx="40" ry="30" fill="#ecd6b4"/><ellipse cx="100" cy="116" rx="30" ry="24" fill="#f2e1c8"/><ellipse cx="72" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="128" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="100" cy="106" rx="9" ry="7" fill="#3a2a26"/><ellipse cx="97" cy="104" rx="3" ry="2" fill="#5a4a44" opacity="0.7"/><ellipse cx="80" cy="94" rx="13" ry="15" fill="#fff"/><ellipse cx="120" cy="94" rx="13" ry="15" fill="#fff"/><circle cx="81" cy="96" r="9.5" fill="#4a90d9"/><circle cx="119" cy="96" r="9.5" fill="#4a90d9"/><circle cx="81" cy="96" r="5" fill="#1a2f4a"/><circle cx="119" cy="96" r="5" fill="#1a2f4a"/><circle cx="84" cy="91" r="3.5" fill="#fff"/><circle cx="122" cy="91" r="3.5" fill="#fff"/><circle cx="77" cy="98" r="1.8" fill="#fff" opacity="0.8"/><circle cx="115" cy="98" r="1.8" fill="#fff" opacity="0.8"/><path d="M88 120 Q100 130 112 120" stroke="#7a5238" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M74 142 Q100 154 126 142" stroke="#9a4030" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="100" cy="151" r="7" fill="#f0c44e"/><circle cx="100" cy="153" r="1.8" fill="#9a7a1a"/></svg></div>
+    <div class="bubble"><div class="who">Кайл</div><p>Дорогие студенты-Яндексоиды, переходим на тёмную сторону — на сервер. Тут нет кнопок и анимаций. Тут данные, правила и ответственность. Зато именно тут решается, что фронту вообще можно показывать.</p></div></div><section><div class="sec-num">01 · ЗАЧЕМ ОН НУЖЕН</div><h2>Чему нельзя доверять браузеру</h2><p class="lead">Бэкенд — это код, которому можно верить. Браузер у пользователя, его можно вскрыть и подправить. Сервер у тебя.</p><p>Поэтому на бэке живёт всё, что нельзя отдавать клиенту: проверка прав, цены и скидки, доступ к базе, пароли, платежи. Фронт красивый, но наивный: он просто рисует то, что прислал сервер. Решения принимает сервер.</p><ul class="plain"><li><strong>Бизнес-логика</strong> — правила: можно ли забронировать этот слот, хватает ли денег.</li><li><strong>База данных</strong> — единственный источник правды, фронт к ней напрямую не лезет.</li><li><strong>Безопасность</strong> — аутентификация, права, валидация входных данных.</li></ul><div class="box warn"><div class="bt">Золотое правило</div><p>Никогда не доверяй данным с фронта. Цену, роль юзера, id владельца — всё перепроверяй на сервере. Клиент может прислать что угодно, включая то, что ты не предусмотрел.</p></div></section><section><div class="sec-num">02 · СВЯЗЬ С ФРОНТОМ</div><h2>Та же переписка по HTTP</h2><p>Помнишь цикл «запрос → ответ» из лекции про дату? Вот он с другой стороны. Фронт шлёт HTTP-запрос на твой сервер, сервер думает, лезет в базу и возвращает JSON. Бэкенд — это тот, кто отвечает на том конце провода.</p><div class="net"><div class="net-stage"><div class="net-node"><div class="nbox">🧑‍💻</div><div class="nlbl">Фронтенд<br>(React)</div></div><div class="net-wire" id="net-wire"></div><div class="net-node"><div class="nbox">⚙️</div><div class="nlbl">Express<br>сервер</div></div></div><div class="net-log" id="net-log">нажми — фронт отправит запрос на бэк</div><div style="text-align:center;margin-top:14px;"><button class="minibtn" onclick="flyPacket()">▶ Запрос с фронта</button></div></div><div class="say ren"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="rFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8893ab"/><stop offset="100%" stop-color="#6e7a94"/></linearGradient></defs><circle cx="70" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="130" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="70" cy="62" r="7.5" fill="#525c70"/><circle cx="130" cy="62" r="7.5" fill="#525c70"/><circle cx="100" cy="102" r="50" fill="url(#rFur__U)"/><ellipse cx="100" cy="116" rx="38" ry="30" fill="#e6eaf2"/><ellipse cx="100" cy="120" rx="30" ry="22" fill="#eef1f7"/><ellipse cx="100" cy="110" rx="11" ry="8" fill="#3e3e48"/><ellipse cx="96" cy="108" rx="3" ry="2" fill="#5e5e68" opacity="0.7"/><path d="M100 117 L100 126" stroke="#3e3e48" stroke-width="2" stroke-linecap="round"/><circle cx="80" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><circle cx="120" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><path d="M96 94 Q100 90 104 94" stroke="#4a5a6a" stroke-width="2.5" fill="none"/><circle cx="80" cy="95" r="8" fill="#3e3e48"/><circle cx="120" cy="95" r="8" fill="#3e3e48"/><circle cx="83" cy="92" r="3" fill="#fff"/><circle cx="123" cy="92" r="3" fill="#fff"/><circle cx="77" cy="97" r="1.5" fill="#fff" opacity="0.7"/><circle cx="117" cy="97" r="1.5" fill="#fff" opacity="0.7"/><path d="M72 88 Q78 84 84 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M112 88 Q118 84 124 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M78 116 Q60 114 52 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M78 122 Q60 124 54 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 116 Q140 114 148 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 122 Q140 124 146 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M90 124 Q100 131 110 124" stroke="#525c70" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg></div>
+    <div class="bubble"><div class="who">Рен</div><p>Контракт между ними — это API: набор адресов и форматов. GET /api/bookings вернёт список, POST /api/bookings создаст бронь. Фронт и бэк могут писать разные люди на разных языках — лишь бы соблюдали этот контракт.</p></div></div></section><section><div class="sec-num">03 · ПЕРВЫЙ СЕРВЕР</div><h2>Express за пять строк</h2><p>Node.js позволяет запускать JavaScript вне браузера. Express — лёгкий фреймворк поверх него, который превращает «слушать порт и разбирать HTTP» в пару понятных строк.</p><div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">server.js</span></div>
+  <pre><code><span class="tk">const</span> <span class="tx">express</span> <span class="to">=</span> <span class="tf">require</span><span class="tx">(</span><span class="ts2">'express'</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tk">const</span> <span class="tx">app</span> <span class="to">=</span> <span class="tf">express</span><span class="tx">(</span><span class="tx">)</span><span class="tx">;</span>
+
+<span class="tx">app</span><span class="tx">.</span><span class="tf">use</span><span class="tx">(</span><span class="tx">express</span><span class="tx">.</span><span class="tf">json</span><span class="tx">(</span><span class="tx">)</span><span class="tx">)</span><span class="tx">;</span>          <span class="tc">// понимать JSON в теле запросов</span>
+
+<span class="tc">// маршрут: на GET /health отвечаем, что живы</span>
+<span class="tx">app</span><span class="tx">.</span><span class="tk">get</span><span class="tx">(</span><span class="ts2">'/health'</span><span class="tx">,</span> <span class="tx">(</span><span class="tx">req</span><span class="tx">,</span> <span class="tx">res</span><span class="tx">)</span> <span class="to">=&gt;</span> <span class="tx">{</span>
+  <span class="tx">res</span><span class="tx">.</span><span class="tf">status</span><span class="tx">(</span><span class="tn">200</span><span class="tx">)</span><span class="tx">.</span><span class="tf">json</span><span class="tx">(</span><span class="tx">{</span> <span class="tx">status</span><span class="to">:</span> <span class="ts2">'ok'</span> <span class="tx">}</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">}</span><span class="tx">)</span><span class="tx">;</span>
+
+<span class="tx">app</span><span class="tx">.</span><span class="tf">listen</span><span class="tx">(</span><span class="tn">3000</span><span class="tx">,</span> <span class="tx">(</span><span class="tx">)</span> <span class="to">=&gt;</span> <span class="tx">{</span>
+  <span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="ts2">'Сервер слушает http://localhost:3000'</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">}</span><span class="tx">)</span><span class="tx">;</span></code></pre>
+</div><div class="say maxi"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#46b877"/><stop offset="100%" stop-color="#359a5e"/></linearGradient><radialGradient id="mCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#f0a890" stop-opacity="0.45"/><stop offset="100%" stop-color="#f0a890" stop-opacity="0"/></radialGradient></defs><path d="M66 56 Q56 18 90 42 Q80 54 72 58 Z" fill="url(#mFur__U)"/><path d="M134 56 Q144 18 110 42 Q120 54 128 58 Z" fill="url(#mFur__U)"/><path d="M70 50 Q64 30 82 44 Z" fill="#1f1f1f"/><path d="M130 50 Q136 30 118 44 Z" fill="#1f1f1f"/><circle cx="100" cy="100" r="50" fill="url(#mFur__U)"/><path d="M100 64 Q66 72 70 112 Q100 128 130 112 Q134 72 100 64 Z" fill="#f2f6f2"/><ellipse cx="100" cy="104" rx="34" ry="26" fill="#f7faf7"/><ellipse cx="74" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="126" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="100" cy="108" rx="6.5" ry="5" fill="#2a2a2a"/><path d="M100 113 L100 120" stroke="#2a2a2a" stroke-width="1.5" stroke-linecap="round"/><ellipse cx="82" cy="96" rx="12" ry="14" fill="#fff"/><ellipse cx="118" cy="96" rx="12" ry="14" fill="#fff"/><circle cx="83" cy="98" r="8.5" fill="#e8a020"/><circle cx="117" cy="98" r="8.5" fill="#e8a020"/><circle cx="83" cy="98" r="4.5" fill="#3a2400"/><circle cx="117" cy="98" r="4.5" fill="#3a2400"/><circle cx="86" cy="93" r="3.2" fill="#fff"/><circle cx="120" cy="93" r="3.2" fill="#fff"/><circle cx="79" cy="100" r="1.6" fill="#fff" opacity="0.8"/><circle cx="113" cy="100" r="1.6" fill="#fff" opacity="0.8"/><path d="M90 119 Q100 127 110 119" stroke="#1f5a32" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M97 124 Q100 129 103 124 Z" fill="#e87a8a"/></svg></div>
+    <div class="bubble"><div class="who">Макси</div><p>Вся суть тут: app слушает порт, на каждый запрос подбирает обработчик по методу и пути, и тот зовёт res.json(). Ниже — та же логика обработчика чистым JS, её можно запустить прямо здесь.</p></div></div><div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">handler.js</span><button class="runbtn" onclick="runJS(this)" data-src="%2F%2F%20%D0%B2%20%D0%BF%D0%B0%D0%BC%D1%8F%D1%82%D0%B8%20%D1%81%D0%B5%D1%80%D0%B2%D0%B5%D1%80%D0%B0%20%D0%BB%D0%B5%D0%B6%D0%B0%D1%82%20%D0%B1%D1%80%D0%BE%D0%BD%D0%B8%20%28%D0%BF%D0%BE%D1%82%D0%BE%D0%BC%20%D1%8D%D1%82%D0%BE%20%D0%B1%D1%83%D0%B4%D0%B5%D1%82%20%D0%91%D0%94%29%0Aconst%20bookings%20%3D%20%5B%0A%20%20%7B%20id%3A%201%2C%20court%3A%203%2C%20time%3A%20%2709%3A00%27%20%7D%2C%0A%20%20%7B%20id%3A%202%2C%20court%3A%201%2C%20time%3A%20%2712%3A00%27%20%7D%2C%0A%5D%3B%0A%0A%2F%2F%20%D0%BE%D0%B1%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%87%D0%B8%D0%BA%20GET%20%2Fbookings%20%E2%80%94%20%D1%87%D0%B8%D1%81%D1%82%D0%B0%D1%8F%20%D1%84%D1%83%D0%BD%D0%BA%D1%86%D0%B8%D1%8F%3A%20%D0%BD%D0%B0%20%D0%B2%D1%85%D0%BE%D0%B4%D0%B5%20%D0%B7%D0%B0%D0%BF%D1%80%D0%BE%D1%81%2C%20%D0%BD%D0%B0%20%D0%B2%D1%8B%D1%85%D0%BE%D0%B4%D0%B5%20%D0%BE%D1%82%D0%B2%D0%B5%D1%82%0Afunction%20getBookings%28%29%20%7B%0A%20%20return%20%7B%20status%3A%20200%2C%20body%3A%20bookings%20%7D%3B%0A%7D%0A%0Aconst%20response%20%3D%20getBookings%28%29%3B%0Aconsole.log%28%27status%3A%27%2C%20response.status%29%3B%0Aconsole.log%28%27body%3A%27%2C%20response.body%29%3B"><span>▶</span><span class="rlabel">Запустить</span></button></div>
+  <pre><code><span class="tc">// в памяти сервера лежат брони (потом это будет БД)</span>
+<span class="tk">const</span> <span class="tx">bookings</span> <span class="to">=</span> <span class="tx">[</span>
+  <span class="tx">{</span> <span class="tx">id</span><span class="to">:</span> <span class="tn">1</span><span class="tx">,</span> <span class="tx">court</span><span class="to">:</span> <span class="tn">3</span><span class="tx">,</span> <span class="tx">time</span><span class="to">:</span> <span class="ts2">'09:00'</span> <span class="tx">}</span><span class="tx">,</span>
+  <span class="tx">{</span> <span class="tx">id</span><span class="to">:</span> <span class="tn">2</span><span class="tx">,</span> <span class="tx">court</span><span class="to">:</span> <span class="tn">1</span><span class="tx">,</span> <span class="tx">time</span><span class="to">:</span> <span class="ts2">'12:00'</span> <span class="tx">}</span><span class="tx">,</span>
+<span class="tx">]</span><span class="tx">;</span>
+
+<span class="tc">// обработчик GET /bookings — чистая функция: на входе запрос, на выходе ответ</span>
+<span class="tk">function</span> <span class="tf">getBookings</span><span class="tx">(</span><span class="tx">)</span> <span class="tx">{</span>
+  <span class="tk">return</span> <span class="tx">{</span> <span class="tx">status</span><span class="to">:</span> <span class="tn">200</span><span class="tx">,</span> <span class="tx">body</span><span class="to">:</span> <span class="tx">bookings</span> <span class="tx">}</span><span class="tx">;</span>
+<span class="tx">}</span>
+
+<span class="tk">const</span> <span class="tx">response</span> <span class="to">=</span> <span class="tf">getBookings</span><span class="tx">(</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="ts2">'status:'</span><span class="tx">,</span> <span class="tx">response</span><span class="tx">.</span><span class="tx">status</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="ts2">'body:'</span><span class="tx">,</span> <span class="tx">response</span><span class="tx">.</span><span class="tx">body</span><span class="tx">)</span><span class="tx">;</span></code></pre>
+  <div class="console"><div class="console-inner"><div class="console-label">console</div></div></div>
+</div><div class="qt"><div class="qt-text">Бэкенд — это место, где «у меня на машине работает» наконец-то правда, потому что машина одна и она твоя.</div><div class="qt-author">девелоперский фольклор</div></div></section><div class="pager"><button onclick="pager(1)" class="next">Дальше: роутинг и запросы →</button></div></div>
+<div class="page" id="page-routing"><div class="phero"><div class="kicker">Раздел 02 · Роутинг</div><h1>Маршруты и обработка запросов</h1><p>Сервер должен понимать, какой запрос куда вести. Это роутинг: метод + путь → обработчик. Разберём req/res, параметры, middleware, и поднимем живой мок-API, который реально отвечает на кнопки.</p></div><div class="say kyle"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="kFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#b87a48"/><stop offset="100%" stop-color="#9a6238"/></linearGradient><radialGradient id="kCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#e8957a" stop-opacity="0.5"/><stop offset="100%" stop-color="#e8957a" stop-opacity="0"/></radialGradient></defs><ellipse cx="58" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="142" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="64" cy="90" rx="22" ry="26" fill="#6e4426"/><ellipse cx="136" cy="90" rx="22" ry="26" fill="#6e4426"/><path d="M68 58 Q60 22 88 44 Q80 56 72 60 Z" fill="url(#kFur__U)"/><path d="M132 58 Q140 22 112 44 Q120 56 128 60 Z" fill="url(#kFur__U)"/><path d="M71 54 Q67 36 82 48 Z" fill="#3a3230"/><path d="M129 54 Q133 36 118 48 Z" fill="#3a3230"/><circle cx="100" cy="100" r="50" fill="url(#kFur__U)"/><path d="M100 56 Q62 62 60 104 Q100 92 140 104 Q138 62 100 56 Z" fill="#e8cfa8"/><ellipse cx="100" cy="98" rx="40" ry="30" fill="#ecd6b4"/><ellipse cx="100" cy="116" rx="30" ry="24" fill="#f2e1c8"/><ellipse cx="72" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="128" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="100" cy="106" rx="9" ry="7" fill="#3a2a26"/><ellipse cx="97" cy="104" rx="3" ry="2" fill="#5a4a44" opacity="0.7"/><ellipse cx="80" cy="94" rx="13" ry="15" fill="#fff"/><ellipse cx="120" cy="94" rx="13" ry="15" fill="#fff"/><circle cx="81" cy="96" r="9.5" fill="#4a90d9"/><circle cx="119" cy="96" r="9.5" fill="#4a90d9"/><circle cx="81" cy="96" r="5" fill="#1a2f4a"/><circle cx="119" cy="96" r="5" fill="#1a2f4a"/><circle cx="84" cy="91" r="3.5" fill="#fff"/><circle cx="122" cy="91" r="3.5" fill="#fff"/><circle cx="77" cy="98" r="1.8" fill="#fff" opacity="0.8"/><circle cx="115" cy="98" r="1.8" fill="#fff" opacity="0.8"/><path d="M88 120 Q100 130 112 120" stroke="#7a5238" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M74 142 Q100 154 126 142" stroke="#9a4030" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="100" cy="151" r="7" fill="#f0c44e"/><circle cx="100" cy="153" r="1.8" fill="#9a7a1a"/></svg></div>
+    <div class="bubble"><div class="who">Кайл</div><p>Роутинг — это диспетчерская. Пришёл запрос, смотрим: какой метод, какой путь, и отправляем нужному обработчику. Не нашли подходящий — отвечаем 404. Всё.</p></div></div><section><div class="sec-num">01 · МАРШРУТ</div><h2>Метод + путь → обработчик</h2><p class="lead">Один маршрут = глагол (метод) + адрес (путь) + функция, которая на это отвечает.</p><p>Двоеточие в пути — это <strong>параметр</strong>. <code>/bookings/:id</code> ловит и <code>/bookings/1</code>, и <code>/bookings/42</code>, а само значение кладёт в <code>req.params.id</code>.</p><div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">routes.js</span></div>
+  <pre><code><span class="tx">app</span><span class="tx">.</span><span class="tk">get</span><span class="tx">(</span><span class="ts2">'/bookings'</span><span class="tx">,</span>     <span class="tx">getAllBookings</span><span class="tx">)</span><span class="tx">;</span>    <span class="tc">// список</span>
+<span class="tx">app</span><span class="tx">.</span><span class="tk">get</span><span class="tx">(</span><span class="ts2">'/bookings/:id'</span><span class="tx">,</span> <span class="tx">getBookingById</span><span class="tx">)</span><span class="tx">;</span>   <span class="tc">// одна бронь по id</span>
+<span class="tx">app</span><span class="tx">.</span><span class="tf">post</span><span class="tx">(</span><span class="ts2">'/bookings'</span><span class="tx">,</span>    <span class="tx">createBooking</span><span class="tx">)</span><span class="tx">;</span>     <span class="tc">// создать</span>
+<span class="tx">app</span><span class="tx">.</span><span class="tf">delete</span><span class="tx">(</span><span class="ts2">'/bookings/:id'</span><span class="tx">,</span> <span class="tx">deleteBooking</span><span class="tx">)</span><span class="tx">;</span>  <span class="tc">// удалить</span>
+
+<span class="tc">// внутри обработчика достаём данные запроса:</span>
+<span class="tk">function</span> <span class="tf">getBookingById</span><span class="tx">(</span><span class="tx">req</span><span class="tx">,</span> <span class="tx">res</span><span class="tx">)</span> <span class="tx">{</span>
+  <span class="tk">const</span> <span class="tx">id</span> <span class="to">=</span> <span class="tx">req</span><span class="tx">.</span><span class="tx">params</span><span class="tx">.</span><span class="tx">id</span><span class="tx">;</span>        <span class="tc">// из пути /bookings/:id</span>
+  <span class="tk">const</span> <span class="tx">sort</span> <span class="to">=</span> <span class="tx">req</span><span class="tx">.</span><span class="tx">query</span><span class="tx">.</span><span class="tx">sort</span><span class="tx">;</span>     <span class="tc">// из ?sort=time</span>
+  <span class="tc">// ... найти и вернуть</span>
+  <span class="tx">res</span><span class="tx">.</span><span class="tf">status</span><span class="tx">(</span><span class="tn">200</span><span class="tx">)</span><span class="tx">.</span><span class="tf">json</span><span class="tx">(</span><span class="tx">booking</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">}</span></code></pre>
+</div><div class="box info"><div class="bt">req и res</div><p>req — это входящий запрос: params (из пути), query (из ?строки), body (тело POST), headers. res — твой ответ: res.status(код).json(данные). Вся обработка крутится вокруг этих двух объектов.</p></div></section><section><div class="sec-num">02 · MIDDLEWARE</div><h2>Конвейер перед обработчиком</h2><p>Middleware — это функции, через которые запрос проходит <strong>по дороге</strong> к обработчику. Каждая может что-то проверить, дополнить или зарубить. Вызвал <code>next()</code> — поехали дальше, не вызвал — запрос застрял (например, отказ по правам).</p><div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">middleware.js</span></div>
+  <pre><code><span class="tc">// логируем каждый запрос</span>
+<span class="tx">app</span><span class="tx">.</span><span class="tf">use</span><span class="tx">(</span><span class="tx">(</span><span class="tx">req</span><span class="tx">,</span> <span class="tx">res</span><span class="tx">,</span> <span class="tx">next</span><span class="tx">)</span> <span class="to">=&gt;</span> <span class="tx">{</span>
+  <span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="ts2">`${req.method} ${req.url}`</span><span class="tx">)</span><span class="tx">;</span>
+  <span class="tf">next</span><span class="tx">(</span><span class="tx">)</span><span class="tx">;</span>                          <span class="tc">// пропускаем дальше по конвейеру</span>
+<span class="tx">}</span><span class="tx">)</span><span class="tx">;</span>
+
+<span class="tc">// пускаем дальше только с валидным токеном</span>
+<span class="tk">function</span> <span class="tf">auth</span><span class="tx">(</span><span class="tx">req</span><span class="tx">,</span> <span class="tx">res</span><span class="tx">,</span> <span class="tx">next</span><span class="tx">)</span> <span class="tx">{</span>
+  <span class="tk">if</span> <span class="tx">(</span><span class="to">!</span><span class="tx">req</span><span class="tx">.</span><span class="tx">headers</span><span class="tx">.</span><span class="tx">authorization</span><span class="tx">)</span> <span class="tx">{</span>
+    <span class="tk">return</span> <span class="tx">res</span><span class="tx">.</span><span class="tf">status</span><span class="tx">(</span><span class="tn">401</span><span class="tx">)</span><span class="tx">.</span><span class="tf">json</span><span class="tx">(</span><span class="tx">{</span> <span class="tx">error</span><span class="to">:</span> <span class="ts2">'нужен токен'</span> <span class="tx">}</span><span class="tx">)</span><span class="tx">;</span>
+  <span class="tx">}</span>
+  <span class="tf">next</span><span class="tx">(</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">}</span>
+
+<span class="tx">app</span><span class="tx">.</span><span class="tk">get</span><span class="tx">(</span><span class="ts2">'/bookings'</span><span class="tx">,</span> <span class="tx">auth</span><span class="tx">,</span> <span class="tx">getAllBookings</span><span class="tx">)</span><span class="tx">;</span>  <span class="tc">// auth сработает ДО обработчика</span></code></pre>
+</div><div class="say ren"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="rFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8893ab"/><stop offset="100%" stop-color="#6e7a94"/></linearGradient></defs><circle cx="70" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="130" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="70" cy="62" r="7.5" fill="#525c70"/><circle cx="130" cy="62" r="7.5" fill="#525c70"/><circle cx="100" cy="102" r="50" fill="url(#rFur__U)"/><ellipse cx="100" cy="116" rx="38" ry="30" fill="#e6eaf2"/><ellipse cx="100" cy="120" rx="30" ry="22" fill="#eef1f7"/><ellipse cx="100" cy="110" rx="11" ry="8" fill="#3e3e48"/><ellipse cx="96" cy="108" rx="3" ry="2" fill="#5e5e68" opacity="0.7"/><path d="M100 117 L100 126" stroke="#3e3e48" stroke-width="2" stroke-linecap="round"/><circle cx="80" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><circle cx="120" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><path d="M96 94 Q100 90 104 94" stroke="#4a5a6a" stroke-width="2.5" fill="none"/><circle cx="80" cy="95" r="8" fill="#3e3e48"/><circle cx="120" cy="95" r="8" fill="#3e3e48"/><circle cx="83" cy="92" r="3" fill="#fff"/><circle cx="123" cy="92" r="3" fill="#fff"/><circle cx="77" cy="97" r="1.5" fill="#fff" opacity="0.7"/><circle cx="117" cy="97" r="1.5" fill="#fff" opacity="0.7"/><path d="M72 88 Q78 84 84 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M112 88 Q118 84 124 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M78 116 Q60 114 52 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M78 122 Q60 124 54 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 116 Q140 114 148 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 122 Q140 124 146 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M90 124 Q100 131 110 124" stroke="#525c70" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg></div>
+    <div class="bubble"><div class="who">Рен</div><p>Порядок middleware = порядок конвейера. express.json() парсит тело, логгер пишет, auth проверяет права, и только потом обработчик. Ошибку ловит специальный error-middleware в самом конце. Это тот же принцип, что цепочка .filter().map() — данные текут через звенья.</p></div></div></section><section><div class="sec-num">03 · ПЕСОЧНИЦА</div><h2>Живой мок Express-API</h2><p>Ниже — настоящий мини-сервер прямо в браузере: роутер, обработчики, данные в памяти. Жми кнопки — это реальные запросы к моку. Увидишь, какой маршрут совпал, через какие слои прошёл запрос и что вернулось (статус + JSON). POST добавляет бронь, DELETE удаляет, кривой путь даёт 404.</p><div class="api"><div class="api-head">mock express · POST добавляет, DELETE удаляет, /oops → 404</div><div class="ctrl-row"><button class="verb get" onclick="apiSend('GET','/bookings')">GET /bookings</button><button class="verb get" onclick="apiSend('GET','/bookings/1')">GET /bookings/1</button><button class="verb bad" onclick="apiSend('GET','/bookings/99')">GET /bookings/99</button><button class="verb post" onclick="apiSend('POST','/bookings')">POST /bookings</button><button class="verb del" onclick="apiSend('DELETE','/bookings/1')">DELETE /bookings/1</button><button class="verb bad" onclick="apiSend('GET','/oops')">GET /oops</button><button class="minibtn ghost" onclick="apiReset()">reset</button></div><div class="api-out" id="api-out"></div></div><div class="meme-row"><span class="meme"><span class="mava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#46b877"/><stop offset="100%" stop-color="#359a5e"/></linearGradient><radialGradient id="mCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#f0a890" stop-opacity="0.45"/><stop offset="100%" stop-color="#f0a890" stop-opacity="0"/></radialGradient></defs><path d="M66 56 Q56 18 90 42 Q80 54 72 58 Z" fill="url(#mFur__U)"/><path d="M134 56 Q144 18 110 42 Q120 54 128 58 Z" fill="url(#mFur__U)"/><path d="M70 50 Q64 30 82 44 Z" fill="#1f1f1f"/><path d="M130 50 Q136 30 118 44 Z" fill="#1f1f1f"/><circle cx="100" cy="100" r="50" fill="url(#mFur__U)"/><path d="M100 64 Q66 72 70 112 Q100 128 130 112 Q134 72 100 64 Z" fill="#f2f6f2"/><ellipse cx="100" cy="104" rx="34" ry="26" fill="#f7faf7"/><ellipse cx="74" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="126" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="100" cy="108" rx="6.5" ry="5" fill="#2a2a2a"/><path d="M100 113 L100 120" stroke="#2a2a2a" stroke-width="1.5" stroke-linecap="round"/><ellipse cx="82" cy="96" rx="12" ry="14" fill="#fff"/><ellipse cx="118" cy="96" rx="12" ry="14" fill="#fff"/><circle cx="83" cy="98" r="8.5" fill="#e8a020"/><circle cx="117" cy="98" r="8.5" fill="#e8a020"/><circle cx="83" cy="98" r="4.5" fill="#3a2400"/><circle cx="117" cy="98" r="4.5" fill="#3a2400"/><circle cx="86" cy="93" r="3.2" fill="#fff"/><circle cx="120" cy="93" r="3.2" fill="#fff"/><circle cx="79" cy="100" r="1.6" fill="#fff" opacity="0.8"/><circle cx="113" cy="100" r="1.6" fill="#fff" opacity="0.8"/><path d="M90 119 Q100 127 110 119" stroke="#1f5a32" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M97 124 Q100 129 103 124 Z" fill="#e87a8a"/></svg></span>404 — это не баг сервера, это сервер вежливо говорит «такого адреса у меня нет»</span></div></section><div class="pager"><button onclick="pager(-1)">← Бэкенд</button><button onclick="pager(1)" class="next">Дальше: SOLID →</button></div></div>
+<div class="page" id="page-solid"><div class="phero"><div class="kicker">Раздел 03 · SOLID</div><h1>SOLID: пять правил, чтобы код не сгнил</h1><p>Сервер живёт годами и его правят десятки людей. SOLID — пять принципов, которые держат код гибким и не дают ему превратиться в один гигантский класс, который страшно трогать. Разберём каждый на бэкенд-примере.</p></div><div class="say kyle"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="kFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#b87a48"/><stop offset="100%" stop-color="#9a6238"/></linearGradient><radialGradient id="kCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#e8957a" stop-opacity="0.5"/><stop offset="100%" stop-color="#e8957a" stop-opacity="0"/></radialGradient></defs><ellipse cx="58" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="142" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="64" cy="90" rx="22" ry="26" fill="#6e4426"/><ellipse cx="136" cy="90" rx="22" ry="26" fill="#6e4426"/><path d="M68 58 Q60 22 88 44 Q80 56 72 60 Z" fill="url(#kFur__U)"/><path d="M132 58 Q140 22 112 44 Q120 56 128 60 Z" fill="url(#kFur__U)"/><path d="M71 54 Q67 36 82 48 Z" fill="#3a3230"/><path d="M129 54 Q133 36 118 48 Z" fill="#3a3230"/><circle cx="100" cy="100" r="50" fill="url(#kFur__U)"/><path d="M100 56 Q62 62 60 104 Q100 92 140 104 Q138 62 100 56 Z" fill="#e8cfa8"/><ellipse cx="100" cy="98" rx="40" ry="30" fill="#ecd6b4"/><ellipse cx="100" cy="116" rx="30" ry="24" fill="#f2e1c8"/><ellipse cx="72" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="128" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="100" cy="106" rx="9" ry="7" fill="#3a2a26"/><ellipse cx="97" cy="104" rx="3" ry="2" fill="#5a4a44" opacity="0.7"/><ellipse cx="80" cy="94" rx="13" ry="15" fill="#fff"/><ellipse cx="120" cy="94" rx="13" ry="15" fill="#fff"/><circle cx="81" cy="96" r="9.5" fill="#4a90d9"/><circle cx="119" cy="96" r="9.5" fill="#4a90d9"/><circle cx="81" cy="96" r="5" fill="#1a2f4a"/><circle cx="119" cy="96" r="5" fill="#1a2f4a"/><circle cx="84" cy="91" r="3.5" fill="#fff"/><circle cx="122" cy="91" r="3.5" fill="#fff"/><circle cx="77" cy="98" r="1.8" fill="#fff" opacity="0.8"/><circle cx="115" cy="98" r="1.8" fill="#fff" opacity="0.8"/><path d="M88 120 Q100 130 112 120" stroke="#7a5238" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M74 142 Q100 154 126 142" stroke="#9a4030" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="100" cy="151" r="7" fill="#f0c44e"/><circle cx="100" cy="153" r="1.8" fill="#9a7a1a"/></svg></div>
+    <div class="bubble"><div class="who">Кайл</div><p>SOLID звучит как заклинание, но за каждой буквой простая мысль. Тыкай буквы — расскажу по одной. Главная из них для нас — последняя, D, на ней держится слоистая архитектура.</p></div></div><section><div class="sec-num">01 · ПЯТЬ ПРИНЦИПОВ</div><h2>Тыкай букву</h2><div class="stx"><div class="stx-chips"><button class="stx-chip" data-code="S" onclick="pickSolid('S')">S</button><button class="stx-chip" data-code="O" onclick="pickSolid('O')">O</button><button class="stx-chip" data-code="L" onclick="pickSolid('L')">L</button><button class="stx-chip" data-code="I" onclick="pickSolid('I')">I</button><button class="stx-chip" data-code="D" onclick="pickSolid('D')">D</button></div><div class="stx-detail" id="stx-detail"></div></div></section><section><div class="sec-num">02 · НА ПРАКТИКЕ</div><h2>Божественный объект против разделения</h2><p>Самое частое нарушение у новичков — <strong>God Object</strong>: один класс делает всё. Принимает запрос, считает логику, лезет в базу. Поменялась БД — лезешь в тот же файл, где бизнес-логика. Поменялось правило — туда же. Всё спутано.</p><div class="cmp"><div class="ch a">разделено (S + D) ✓</div><div class="ch b">God Object ✗</div><div class="cc">// контроллер — только HTTP
+// сервис — только логика
+// репозиторий — только БД
+
+каждый меняется
+по своей причине</div><div class="cc">class BookingController {
+  handle(req, res) {
+    // парсит запрос
+    // считает цену
+    // пишет SQL
+    // шлёт письмо
+  } // всё в куче
+}</div></div><div class="say ren"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="rFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8893ab"/><stop offset="100%" stop-color="#6e7a94"/></linearGradient></defs><circle cx="70" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="130" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="70" cy="62" r="7.5" fill="#525c70"/><circle cx="130" cy="62" r="7.5" fill="#525c70"/><circle cx="100" cy="102" r="50" fill="url(#rFur__U)"/><ellipse cx="100" cy="116" rx="38" ry="30" fill="#e6eaf2"/><ellipse cx="100" cy="120" rx="30" ry="22" fill="#eef1f7"/><ellipse cx="100" cy="110" rx="11" ry="8" fill="#3e3e48"/><ellipse cx="96" cy="108" rx="3" ry="2" fill="#5e5e68" opacity="0.7"/><path d="M100 117 L100 126" stroke="#3e3e48" stroke-width="2" stroke-linecap="round"/><circle cx="80" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><circle cx="120" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><path d="M96 94 Q100 90 104 94" stroke="#4a5a6a" stroke-width="2.5" fill="none"/><circle cx="80" cy="95" r="8" fill="#3e3e48"/><circle cx="120" cy="95" r="8" fill="#3e3e48"/><circle cx="83" cy="92" r="3" fill="#fff"/><circle cx="123" cy="92" r="3" fill="#fff"/><circle cx="77" cy="97" r="1.5" fill="#fff" opacity="0.7"/><circle cx="117" cy="97" r="1.5" fill="#fff" opacity="0.7"/><path d="M72 88 Q78 84 84 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M112 88 Q118 84 124 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M78 116 Q60 114 52 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M78 122 Q60 124 54 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 116 Q140 114 148 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 122 Q140 124 146 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M90 124 Q100 131 110 124" stroke="#525c70" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg></div>
+    <div class="bubble"><div class="who">Рен</div><p>Принцип D (инверсия зависимостей) — самый важный на практике. Сервис не должен знать, что там за база. Он зависит от интерфейса репозитория. Запусти пример: подменяем реальный репозиторий на мок, а сервис даже не замечает.</p></div></div><div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">dip.js</span><button class="runbtn" onclick="runJS(this)" data-src="%2F%2F%20%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%20%D0%B7%D0%B0%D0%B2%D0%B8%D1%81%D0%B8%D1%82%20%D0%BE%D1%82%20%D0%90%D0%91%D0%A1%D0%A2%D0%A0%D0%90%D0%9A%D0%A6%D0%98%D0%98%20%D1%80%D0%B5%D0%BF%D0%BE%D0%B7%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D1%8F%2C%20%D0%B0%20%D0%BD%D0%B5%20%D0%BE%D1%82%20%D0%BA%D0%BE%D0%BD%D0%BA%D1%80%D0%B5%D1%82%D0%BD%D0%BE%D0%B9%20%D0%91%D0%94%0Afunction%20createBookingService%28repo%29%20%7B%0A%20%20return%20%7B%0A%20%20%20%20book%28court%2C%20time%29%20%7B%0A%20%20%20%20%20%20if%20%28repo.isTaken%28court%2C%20time%29%29%20%7B%0A%20%20%20%20%20%20%20%20return%20%7B%20ok%3A%20false%2C%20reason%3A%20%27%D1%81%D0%BB%D0%BE%D1%82%20%D0%B7%D0%B0%D0%BD%D1%8F%D1%82%27%20%7D%3B%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20const%20saved%20%3D%20repo.save%28%7B%20court%2C%20time%20%7D%29%3B%0A%20%20%20%20%20%20return%20%7B%20ok%3A%20true%2C%20booking%3A%20saved%20%7D%3B%0A%20%20%20%20%7D%2C%0A%20%20%7D%3B%0A%7D%0A%0A%2F%2F%20%D0%B2%20%D1%82%D0%B5%D1%81%D1%82%D0%B0%D1%85%20%D0%BF%D0%BE%D0%B4%D1%81%D0%BE%D0%B2%D1%8B%D0%B2%D0%B0%D0%B5%D0%BC%20%D0%BC%D0%BE%D0%BA-%D1%80%D0%B5%D0%BF%D0%BE%D0%B7%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D0%B9%20%28%D0%BD%D0%B8%D0%BA%D0%B0%D0%BA%D0%BE%D0%B9%20%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D1%8F%D1%89%D0%B5%D0%B9%20%D0%91%D0%94%29%0Aconst%20fakeRepo%20%3D%20%7B%0A%20%20taken%3A%20%5B%7B%20court%3A%203%2C%20time%3A%20%2709%3A00%27%20%7D%5D%2C%0A%20%20isTaken%28c%2C%20t%29%20%7B%20return%20this.taken.some%28x%20%3D%3E%20x.court%20%3D%3D%3D%20c%20%26%26%20x.time%20%3D%3D%3D%20t%29%3B%20%7D%2C%0A%20%20save%28b%29%20%7B%20return%20%7B%20id%3A%2042%2C%20...b%20%7D%3B%20%7D%2C%0A%7D%3B%0A%0Aconst%20service%20%3D%20createBookingService%28fakeRepo%29%3B%0Aconsole.log%28service.book%283%2C%20%2709%3A00%27%29%29%3B%20%20%20%2F%2F%20%D0%B7%D0%B0%D0%BD%D1%8F%D1%82%0Aconsole.log%28service.book%281%2C%20%2712%3A00%27%29%29%3B%20%20%20%2F%2F%20ok%2C%20id%2042"><span>▶</span><span class="rlabel">Запустить</span></button></div>
+  <pre><code><span class="tc">// сервис зависит от АБСТРАКЦИИ репозитория, а не от конкретной БД</span>
+<span class="tk">function</span> <span class="tf">createBookingService</span><span class="tx">(</span><span class="tx">repo</span><span class="tx">)</span> <span class="tx">{</span>
+  <span class="tk">return</span> <span class="tx">{</span>
+    <span class="tf">book</span><span class="tx">(</span><span class="tx">court</span><span class="tx">,</span> <span class="tx">time</span><span class="tx">)</span> <span class="tx">{</span>
+      <span class="tk">if</span> <span class="tx">(</span><span class="tx">repo</span><span class="tx">.</span><span class="tf">isTaken</span><span class="tx">(</span><span class="tx">court</span><span class="tx">,</span> <span class="tx">time</span><span class="tx">)</span><span class="tx">)</span> <span class="tx">{</span>
+        <span class="tk">return</span> <span class="tx">{</span> <span class="tx">ok</span><span class="to">:</span> <span class="tn">false</span><span class="tx">,</span> <span class="tx">reason</span><span class="to">:</span> <span class="ts2">'слот занят'</span> <span class="tx">}</span><span class="tx">;</span>
+      <span class="tx">}</span>
+      <span class="tk">const</span> <span class="tx">saved</span> <span class="to">=</span> <span class="tx">repo</span><span class="tx">.</span><span class="tf">save</span><span class="tx">(</span><span class="tx">{</span> <span class="tx">court</span><span class="tx">,</span> <span class="tx">time</span> <span class="tx">}</span><span class="tx">)</span><span class="tx">;</span>
+      <span class="tk">return</span> <span class="tx">{</span> <span class="tx">ok</span><span class="to">:</span> <span class="tn">true</span><span class="tx">,</span> <span class="tx">booking</span><span class="to">:</span> <span class="tx">saved</span> <span class="tx">}</span><span class="tx">;</span>
+    <span class="tx">}</span><span class="tx">,</span>
+  <span class="tx">}</span><span class="tx">;</span>
+<span class="tx">}</span>
+
+<span class="tc">// в тестах подсовываем мок-репозиторий (никакой настоящей БД)</span>
+<span class="tk">const</span> <span class="tx">fakeRepo</span> <span class="to">=</span> <span class="tx">{</span>
+  <span class="tx">taken</span><span class="to">:</span> <span class="tx">[</span><span class="tx">{</span> <span class="tx">court</span><span class="to">:</span> <span class="tn">3</span><span class="tx">,</span> <span class="tx">time</span><span class="to">:</span> <span class="ts2">'09:00'</span> <span class="tx">}</span><span class="tx">]</span><span class="tx">,</span>
+  <span class="tf">isTaken</span><span class="tx">(</span><span class="tx">c</span><span class="tx">,</span> <span class="tx">t</span><span class="tx">)</span> <span class="tx">{</span> <span class="tk">return</span> <span class="tk">this</span><span class="tx">.</span><span class="tx">taken</span><span class="tx">.</span><span class="tf">some</span><span class="tx">(</span><span class="tx">x</span> <span class="to">=&gt;</span> <span class="tx">x</span><span class="tx">.</span><span class="tx">court</span> <span class="to">===</span> <span class="tx">c</span> <span class="to">&amp;&amp;</span> <span class="tx">x</span><span class="tx">.</span><span class="tx">time</span> <span class="to">===</span> <span class="tx">t</span><span class="tx">)</span><span class="tx">;</span> <span class="tx">}</span><span class="tx">,</span>
+  <span class="tf">save</span><span class="tx">(</span><span class="tx">b</span><span class="tx">)</span> <span class="tx">{</span> <span class="tk">return</span> <span class="tx">{</span> <span class="tx">id</span><span class="to">:</span> <span class="tn">42</span><span class="tx">,</span> <span class="to">...</span><span class="tx">b</span> <span class="tx">}</span><span class="tx">;</span> <span class="tx">}</span><span class="tx">,</span>
+<span class="tx">}</span><span class="tx">;</span>
+
+<span class="tk">const</span> <span class="tx">service</span> <span class="to">=</span> <span class="tf">createBookingService</span><span class="tx">(</span><span class="tx">fakeRepo</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="tx">service</span><span class="tx">.</span><span class="tf">book</span><span class="tx">(</span><span class="tn">3</span><span class="tx">,</span> <span class="ts2">'09:00'</span><span class="tx">)</span><span class="tx">)</span><span class="tx">;</span>   <span class="tc">// занят</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="tx">service</span><span class="tx">.</span><span class="tf">book</span><span class="tx">(</span><span class="tn">1</span><span class="tx">,</span> <span class="ts2">'12:00'</span><span class="tx">)</span><span class="tx">)</span><span class="tx">;</span>   <span class="tc">// ok, id 42</span></code></pre>
+  <div class="console"><div class="console-inner"><div class="console-label">console</div></div></div>
+</div><div class="qt"><div class="qt-text">Любой код, который ты не открывал полгода, с тем же успехом мог написать кто-то другой.</div><div class="qt-author">закон Иглсона</div></div></section><div class="pager"><button onclick="pager(-1)">← Роутинг</button><button onclick="pager(1)" class="next">Дальше: слоистая архитектура →</button></div></div>
+<div class="page" id="page-layers"><div class="phero"><div class="kicker">Раздел 04 · Архитектура</div><h1>Слоистая архитектура</h1><p>SOLID на уровне всего приложения превращается в слои. Запрос проходит сверху вниз через чёткие уровни, каждый знает только соседа. Это бэкенд-родственник FSD из прошлых лекций: те же границы, та же дисциплина.</p></div><div class="say kyle"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="kFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#b87a48"/><stop offset="100%" stop-color="#9a6238"/></linearGradient><radialGradient id="kCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#e8957a" stop-opacity="0.5"/><stop offset="100%" stop-color="#e8957a" stop-opacity="0"/></radialGradient></defs><ellipse cx="58" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="142" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="64" cy="90" rx="22" ry="26" fill="#6e4426"/><ellipse cx="136" cy="90" rx="22" ry="26" fill="#6e4426"/><path d="M68 58 Q60 22 88 44 Q80 56 72 60 Z" fill="url(#kFur__U)"/><path d="M132 58 Q140 22 112 44 Q120 56 128 60 Z" fill="url(#kFur__U)"/><path d="M71 54 Q67 36 82 48 Z" fill="#3a3230"/><path d="M129 54 Q133 36 118 48 Z" fill="#3a3230"/><circle cx="100" cy="100" r="50" fill="url(#kFur__U)"/><path d="M100 56 Q62 62 60 104 Q100 92 140 104 Q138 62 100 56 Z" fill="#e8cfa8"/><ellipse cx="100" cy="98" rx="40" ry="30" fill="#ecd6b4"/><ellipse cx="100" cy="116" rx="30" ry="24" fill="#f2e1c8"/><ellipse cx="72" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="128" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="100" cy="106" rx="9" ry="7" fill="#3a2a26"/><ellipse cx="97" cy="104" rx="3" ry="2" fill="#5a4a44" opacity="0.7"/><ellipse cx="80" cy="94" rx="13" ry="15" fill="#fff"/><ellipse cx="120" cy="94" rx="13" ry="15" fill="#fff"/><circle cx="81" cy="96" r="9.5" fill="#4a90d9"/><circle cx="119" cy="96" r="9.5" fill="#4a90d9"/><circle cx="81" cy="96" r="5" fill="#1a2f4a"/><circle cx="119" cy="96" r="5" fill="#1a2f4a"/><circle cx="84" cy="91" r="3.5" fill="#fff"/><circle cx="122" cy="91" r="3.5" fill="#fff"/><circle cx="77" cy="98" r="1.8" fill="#fff" opacity="0.8"/><circle cx="115" cy="98" r="1.8" fill="#fff" opacity="0.8"/><path d="M88 120 Q100 130 112 120" stroke="#7a5238" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M74 142 Q100 154 126 142" stroke="#9a4030" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="100" cy="151" r="7" fill="#f0c44e"/><circle cx="100" cy="153" r="1.8" fill="#9a7a1a"/></svg></div>
+    <div class="bubble"><div class="who">Кайл</div><p>Три главных слоя: контроллер ловит HTTP, сервис думает бизнес-логику, репозиторий говорит с базой. Чужую работу никто не делает. Поменял базу — трогаешь только репозиторий. Поменял правило — только сервис.</p></div></div><section><div class="sec-num">01 · СЛОИ</div><h2>Кто за что отвечает</h2><ul class="plain"><li><strong>Controller / Router</strong> — граница с HTTP. Достал params/body, позвал сервис, отдал res.json(). Бизнес-логики тут нет.</li><li><strong>Service</strong> — чистая бизнес-логика. Правила, проверки, расчёты. Не знает про HTTP и не знает про SQL.</li><li><strong>Repository</strong> — доступ к данным. Прячет за собой SQL/ORM. Сервис просит «дай брони на корт 3», репозиторий разбирается как.</li><li><strong>Database</strong> — Postgres, источник правды.</li></ul><div class="ftree"><span class="dir">src/</span>
+├─ <span class="dir">routes/</span> <span class="fl">bookings.routes.js</span>   <span class="cm"># пути → контроллеры</span>
+├─ <span class="dir">controllers/</span> <span class="fl">bookings.controller.js</span> <span class="cm"># HTTP-граница</span>
+├─ <span class="dir">services/</span> <span class="fl">bookings.service.js</span>   <span class="cm"># бизнес-логика</span>
+├─ <span class="dir">repositories/</span> <span class="fl">bookings.repo.js</span>   <span class="cm"># доступ к БД</span>
+└─ <span class="dir">db/</span> <span class="fl">pool.js</span>                  <span class="cm"># подключение к Postgres</span></div><div class="box info"><div class="bt">Связь с FSD</div><p>Тот же принцип, что правило импортов в FSD: зависимости текут в одну сторону. Контроллер знает сервис, сервис знает репозиторий, репозиторий знает базу. Назад — никогда. База ничего не знает о контроллере.</p></div></section><section><div class="sec-num">02 · ПОТОК ЗАПРОСА</div><h2>Запрос едет по слоям</h2><p>Запусти и посмотри, как один GET /bookings проходит сверху вниз и возвращается. Каждый слой делает ровно своё:</p><div class="pipe"><div class="pipe-track"><div class="pipe-step" id="ps-ctrl"><div class="ps-ico">🚦</div><div class="ps-layer">controller</div><div class="ps-t">HTTP</div><div class="ps-d">Достал params, позвал сервис</div></div><div class="pipe-step" id="ps-svc"><div class="ps-ico">🧠</div><div class="ps-layer">service</div><div class="ps-t">Логика</div><div class="ps-d">Применил правила и права</div></div><div class="pipe-step" id="ps-repo"><div class="ps-ico">🗄️</div><div class="ps-layer">repository</div><div class="ps-t">SQL</div><div class="ps-d">Собрал запрос к данным</div></div><div class="pipe-step" id="ps-db"><div class="ps-ico">🐘</div><div class="ps-layer">postgres</div><div class="ps-t">Данные</div><div class="ps-d">Вернул строки таблицы</div></div><div class="pipe-step" id="ps-resp"><div class="ps-ico">📤</div><div class="ps-layer">controller</div><div class="ps-t">Ответ</div><div class="ps-d">res.json() обратно фронту</div></div></div><div class="net-log" id="pipe-log" style="margin-top:16px;">нажми — запрос проедет по слоям</div><div style="text-align:center;margin-top:12px;"><button class="minibtn" onclick="runPipe()">▶ Прогнать запрос</button></div></div></section><section><div class="sec-num">03 · В КОДЕ</div><h2>Один эндпоинт, три слоя</h2><p>Тот же GET /bookings/:id, разрезанный по слоям. Видно, как каждый зовёт только следующего и не лезет в чужое.</p><div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">layers.js</span></div>
+  <pre><code><span class="tc">// --- controller: только HTTP ---</span>
+<span class="tk">async</span> <span class="tk">function</span> <span class="tf">getBookingById</span><span class="tx">(</span><span class="tx">req</span><span class="tx">,</span> <span class="tx">res</span><span class="tx">)</span> <span class="tx">{</span>
+  <span class="tk">const</span> <span class="tx">booking</span> <span class="to">=</span> <span class="tk">await</span> <span class="tx">bookingService</span><span class="tx">.</span><span class="tf">getById</span><span class="tx">(</span><span class="tx">req</span><span class="tx">.</span><span class="tx">params</span><span class="tx">.</span><span class="tx">id</span><span class="tx">)</span><span class="tx">;</span>
+  <span class="tk">if</span> <span class="tx">(</span><span class="to">!</span><span class="tx">booking</span><span class="tx">)</span> <span class="tk">return</span> <span class="tx">res</span><span class="tx">.</span><span class="tf">status</span><span class="tx">(</span><span class="tn">404</span><span class="tx">)</span><span class="tx">.</span><span class="tf">json</span><span class="tx">(</span><span class="tx">{</span> <span class="tx">error</span><span class="to">:</span> <span class="ts2">'не найдено'</span> <span class="tx">}</span><span class="tx">)</span><span class="tx">;</span>
+  <span class="tx">res</span><span class="tx">.</span><span class="tf">status</span><span class="tx">(</span><span class="tn">200</span><span class="tx">)</span><span class="tx">.</span><span class="tf">json</span><span class="tx">(</span><span class="tx">booking</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">}</span>
+
+<span class="tc">// --- service: только логика, не знает про SQL ---</span>
+<span class="tk">const</span> <span class="tx">bookingService</span> <span class="to">=</span> <span class="tx">{</span>
+  <span class="tk">async</span> <span class="tf">getById</span><span class="tx">(</span><span class="tx">id</span><span class="tx">)</span> <span class="tx">{</span>
+    <span class="tk">const</span> <span class="tx">b</span> <span class="to">=</span> <span class="tk">await</span> <span class="tx">bookingRepo</span><span class="tx">.</span><span class="tf">findById</span><span class="tx">(</span><span class="tx">id</span><span class="tx">)</span><span class="tx">;</span>
+    <span class="tk">return</span> <span class="tx">b</span> <span class="to">&amp;&amp;</span> <span class="tx">b</span><span class="tx">.</span><span class="tx">isPublic</span> <span class="to">?</span> <span class="tx">b</span> <span class="to">:</span> <span class="tn">null</span><span class="tx">;</span>     <span class="tc">// бизнес-правило</span>
+  <span class="tx">}</span><span class="tx">,</span>
+<span class="tx">}</span><span class="tx">;</span>
+
+<span class="tc">// --- repository: только данные, прячет SQL ---</span>
+<span class="tk">const</span> <span class="tx">bookingRepo</span> <span class="to">=</span> <span class="tx">{</span>
+  <span class="tk">async</span> <span class="tf">findById</span><span class="tx">(</span><span class="tx">id</span><span class="tx">)</span> <span class="tx">{</span>
+    <span class="tk">const</span> <span class="tx">{</span> <span class="tx">rows</span> <span class="tx">}</span> <span class="to">=</span> <span class="tk">await</span> <span class="tx">pool</span><span class="tx">.</span><span class="tf">query</span><span class="tx">(</span>
+      <span class="ts2">'SELECT * FROM bookings WHERE id = $1'</span><span class="tx">,</span> <span class="tx">[</span><span class="tx">id</span><span class="tx">]</span>
+    <span class="tx">)</span><span class="tx">;</span>
+    <span class="tk">return</span> <span class="tx">rows</span><span class="tx">[</span><span class="tn">0</span><span class="tx">]</span><span class="tx">;</span>
+  <span class="tx">}</span><span class="tx">,</span>
+<span class="tx">}</span><span class="tx">;</span></code></pre>
+</div><div class="meme-row"><span class="meme"><span class="mava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#46b877"/><stop offset="100%" stop-color="#359a5e"/></linearGradient><radialGradient id="mCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#f0a890" stop-opacity="0.45"/><stop offset="100%" stop-color="#f0a890" stop-opacity="0"/></radialGradient></defs><path d="M66 56 Q56 18 90 42 Q80 54 72 58 Z" fill="url(#mFur__U)"/><path d="M134 56 Q144 18 110 42 Q120 54 128 58 Z" fill="url(#mFur__U)"/><path d="M70 50 Q64 30 82 44 Z" fill="#1f1f1f"/><path d="M130 50 Q136 30 118 44 Z" fill="#1f1f1f"/><circle cx="100" cy="100" r="50" fill="url(#mFur__U)"/><path d="M100 64 Q66 72 70 112 Q100 128 130 112 Q134 72 100 64 Z" fill="#f2f6f2"/><ellipse cx="100" cy="104" rx="34" ry="26" fill="#f7faf7"/><ellipse cx="74" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="126" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="100" cy="108" rx="6.5" ry="5" fill="#2a2a2a"/><path d="M100 113 L100 120" stroke="#2a2a2a" stroke-width="1.5" stroke-linecap="round"/><ellipse cx="82" cy="96" rx="12" ry="14" fill="#fff"/><ellipse cx="118" cy="96" rx="12" ry="14" fill="#fff"/><circle cx="83" cy="98" r="8.5" fill="#e8a020"/><circle cx="117" cy="98" r="8.5" fill="#e8a020"/><circle cx="83" cy="98" r="4.5" fill="#3a2400"/><circle cx="117" cy="98" r="4.5" fill="#3a2400"/><circle cx="86" cy="93" r="3.2" fill="#fff"/><circle cx="120" cy="93" r="3.2" fill="#fff"/><circle cx="79" cy="100" r="1.6" fill="#fff" opacity="0.8"/><circle cx="113" cy="100" r="1.6" fill="#fff" opacity="0.8"/><path d="M90 119 Q100 127 110 119" stroke="#1f5a32" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M97 124 Q100 129 103 124 Z" fill="#e87a8a"/></svg></span>Контроллер, который сам пишет SQL — это сантехник, который заодно проектирует дом</span></div><div class="say ren"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="rFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8893ab"/><stop offset="100%" stop-color="#6e7a94"/></linearGradient></defs><circle cx="70" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="130" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="70" cy="62" r="7.5" fill="#525c70"/><circle cx="130" cy="62" r="7.5" fill="#525c70"/><circle cx="100" cy="102" r="50" fill="url(#rFur__U)"/><ellipse cx="100" cy="116" rx="38" ry="30" fill="#e6eaf2"/><ellipse cx="100" cy="120" rx="30" ry="22" fill="#eef1f7"/><ellipse cx="100" cy="110" rx="11" ry="8" fill="#3e3e48"/><ellipse cx="96" cy="108" rx="3" ry="2" fill="#5e5e68" opacity="0.7"/><path d="M100 117 L100 126" stroke="#3e3e48" stroke-width="2" stroke-linecap="round"/><circle cx="80" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><circle cx="120" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><path d="M96 94 Q100 90 104 94" stroke="#4a5a6a" stroke-width="2.5" fill="none"/><circle cx="80" cy="95" r="8" fill="#3e3e48"/><circle cx="120" cy="95" r="8" fill="#3e3e48"/><circle cx="83" cy="92" r="3" fill="#fff"/><circle cx="123" cy="92" r="3" fill="#fff"/><circle cx="77" cy="97" r="1.5" fill="#fff" opacity="0.7"/><circle cx="117" cy="97" r="1.5" fill="#fff" opacity="0.7"/><path d="M72 88 Q78 84 84 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M112 88 Q118 84 124 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M78 116 Q60 114 52 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M78 122 Q60 124 54 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 116 Q140 114 148 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 122 Q140 124 146 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M90 124 Q100 131 110 124" stroke="#525c70" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg></div>
+    <div class="bubble"><div class="who">Рен</div><p>Заметь $1 в SQL вместо склейки строк. Это параметризованный запрос — защита от SQL-инъекций. Никогда не вставляй данные пользователя прямо в текст запроса, только через параметры. Это правило не обсуждается.</p></div></div></section><div class="pager"><button onclick="pager(-1)">← SOLID</button><button onclick="pager(1)" class="next">Дальше: Postgres и библиотеки →</button></div></div>
+<div class="page" id="page-db"><div class="phero"><div class="kicker">Раздел 05 · База данных</div><h1>Postgres, SQL и базовые библиотеки</h1><p>Под всем этим лежит база. Postgres — реляционная: данные в таблицах, связанных ключами. Разберём таблицы, базовый SQL с живой песочницей, как Node с базой говорит, и набор библиотек, без которых не обходится ни один проект.</p></div><div class="say kyle"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="kFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#b87a48"/><stop offset="100%" stop-color="#9a6238"/></linearGradient><radialGradient id="kCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#e8957a" stop-opacity="0.5"/><stop offset="100%" stop-color="#e8957a" stop-opacity="0"/></radialGradient></defs><ellipse cx="58" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="142" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="64" cy="90" rx="22" ry="26" fill="#6e4426"/><ellipse cx="136" cy="90" rx="22" ry="26" fill="#6e4426"/><path d="M68 58 Q60 22 88 44 Q80 56 72 60 Z" fill="url(#kFur__U)"/><path d="M132 58 Q140 22 112 44 Q120 56 128 60 Z" fill="url(#kFur__U)"/><path d="M71 54 Q67 36 82 48 Z" fill="#3a3230"/><path d="M129 54 Q133 36 118 48 Z" fill="#3a3230"/><circle cx="100" cy="100" r="50" fill="url(#kFur__U)"/><path d="M100 56 Q62 62 60 104 Q100 92 140 104 Q138 62 100 56 Z" fill="#e8cfa8"/><ellipse cx="100" cy="98" rx="40" ry="30" fill="#ecd6b4"/><ellipse cx="100" cy="116" rx="30" ry="24" fill="#f2e1c8"/><ellipse cx="72" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="128" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="100" cy="106" rx="9" ry="7" fill="#3a2a26"/><ellipse cx="97" cy="104" rx="3" ry="2" fill="#5a4a44" opacity="0.7"/><ellipse cx="80" cy="94" rx="13" ry="15" fill="#fff"/><ellipse cx="120" cy="94" rx="13" ry="15" fill="#fff"/><circle cx="81" cy="96" r="9.5" fill="#4a90d9"/><circle cx="119" cy="96" r="9.5" fill="#4a90d9"/><circle cx="81" cy="96" r="5" fill="#1a2f4a"/><circle cx="119" cy="96" r="5" fill="#1a2f4a"/><circle cx="84" cy="91" r="3.5" fill="#fff"/><circle cx="122" cy="91" r="3.5" fill="#fff"/><circle cx="77" cy="98" r="1.8" fill="#fff" opacity="0.8"/><circle cx="115" cy="98" r="1.8" fill="#fff" opacity="0.8"/><path d="M88 120 Q100 130 112 120" stroke="#7a5238" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M74 142 Q100 154 126 142" stroke="#9a4030" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="100" cy="151" r="7" fill="#f0c44e"/><circle cx="100" cy="153" r="1.8" fill="#9a7a1a"/></svg></div>
+    <div class="bubble"><div class="who">Кайл</div><p>Реляционная база — это таблицы, как листы в Excel, только строгие и связанные. У каждой строки есть id (первичный ключ). Ссылка из одной таблицы на другую — внешний ключ. Вот и вся базовая идея.</p></div></div><section><div class="sec-num">01 · ТАБЛИЦЫ</div><h2>Строки, столбцы, ключи</h2><p>Две таблицы из нашего букинга. У <code>users</code> свой id. В <code>bookings</code> поле <code>user_id</code> ссылается на <code>users.id</code> — это связь «чья бронь».</p><div style="margin:18px 0;"><div class="dbtable"><div class="tt">users</div><div class="col"><span>id</span><span class="ty">serial <span class="pk">PK</span></span></div><div class="col"><span>name</span><span class="ty">text</span></div><div class="col"><span>city</span><span class="ty">text</span></div></div><div class="dbtable"><div class="tt">bookings</div><div class="col"><span>id</span><span class="ty">serial <span class="pk">PK</span></span></div><div class="col"><span>court</span><span class="ty">int</span></div><div class="col"><span>user_id</span><span class="ty">int <span class="pk">FK→users</span></span></div></div></div><div class="box tip"><div class="bt">Зачем ключи</div><p>Первичный ключ (PK) — уникальный паспорт строки. Внешний ключ (FK) — связь между таблицами. По ним делают JOIN: «дай брони вместе с именами их владельцев». База сама следит, чтобы ссылки не висели в пустоту.</p></div></section><section><div class="sec-num">02 · SQL</div><h2>Язык запросов к базе</h2><p>SQL — это как ты разговариваешь с базой. Четыре главных глагола: читать, создавать, менять, удалять.</p><div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">queries.sql</span></div>
+  <pre><code><span class="to">-</span><span class="to">-</span> 
+<span class="ty">SELECT</span> <span class="tx">name</span><span class="tx">,</span> <span class="tx">city</span> <span class="ty">FROM</span> <span class="tx">users</span> <span class="ty">WHERE</span> <span class="tx">city</span> <span class="to">=</span> <span class="ts2">'Москва'</span><span class="tx">;</span>
+
+<span class="to">-</span><span class="to">-</span> 
+<span class="ty">INSERT</span> <span class="ty">INTO</span> <span class="tf">users</span> <span class="tx">(</span><span class="tx">name</span><span class="tx">,</span> <span class="tx">city</span><span class="tx">)</span> <span class="ty">VALUES</span> <span class="tx">(</span><span class="ts2">'Аня'</span><span class="tx">,</span> <span class="ts2">'Москва'</span><span class="tx">)</span><span class="tx">;</span>
+
+<span class="to">-</span><span class="to">-</span> 
+<span class="ty">UPDATE</span> <span class="tx">bookings</span> <span class="ty">SET</span> <span class="tx">court</span> <span class="to">=</span> <span class="tn">2</span> <span class="ty">WHERE</span> <span class="tx">id</span> <span class="to">=</span> <span class="tn">1</span><span class="tx">;</span>
+
+<span class="to">-</span><span class="to">-</span> 
+<span class="ty">DELETE</span> <span class="ty">FROM</span> <span class="tx">bookings</span> <span class="ty">WHERE</span> <span class="tx">id</span> <span class="to">=</span> <span class="tn">1</span><span class="tx">;</span>
+
+<span class="to">-</span><span class="to">-</span>   <span class="tx">(</span><span class="ty">JOIN</span><span class="tx">)</span><span class="to">:</span>     
+<span class="ty">SELECT</span> <span class="tx">b</span><span class="tx">.</span><span class="tx">court</span><span class="tx">,</span> <span class="tx">u</span><span class="tx">.</span><span class="tx">name</span>
+<span class="ty">FROM</span> <span class="tx">bookings</span> <span class="tx">b</span>
+<span class="ty">JOIN</span> <span class="tx">users</span> <span class="tx">u</span> <span class="ty">ON</span> <span class="tx">u</span><span class="tx">.</span><span class="tx">id</span> <span class="to">=</span> <span class="tx">b</span><span class="tx">.</span><span class="tx">user_id</span><span class="tx">;</span></code></pre>
+</div><div class="say maxi"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#46b877"/><stop offset="100%" stop-color="#359a5e"/></linearGradient><radialGradient id="mCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#f0a890" stop-opacity="0.45"/><stop offset="100%" stop-color="#f0a890" stop-opacity="0"/></radialGradient></defs><path d="M66 56 Q56 18 90 42 Q80 54 72 58 Z" fill="url(#mFur__U)"/><path d="M134 56 Q144 18 110 42 Q120 54 128 58 Z" fill="url(#mFur__U)"/><path d="M70 50 Q64 30 82 44 Z" fill="#1f1f1f"/><path d="M130 50 Q136 30 118 44 Z" fill="#1f1f1f"/><circle cx="100" cy="100" r="50" fill="url(#mFur__U)"/><path d="M100 64 Q66 72 70 112 Q100 128 130 112 Q134 72 100 64 Z" fill="#f2f6f2"/><ellipse cx="100" cy="104" rx="34" ry="26" fill="#f7faf7"/><ellipse cx="74" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="126" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="100" cy="108" rx="6.5" ry="5" fill="#2a2a2a"/><path d="M100 113 L100 120" stroke="#2a2a2a" stroke-width="1.5" stroke-linecap="round"/><ellipse cx="82" cy="96" rx="12" ry="14" fill="#fff"/><ellipse cx="118" cy="96" rx="12" ry="14" fill="#fff"/><circle cx="83" cy="98" r="8.5" fill="#e8a020"/><circle cx="117" cy="98" r="8.5" fill="#e8a020"/><circle cx="83" cy="98" r="4.5" fill="#3a2400"/><circle cx="117" cy="98" r="4.5" fill="#3a2400"/><circle cx="86" cy="93" r="3.2" fill="#fff"/><circle cx="120" cy="93" r="3.2" fill="#fff"/><circle cx="79" cy="100" r="1.6" fill="#fff" opacity="0.8"/><circle cx="113" cy="100" r="1.6" fill="#fff" opacity="0.8"/><path d="M90 119 Q100 127 110 119" stroke="#1f5a32" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M97 124 Q100 129 103 124 Z" fill="#e87a8a"/></svg></div>
+    <div class="bubble"><div class="who">Макси</div><p>Ниже — живая SQL-песочница на наших двух таблицах. Поддерживает SELECT с WHERE. Жми пресеты или правь запрос руками — увидишь реальную выборку.</p></div></div><div class="sqlbox"><div class="api-head" style="margin-bottom:10px;">live sql · таблицы: users, bookings</div><div class="ctrl-row"><button class="minibtn ghost" onclick="sqlPreset('SELECT * FROM users')">все users</button><button class="minibtn ghost" onclick="sqlPreset(&quot;SELECT name, city FROM users WHERE city = 'Москва'&quot;)">кто из Москвы</button><button class="minibtn ghost" onclick="sqlPreset('SELECT * FROM bookings WHERE court = 3')">брони корта 3</button><button class="minibtn ghost" onclick="sqlPreset('SELECT * FROM users WHERE id > 2')">id больше 2</button></div><textarea id="sql-input">SELECT * FROM users</textarea><div class="ctrl-row"><button class="minibtn" onclick="runSQL()">▶ Выполнить</button></div><div class="sql-out" id="sql-out"></div></div></section><section><div class="sec-num">03 · NODE ↔ POSTGRES</div><h2>Как код говорит с базой</h2><p>Два пути. Драйвер <code>pg</code> — ты пишешь SQL руками (максимум контроля). ORM вроде <code>Prisma</code>/<code>TypeORM</code> — пишешь на объектах, SQL генерится сам (быстрее, но магия).</p><div class="cmp"><div class="ch a">pg (сырой SQL)</div><div class="ch b">Prisma (ORM)</div><div class="cc">const { rows } = await pool.query(
+  'SELECT * FROM users WHERE id=$1',
+  [id]
+);
+const user = rows[0];</div><div class="cc">const user = await prisma.user
+  .findUnique({
+    where: { id }
+  });
+// SQL сгенерится сам</div></div><div class="box warn"><div class="bt">Параметры, не склейка</div><p>И там, и там данные идут параметрами ($1 или { id }), а не вклеиваются в строку запроса. Склеишь руками — получишь SQL-инъекцию, классическую дыру, через которую сливают базы.</p></div></section><section><div class="sec-num">04 · БАЗОВЫЕ БИБЛИОТЕКИ</div><h2>Джентльменский набор бэкендера</h2><p>Что почти всегда стоит в package.json реального Node-бэка:</p><div class="libgrid"><div class="libcard"><div class="ln">express</div><div class="ld">сам веб-сервер: роутинг, middleware, запросы.</div></div><div class="libcard"><div class="ln">pg / prisma</div><div class="ld">общение с Postgres: драйвер или ORM.</div></div><div class="libcard"><div class="ln">dotenv</div><div class="ld">секреты и конфиг из .env, а не в коде.</div></div><div class="libcard"><div class="ln">cors</div><div class="ld">разрешить фронту с другого домена стучаться к API.</div></div><div class="libcard"><div class="ln">zod</div><div class="ld">валидация входящих данных (та самая, с фронта).</div></div><div class="libcard"><div class="ln">bcrypt</div><div class="ld">хэширование паролей. Пароли в базе — только хэшами.</div></div><div class="libcard"><div class="ln">jsonwebtoken</div><div class="ld">JWT-токены для аутентификации.</div></div><div class="libcard"><div class="ln">pino / morgan</div><div class="ld">логирование запросов и событий.</div></div></div><div class="say kyle"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="kFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#b87a48"/><stop offset="100%" stop-color="#9a6238"/></linearGradient><radialGradient id="kCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#e8957a" stop-opacity="0.5"/><stop offset="100%" stop-color="#e8957a" stop-opacity="0"/></radialGradient></defs><ellipse cx="58" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="142" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="64" cy="90" rx="22" ry="26" fill="#6e4426"/><ellipse cx="136" cy="90" rx="22" ry="26" fill="#6e4426"/><path d="M68 58 Q60 22 88 44 Q80 56 72 60 Z" fill="url(#kFur__U)"/><path d="M132 58 Q140 22 112 44 Q120 56 128 60 Z" fill="url(#kFur__U)"/><path d="M71 54 Q67 36 82 48 Z" fill="#3a3230"/><path d="M129 54 Q133 36 118 48 Z" fill="#3a3230"/><circle cx="100" cy="100" r="50" fill="url(#kFur__U)"/><path d="M100 56 Q62 62 60 104 Q100 92 140 104 Q138 62 100 56 Z" fill="#e8cfa8"/><ellipse cx="100" cy="98" rx="40" ry="30" fill="#ecd6b4"/><ellipse cx="100" cy="116" rx="30" ry="24" fill="#f2e1c8"/><ellipse cx="72" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="128" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="100" cy="106" rx="9" ry="7" fill="#3a2a26"/><ellipse cx="97" cy="104" rx="3" ry="2" fill="#5a4a44" opacity="0.7"/><ellipse cx="80" cy="94" rx="13" ry="15" fill="#fff"/><ellipse cx="120" cy="94" rx="13" ry="15" fill="#fff"/><circle cx="81" cy="96" r="9.5" fill="#4a90d9"/><circle cx="119" cy="96" r="9.5" fill="#4a90d9"/><circle cx="81" cy="96" r="5" fill="#1a2f4a"/><circle cx="119" cy="96" r="5" fill="#1a2f4a"/><circle cx="84" cy="91" r="3.5" fill="#fff"/><circle cx="122" cy="91" r="3.5" fill="#fff"/><circle cx="77" cy="98" r="1.8" fill="#fff" opacity="0.8"/><circle cx="115" cy="98" r="1.8" fill="#fff" opacity="0.8"/><path d="M88 120 Q100 130 112 120" stroke="#7a5238" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M74 142 Q100 154 126 142" stroke="#9a4030" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="100" cy="151" r="7" fill="#f0c44e"/><circle cx="100" cy="153" r="1.8" fill="#9a7a1a"/></svg></div>
+    <div class="bubble"><div class="who">Кайл</div><p>И вот вся картина, Яндексоиды, от края до края: React на фронте жмёт кнопку → летит HTTP-запрос → Express ловит его роутером → middleware валидирует через zod → контроллер зовёт сервис → сервис зовёт репозиторий → репозиторий делает SQL к Postgres → строки едут обратно вверх → res.json() → фронт рисует. Каждый кусок на своём слое, каждый слой можно заменить, не трогая соседей. Это и есть бэкенд.</p></div></div><div class="qt"><div class="qt-text">Сначала заставь работать, потом сделай правильно, потом сделай быстро.</div><div class="qt-author">Кент Бек</div></div></section><div class="pager"><button onclick="pager(-1)">← Архитектура</button></div><footer><div class="big">Готово 🔴</div><p>Express · роутинг · SOLID · слои · Postgres &amp; SQL<br>Кайл, Макси и Рен прощаются с дорогими студентами-Яндексоидами.</p></footer></div>
+</div></div>
+<script>
+const pageOrder = ['intro','routing','solid','layers','db'];
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelector('.tab[data-page="'+id+'"]').classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>showPage(t.dataset.page)));
+function pager(dir){
+  const cur=document.querySelector('.page.active').id.replace('page-','');
+  const i=pageOrder.indexOf(cur), ni=i+dir;
+  if(ni>=0&&ni<pageOrder.length) showPage(pageOrder[ni]);
+}
+window.addEventListener('scroll',()=>{const h=document.documentElement;
+  document.getElementById('prog').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';});
+
+// ===== ASYNC JS RUNNER =====
+function fmt(v){
+  if(typeof v==='string') return v;
+  if(v===undefined) return 'undefined';
+  if(v===null) return 'null';
+  try{return JSON.stringify(v,null,2);}catch(e){return String(v);}
+}
+async function runJS(btn){
+  const block=btn.closest('.code');
+  const inner=block.querySelector('.console-inner');
+  const consoleEl=block.querySelector('.console');
+  const src=decodeURIComponent(btn.dataset.src);
+  const logs=[];
+  const fakeConsole={log:(...a)=>logs.push({t:'log',m:a.map(fmt).join(' ')}),
+    error:(...a)=>logs.push({t:'err',m:a.map(fmt).join(' ')}),warn:(...a)=>logs.push({t:'log',m:a.map(fmt).join(' ')})};
+  inner.querySelectorAll('.cline').forEach(n=>n.remove());
+  try{const fn=new Function('console','return (async()=>{\n'+src+'\n})();');await fn(fakeConsole);}
+  catch(e){logs.push({t:'err',m:e.name+': '+e.message});}
+  if(!logs.length){const d=document.createElement('div');d.className='cline dim';d.textContent='(нет вывода)';inner.appendChild(d);}
+  else logs.forEach(l=>{const d=document.createElement('div');d.className='cline'+(l.t==='err'?' err':'');d.textContent=l.m;inner.appendChild(d);});
+  consoleEl.classList.add('show');
+  btn.querySelector('.rlabel').textContent='Запущено';
+  setTimeout(()=>{btn.querySelector('.rlabel').textContent='Запустить';},1200);
+}
+
+// ===== NETWORK FLIGHT (front <-> express) =====
+function flyPacket(){
+  const wire=document.getElementById('net-wire'),log=document.getElementById('net-log');
+  if(!wire)return;
+  wire.querySelectorAll('.net-packet').forEach(p=>p.remove());
+  const req=document.createElement('div');req.className='net-packet req go-req';req.textContent='?';wire.appendChild(req);
+  log.textContent='→ GET /api/bookings  (фронт шлёт HTTP-запрос)';
+  setTimeout(()=>{req.remove();const res=document.createElement('div');res.className='net-packet res go-res';res.textContent='✓';wire.appendChild(res);
+    log.textContent='← 200 OK  [{...}]  (Express вернул JSON)';setTimeout(()=>res.remove(),1100);},1050);
+}
+
+// ===== SOLID EXPLORER =====
+const SOLID={
+ S:['Single Responsibility','Один модуль — одна причина измениться','Контроллер принимает запрос. Сервис считает бизнес-логику. Репозиторий лезет в БД. Если контроллер сам пишет SQL — он отвечает за два, и сломается от любого из двух изменений.'],
+ O:['Open/Closed','Открыт для расширения, закрыт для изменения','Новый способ оплаты добавляешь новым классом-стратегией, а не дописываешь if в старый метод оплаты. Старый код не трогаешь — значит не ломаешь.'],
+ L:['Liskov Substitution','Подтип заменяет базовый тип без сюрпризов','Если функция ждёт Repository, любой его наследник (PostgresRepo, InMemoryRepo) должен работать на его месте, не ломая ожиданий вызывающего.'],
+ I:['Interface Segregation','Тонкие интерфейсы вместо одного жирного','Не заставляй класс реализовывать методы, которые ему не нужны. Лучше пять маленьких интерфейсов, чем один на двадцать методов.'],
+ D:['Dependency Inversion','Зависим от абстракций, не от конкретики','Сервис зависит от интерфейса BookingRepo, а не от конкретного Postgres. Подменил реализацию (на мок в тестах) — сервис не заметил. Это и склеивает слои.'],
+};
+function pickSolid(k){
+  document.querySelectorAll('.stx-chip').forEach(c=>c.classList.toggle('active',c.dataset.code===k));
+  const [t,sub,desc]=SOLID[k];
+  document.getElementById('stx-detail').innerHTML=
+    '<div class="stx-code" style="color:var(--acc2);font-size:24px">'+k+' · '+t+'</div><div class="stx-name">'+sub+'</div><div class="stx-desc">'+desc+'</div>';
+}
+
+// ===== LAYERED PIPELINE =====
+const pipeSteps=['ps-ctrl','ps-svc','ps-repo','ps-db','ps-resp'];
+const pipeLog=['Controller: принял GET /bookings, достал параметры',
+  'Service: применил бизнес-правила (фильтры, права)',
+  'Repository: сформировал SQL-запрос к данным',
+  'Postgres: вернул строки из таблицы',
+  'Controller: отдал res.status(200).json(data) фронту'];
+async function runPipe(){
+  pipeSteps.forEach(id=>document.getElementById(id).classList.remove('lit'));
+  const logEl=document.getElementById('pipe-log');
+  for(let i=0;i<pipeSteps.length;i++){
+    document.getElementById(pipeSteps[i]).classList.add('lit');
+    logEl.textContent='› '+pipeLog[i];
+    await new Promise(r=>setTimeout(r,780));
+  }
+  logEl.textContent='✓ запрос прошёл все слои — каждый сделал ровно свою работу и ничего чужого';
+}
+
+// ===== EXPRESS API PLAYGROUND (mock) =====
+const db={bookings:[
+  {id:1,court:3,time:'09:00',user:'Аня'},
+  {id:2,court:1,time:'12:00',user:'Макс'},
+], nextId:3};
+function matchRoute(method,path){
+  const routes=[
+   {m:'GET',p:'/bookings',h:()=>({status:200,body:db.bookings})},
+   {m:'GET',p:'/bookings/:id',h:(pr)=>{const b=db.bookings.find(x=>String(x.id)===pr.id);return b?{status:200,body:b}:{status:404,body:{error:'booking '+pr.id+' not found'}};}},
+   {m:'POST',p:'/bookings',h:(pr,body)=>{const nb={id:db.nextId++,...body};db.bookings.push(nb);return {status:201,body:nb};}},
+   {m:'DELETE',p:'/bookings/:id',h:(pr)=>{const i=db.bookings.findIndex(x=>String(x.id)===pr.id);if(i<0)return{status:404,body:{error:'booking '+pr.id+' not found'}};const rm=db.bookings.splice(i,1)[0];return{status:200,body:{deleted:rm.id}};}},
+   {m:'GET',p:'/health',h:()=>({status:200,body:{status:'ok'}})},
+  ];
+  const segs=path.split('/').filter(Boolean);
+  for(const r of routes){
+    if(r.m!==method)continue;
+    const rp=r.p.split('/').filter(Boolean);
+    if(rp.length!==segs.length)continue;
+    const params={};let ok=true;
+    for(let i=0;i<rp.length;i++){
+      if(rp[i].startsWith(':'))params[rp[i].slice(1)]=segs[i];
+      else if(rp[i]!==segs[i]){ok=false;break;}
+    }
+    if(ok)return {route:r,params};
+  }
+  return null;
+}
+function colorJSON(obj){
+  let s=JSON.stringify(obj,null,2).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  s=s.replace(/"([^"]+)":/g,'<span class="k">"$1"</span>:');
+  s=s.replace(/: "([^"]*)"/g,': <span class="v">"$1"</span>');
+  s=s.replace(/: (\d+\.?\d*)/g,': <span class="num">$1</span>');
+  return s;
+}
+let postCount=0;
+async function apiSend(method,path){
+  const out=document.getElementById('api-out');
+  let body=null;
+  if(method==='POST'){ postCount++; body={court:2,time:'1'+(4+postCount)+':30',user:'Гость'+postCount}; }
+  const m=matchRoute(method,path);
+  const matched=m?(method+' '+m.route.p):null;
+  out.innerHTML='<div class="api-req">'+method+' '+path+(body?'   body: '+JSON.stringify(body):'')+'</div>'+
+    '<div class="api-trace" id="api-trace"></div><div class="api-resp" id="api-resp"></div>';
+  const trace=document.getElementById('api-trace');
+  const steps=[];
+  if(m){
+    steps.push('express.json() — распарсил тело');
+    steps.push('router → совпал маршрут <span class="hit">'+matched+'</span>');
+    steps.push('controller → service → repository');
+    steps.push('<span class="ok">обработчик вернул ответ</span>');
+  }else{
+    steps.push('router → <span style="color:#f0a4b0">ни один маршрут не совпал</span>');
+    steps.push('fallback 404 handler');
+  }
+  let r=m?m.route.h(m.params,body):{status:404,body:{error:'Cannot '+method+' '+path}};
+  for(let i=0;i<steps.length;i++){
+    const d=document.createElement('div');d.className='step';d.style.animationDelay=(i*0.12)+'s';d.innerHTML='↳ '+steps[i];trace.appendChild(d);
+  }
+  setTimeout(()=>{
+    const sc=r.status<400?'s2':'s4';
+    document.getElementById('api-resp').innerHTML='<span class="api-status '+sc+'">'+r.status+'</span>\n'+colorJSON(r.body);
+  }, steps.length*120+150);
+}
+function apiReset(){db.bookings=[{id:1,court:3,time:'09:00',user:'Аня'},{id:2,court:1,time:'12:00',user:'Макс'}];db.nextId=3;postCount=0;
+  document.getElementById('api-out').innerHTML='<div class="api-req" style="border:none">база сброшена · 2 брони</div>';}
+
+// ===== SQL PLAYGROUND =====
+const sqlDB={
+ users:[{id:1,name:'Аня',city:'Москва'},{id:2,name:'Макс',city:'Казань'},{id:3,name:'Лена',city:'Москва'},{id:4,name:'Игорь',city:'Сочи'}],
+ bookings:[{id:1,court:3,user_id:1},{id:2,court:1,user_id:2},{id:3,court:3,user_id:3}],
+};
+function runSQL(){
+  const q=document.getElementById('sql-input').value.trim().replace(/;$/,'');
+  const out=document.getElementById('sql-out');
+  const m=q.match(/^select\s+(.+?)\s+from\s+(\w+)(?:\s+where\s+(\w+)\s*(=|!=|>|<)\s*('?[^']*'?))?$/i);
+  if(!m){out.innerHTML='<div class="sql-err">Не разобрал запрос. Поддерживается:\nSELECT * FROM table [WHERE col =|!=|>|< value]</div>';return;}
+  const [,cols,table,wcol,wop,wvalRaw]=m;
+  const data=sqlDB[table.toLowerCase()];
+  if(!data){out.innerHTML='<div class="sql-err">Нет таблицы "'+table+'". Есть: users, bookings.</div>';return;}
+  let rows=data;
+  if(wcol){
+    let wval=wvalRaw;
+    if(/^'.*'$/.test(wval))wval=wval.slice(1,-1); else if(!isNaN(Number(wval)))wval=Number(wval);
+    rows=data.filter(r=>{const v=r[wcol.toLowerCase()];
+      switch(wop){case'=':return v==wval;case'!=':return v!=wval;case'>':return v>wval;case'<':return v<wval;}return false;});
+  }
+  let keys = cols.trim()==='*'?Object.keys(data[0]):cols.split(',').map(c=>c.trim().toLowerCase());
+  const head='<tr>'+keys.map(k=>'<th>'+k+'</th>').join('')+'</tr>';
+  const bodyRows=rows.map(r=>'<tr>'+keys.map(k=>'<td>'+(r[k]!==undefined?r[k]:'NULL')+'</td>').join('')+'</tr>').join('');
+  out.innerHTML='<table class="sqltable">'+head+bodyRows+'</table><div class="sql-meta">'+rows.length+' '+(rows.length===1?'строка':'строк')+' · таблица '+table+'</div>';
+}
+function sqlPreset(q){document.getElementById('sql-input').value=q;runSQL();}
+
+window.addEventListener('DOMContentLoaded',()=>{
+  showPage('intro');
+  if(document.getElementById('stx-detail')) pickSolid('S');
+  if(document.getElementById('api-out')) apiSend('GET','/bookings');
+  if(document.getElementById('sql-input')) runSQL();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JS → React · Лекция для Яндексоидов</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root{
+    --bg:#13182a;
+    --bg2:#1a2138;
+    --card:#1e2740;
+    --card2:#252f4d;
+    --ink:#e8ecf5;
+    --muted:#8c97b8;
+    --kyle:#b87a45;
+    --maxi:#3fb06f;
+    --ren:#8a96b0;
+    --yellow:#f7df1e;
+    --blue:#61afef;
+    --react:#61dafb;
+    --purple:#c678dd;
+    --green:#98c379;
+    --orange:#e5a35a;
+    --red:#e06c75;
+    --line:#2e3a5c;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;}
+
+  body{
+    font-family:'Nunito',sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    line-height:1.7;
+    overflow-x:hidden;
+  }
+
+  /* dotted texture bg */
+  body::before{
+    content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(circle, rgba(97,175,239,0.06) 1px, transparent 1px);
+    background-size:32px 32px;
+  }
+
+  .wrap{max-width:920px;margin:0 auto;padding:0 20px;position:relative;z-index:1;}
+
+  /* ============ HERO ============ */
+  .hero{
+    text-align:center;padding:70px 20px 50px;position:relative;
+  }
+  .hero .eyebrow{
+    font-family:'JetBrains Mono',monospace;color:var(--muted);
+    font-size:13px;letter-spacing:3px;text-transform:uppercase;margin-bottom:18px;
+  }
+  .hero h1{
+    font-family:'Unbounded',sans-serif;font-weight:800;
+    font-size:clamp(34px,7vw,68px);line-height:1.05;margin-bottom:8px;
+  }
+  .hero h1 .js{color:var(--yellow);}
+  .hero h1 .arrow{color:var(--muted);display:inline-block;margin:0 6px;}
+  .hero h1 .react{color:var(--react);}
+  .hero .sub{color:var(--muted);font-size:17px;max-width:560px;margin:18px auto 0;}
+  .hero .chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:26px;}
+  .chip{
+    background:var(--card);border:1px solid var(--line);border-radius:100px;
+    padding:7px 16px;font-size:13px;font-family:'JetBrains Mono',monospace;color:var(--blue);
+  }
+
+  /* ============ MASCOT INTRO CARDS ============ */
+  .cast{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:44px 0;}
+  @media(max-width:680px){.cast{grid-template-columns:1fr;}}
+  .cast-card{
+    background:var(--card);border:1px solid var(--line);border-radius:20px;
+    padding:20px;text-align:center;transition:transform .2s,border-color .2s;
+  }
+  .cast-card:hover{transform:translateY(-4px);}
+  .cast-card.k:hover{border-color:var(--kyle);}
+  .cast-card.m:hover{border-color:var(--maxi);}
+  .cast-card.r:hover{border-color:var(--ren);}
+  .cast-card svg{width:120px;height:140px;}
+  .cast-card .nm{font-family:'Unbounded',sans-serif;font-weight:600;font-size:19px;margin-top:6px;}
+  .cast-card .rl{font-size:13px;color:var(--muted);margin-top:4px;}
+  .cast-card.k .nm{color:var(--kyle);}
+  .cast-card.m .nm{color:var(--maxi);}
+  .cast-card.r .nm{color:var(--ren);}
+
+  /* ============ SECTIONS ============ */
+  section{padding:36px 0;border-top:1px solid var(--line);}
+  .sec-num{
+    font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--blue);
+    letter-spacing:2px;margin-bottom:8px;
+  }
+  h2{
+    font-family:'Unbounded',sans-serif;font-weight:700;
+    font-size:clamp(26px,4.5vw,40px);margin-bottom:10px;line-height:1.1;
+  }
+  h3{
+    font-family:'Unbounded',sans-serif;font-weight:600;
+    font-size:21px;margin:30px 0 12px;color:var(--ink);
+  }
+  p{margin-bottom:14px;color:#cdd5e8;}
+  p strong{color:#fff;}
+  .lead{font-size:18px;color:#d8dff0;}
+
+  /* inline code */
+  code:not(pre code){
+    font-family:'JetBrains Mono',monospace;font-size:.88em;
+    background:#2a3354;color:var(--orange);padding:2px 7px;border-radius:6px;
+  }
+
+  /* ============ SPEECH BUBBLES ============ */
+  .say{
+    display:flex;gap:14px;align-items:flex-start;margin:22px 0;
+  }
+  .say .ava{flex-shrink:0;width:62px;height:62px;border-radius:16px;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .say .ava svg{width:58px;height:58px;}
+  .say.kyle .ava{background:rgba(184,122,69,.16);border:1.5px solid rgba(184,122,69,.4);}
+  .say.maxi .ava{background:rgba(63,176,111,.16);border:1.5px solid rgba(63,176,111,.4);}
+  .say.ren  .ava{background:rgba(138,150,176,.16);border:1.5px solid rgba(138,150,176,.4);}
+  .bubble{
+    background:var(--card);border:1px solid var(--line);border-radius:6px 16px 16px 16px;
+    padding:14px 18px;position:relative;flex:1;
+  }
+  .bubble .who{font-family:'Unbounded',sans-serif;font-weight:600;font-size:13px;margin-bottom:4px;}
+  .say.kyle .who{color:var(--kyle);}
+  .say.maxi .who{color:var(--maxi);}
+  .say.ren  .who{color:var(--ren);}
+  .bubble p{margin:0;font-size:15.5px;color:#d2dae e;}
+  .bubble p{color:#d2daee;}
+
+  /* ============ CODE BLOCKS ============ */
+  .code{
+    background:#1b2138;border:1px solid var(--line);border-radius:14px;
+    margin:20px 0;overflow:hidden;
+  }
+  .code-top{
+    display:flex;align-items:center;gap:7px;padding:11px 16px;
+    background:#161b30;border-bottom:1px solid var(--line);
+  }
+  .code-top .dot{width:11px;height:11px;border-radius:50%;}
+  .dot.r{background:#ff5f57;}.dot.y{background:#febc2e;}.dot.g{background:#28c840;}
+  .code-top .fn{margin-left:8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);}
+  pre{margin:0;padding:18px 20px;overflow-x:auto;}
+  pre code{font-family:'JetBrains Mono',monospace;font-size:13.5px;line-height:1.65;}
+  .tk{color:var(--purple);}      /* keyword */
+  .ts{color:var(--green);}       /* string */
+  .tn{color:var(--orange);}      /* number */
+  .tc{color:#5c6680;font-style:italic;} /* comment */
+  .tf{color:var(--blue);}        /* function */
+  .tp{color:var(--red);}         /* param/special */
+  .to{color:#56b6c2;}            /* operator */
+  .ty{color:#e5c07b;}            /* type */
+  .tx{color:#abb2bf;}            /* plain */
+
+  /* ============ CALLOUTS ============ */
+  .box{border-radius:14px;padding:16px 20px;margin:20px 0;border-left:4px solid;}
+  .box .bt{font-family:'Unbounded',sans-serif;font-weight:600;font-size:14px;margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+  .box p{margin:0;font-size:15px;}
+  .box.tip{background:rgba(247,223,30,.07);border-color:var(--yellow);}
+  .box.tip .bt{color:var(--yellow);}
+  .box.warn{background:rgba(224,108,117,.08);border-color:var(--red);}
+  .box.warn .bt{color:var(--red);}
+  .box.info{background:rgba(97,175,239,.07);border-color:var(--blue);}
+  .box.info .bt{color:var(--blue);}
+
+  /* ============ MEME REACTION ============ */
+  .meme{
+    display:inline-flex;align-items:center;gap:10px;
+    background:var(--card2);border:1px dashed var(--line);border-radius:100px;
+    padding:6px 16px 6px 8px;margin:6px 4px;font-family:'JetBrains Mono',monospace;
+    font-size:13px;color:var(--muted);
+  }
+  .meme .mava{width:30px;height:30px;border-radius:50%;overflow:hidden;flex-shrink:0;}
+  .meme .mava svg{width:30px;height:30px;}
+  .meme-row{text-align:center;margin:24px 0;}
+
+  /* ============ VIZ / DIAGRAMS ============ */
+  .viz{
+    background:linear-gradient(160deg,#1b2342,#161c33);
+    border:1px solid var(--line);border-radius:18px;padding:26px;margin:24px 0;
+  }
+  .viz-title{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);
+    letter-spacing:2px;text-transform:uppercase;text-align:center;margin-bottom:20px;}
+
+  /* array boxes */
+  .arr{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;}
+  .cell{position:relative;min-width:64px;text-align:center;}
+  .cell .v{
+    background:var(--card2);border:2px solid var(--blue);border-radius:10px;
+    padding:14px 10px;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--ink);font-size:15px;
+  }
+  .cell .i{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);margin-top:6px;}
+
+  /* pipeline (filter/map flow) */
+  .flow{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;}
+  .flow .stage{text-align:center;}
+  .flow .pill{
+    background:var(--card2);border-radius:12px;padding:12px 14px;
+    font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;
+  }
+  .flow .lbl{font-size:11px;color:var(--muted);margin-top:6px;font-family:'JetBrains Mono',monospace;}
+  .flow .op{
+    font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--maxi);
+    background:rgba(63,176,111,.12);border:1px solid rgba(63,176,111,.3);
+    border-radius:100px;padding:6px 12px;white-space:nowrap;
+  }
+  .flow .arr-ico{color:var(--muted);font-size:22px;}
+
+  /* component tree */
+  .tree{display:flex;flex-direction:column;align-items:center;gap:0;}
+  .node{
+    background:var(--card2);border:2px solid var(--react);border-radius:10px;
+    padding:9px 16px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--react);
+    position:relative;
+  }
+  .node.child{border-color:var(--green);color:var(--green);}
+  .branch{display:flex;gap:30px;margin-top:0;}
+  .vline{width:2px;height:24px;background:var(--line);}
+  .hbar{display:flex;align-items:center;gap:0;}
+
+  /* props flow arrow */
+  .props-demo{display:flex;flex-direction:column;gap:0;align-items:center;}
+
+  /* footer */
+  footer{text-align:center;padding:50px 20px 70px;border-top:1px solid var(--line);margin-top:20px;}
+  footer .big{font-family:'Unbounded',sans-serif;font-weight:700;font-size:24px;color:var(--react);margin-bottom:10px;}
+  footer p{color:var(--muted);}
+
+  /* progress bar */
+  .progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--yellow),var(--react));z-index:100;width:0%;transition:width .1s;}
+
+  /* reveal */
+  .reveal{opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s;}
+  .reveal.in{opacity:1;transform:none;}
+
+  /* try-it interactive */
+  .tryit{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin:22px 0;}
+  .tryit h4{font-family:'Unbounded',sans-serif;font-size:15px;margin-bottom:14px;display:flex;align-items:center;gap:8px;color:var(--maxi);}
+  .tryit .controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  .tryit button{
+    font-family:'JetBrains Mono',monospace;font-size:13px;cursor:pointer;
+    background:var(--card2);color:var(--ink);border:1px solid var(--line);
+    border-radius:10px;padding:9px 14px;transition:all .15s;
+  }
+  .tryit button:hover{border-color:var(--maxi);color:var(--maxi);}
+  .tryit button.active{background:var(--maxi);color:#10261a;border-color:var(--maxi);font-weight:700;}
+  .tryit .out{
+    background:#11162a;border-radius:10px;padding:16px;font-family:'JetBrains Mono',monospace;
+    font-size:13px;min-height:54px;display:flex;align-items:center;flex-wrap:wrap;gap:6px;
+  }
+  .tag{background:var(--card2);border:1px solid var(--blue);border-radius:8px;padding:5px 10px;font-size:12px;animation:pop .3s;}
+  @keyframes pop{from{transform:scale(.6);opacity:0;}to{transform:scale(1);opacity:1;}}
+
+  /* todo interactive list */
+  .demo-list{list-style:none;display:flex;flex-direction:column;gap:8px;}
+  .demo-list li{
+    background:var(--card2);border:1px solid var(--line);border-radius:10px;
+    padding:11px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px;
+    transition:all .15s;
+  }
+  .demo-list li:hover{border-color:var(--react);}
+  .demo-list li.done{opacity:.5;text-decoration:line-through;}
+  .demo-list li .bx{width:18px;height:18px;border-radius:5px;border:2px solid var(--react);flex-shrink:0;}
+  .demo-list li.done .bx{background:var(--react);}
+</style>
+</head>
+<body>
+<div class="progress" id="prog"></div>
+
+<div class="wrap">
+
+  <!-- ============ HERO ============ -->
+  <div class="hero reveal">
+    <div class="eyebrow">Ознакомительная лекция</div>
+    <h1><span class="js">JavaScript</span><span class="arrow">→</span><span class="react">React</span></h1>
+    <p class="sub">Как работают функции, массивы, <code>.map()</code> — и как из этого собираются настоящие интерфейсы на компонентах.</p>
+    <div class="chips">
+      <span class="chip">функции</span>
+      <span class="chip">массивы</span>
+      <span class="chip">filter()</span>
+      <span class="chip">map()</span>
+      <span class="chip">компоненты</span>
+      <span class="chip">props</span>
+      <span class="chip">состояние</span>
+    </div>
+  </div>
+
+  <!-- placeholder: cast + sections injected below -->
+  <div id="content">
+<!-- ============ CAST ============ -->
+<div class="cast">
+  <div class="cast-card k reveal">
+    <svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg"><path d="M70 110 Q44 100 50 64 Q60 88 80 88 Q66 100 72 116 Z" fill="#5e3920"/><path d="M170 110 Q196 100 190 64 Q180 88 160 88 Q174 100 168 116 Z" fill="#5e3920"/><path d="M82 56 L70 18 L104 44 Z" fill="#a86a3d"/><path d="M158 56 L170 18 L136 44 Z" fill="#a86a3d"/><path d="M84 52 L78 30 L98 46 Z" fill="#2a2a2a"/><path d="M156 52 L162 30 L142 46 Z" fill="#2a2a2a"/><ellipse cx="120" cy="100" rx="52" ry="48" fill="#a86a3d"/><path d="M120 56 Q86 60 78 96 Q120 86 162 96 Q154 60 120 56 Z" fill="#d9b88a"/><path d="M120 60 Q98 64 90 92 Q120 84 150 92 Q142 64 120 60 Z" fill="#e8cfa8"/><ellipse cx="120" cy="118" rx="26" ry="20" fill="#e8cfa8"/><ellipse cx="120" cy="110" rx="8" ry="6" fill="#2a2020"/><ellipse cx="103" cy="96" rx="9" ry="11" fill="#fff"/><ellipse cx="137" cy="96" rx="9" ry="11" fill="#fff"/><circle cx="104" cy="97" r="6" fill="#4a90d9"/><circle cx="136" cy="97" r="6" fill="#4a90d9"/><circle cx="105" cy="95" r="2.5" fill="#1a3a5c"/><circle cx="137" cy="95" r="2.5" fill="#1a3a5c"/><circle cx="106" cy="93" r="1.5" fill="#fff"/><circle cx="138" cy="93" r="1.5" fill="#fff"/><path d="M108 122 Q120 132 132 122" stroke="#5e3920" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M92 144 Q120 156 148 144" stroke="#8a3a2a" stroke-width="7" fill="none"/><circle cx="120" cy="154" r="7" fill="#e8b84a"/><circle cx="120" cy="154" r="2" fill="#8a6a1a"/></svg>
+    <div class="nm">Кайл</div>
+    <div class="rl">волкособ · ведёт лекцию</div>
+  </div>
+  <div class="cast-card m reveal">
+    <svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg"><path d="M84 58 L72 12 L108 46 Z" fill="#3fa86a"/><path d="M156 58 L168 12 L132 46 Z" fill="#3fa86a"/><path d="M86 52 L80 26 L100 46 Z" fill="#1a1a1a"/><path d="M154 52 L160 26 L140 46 Z" fill="#1a1a1a"/><ellipse cx="120" cy="102" rx="50" ry="46" fill="#3fa86a"/><path d="M120 72 Q96 80 100 112 Q120 128 140 112 Q144 80 120 72 Z" fill="#f0f4f0"/><path d="M112 110 Q120 122 128 110 Q124 118 120 118 Q116 118 112 110 Z" fill="#f0f4f0"/><ellipse cx="120" cy="112" rx="6" ry="4.5" fill="#1a1a1a"/><ellipse cx="106" cy="98" rx="8" ry="10" fill="#fff"/><ellipse cx="134" cy="98" rx="8" ry="10" fill="#fff"/><circle cx="107" cy="99" r="5.5" fill="#e8a020"/><circle cx="133" cy="99" r="5.5" fill="#e8a020"/><circle cx="107" cy="98" r="2.5" fill="#3a2a00"/><circle cx="133" cy="98" r="2.5" fill="#3a2a00"/><circle cx="108" cy="96" r="1.5" fill="#fff"/><circle cx="134" cy="96" r="1.5" fill="#fff"/><path d="M111 120 Q120 127 129 120" stroke="#1a4a2a" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+    <div class="nm">Макси</div>
+    <div class="rl">лис · разбирает механики</div>
+  </div>
+  <div class="cast-card r reveal">
+    <svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg"><circle cx="84" cy="62" r="16" fill="#7a8499"/><circle cx="156" cy="62" r="16" fill="#7a8499"/><circle cx="84" cy="62" r="8" fill="#4a5468"/><circle cx="156" cy="62" r="8" fill="#4a5468"/><ellipse cx="120" cy="104" rx="52" ry="48" fill="#7a8499"/><ellipse cx="120" cy="120" rx="34" ry="26" fill="#e0e4ec"/><ellipse cx="120" cy="112" rx="11" ry="8" fill="#3a3a44"/><path d="M120 120 L120 130" stroke="#3a3a44" stroke-width="2"/><circle cx="103" cy="96" r="15" fill="#bce0f0" stroke="#3a4a5a" stroke-width="3" opacity="0.9"/><circle cx="137" cy="96" r="15" fill="#bce0f0" stroke="#3a4a5a" stroke-width="3" opacity="0.9"/><path d="M118 96 L122 96" stroke="#3a4a5a" stroke-width="3"/><circle cx="103" cy="97" r="6" fill="#3a3a44"/><circle cx="137" cy="97" r="6" fill="#3a3a44"/><circle cx="105" cy="95" r="2" fill="#fff"/><circle cx="139" cy="95" r="2" fill="#fff"/><path d="M96 118 Q78 116 70 120" stroke="#9aa4b8" stroke-width="1.5" fill="none"/><path d="M96 124 Q78 126 72 130" stroke="#9aa4b8" stroke-width="1.5" fill="none"/><path d="M144 118 Q162 116 170 120" stroke="#9aa4b8" stroke-width="1.5" fill="none"/><path d="M144 124 Q162 126 168 130" stroke="#9aa4b8" stroke-width="1.5" fill="none"/><path d="M110 128 Q120 134 130 128" stroke="#4a5468" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+    <div class="nm">Рен</div>
+    <div class="rl">выдра · инженерная глубина</div>
+  </div>
+</div>
+
+<div class="say kyle reveal">
+  <div class="ava"><svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg"><path d="M70 110 Q44 100 50 64 Q60 88 80 88 Q66 100 72 116 Z" fill="#5e3920"/><path d="M170 110 Q196 100 190 64 Q180 88 160 88 Q174 100 168 116 Z" fill="#5e3920"/><path d="M82 56 L70 18 L104 44 Z" fill="#a86a3d"/><path d="M158 56 L170 18 L136 44 Z" fill="#a86a3d"/><path d="M84 52 L78 30 L98 46 Z" fill="#2a2a2a"/><path d="M156 52 L162 30 L142 46 Z" fill="#2a2a2a"/><ellipse cx="120" cy="100" rx="52" ry="48" fill="#a86a3d"/><path d="M120 56 Q86 60 78 96 Q120 86 162 96 Q154 60 120 56 Z" fill="#d9b88a"/><path d="M120 60 Q98 64 90 92 Q120 84 150 92 Q142 64 120 60 Z" fill="#e8cfa8"/><ellipse cx="120" cy="118" rx="26" ry="20" fill="#e8cfa8"/><ellipse cx="120" cy="110" rx="8" ry="6" fill="#2a2020"/><ellipse cx="103" cy="96" rx="9" ry="11" fill="#fff"/><ellipse cx="137" cy="96" rx="9" ry="11" fill="#fff"/><circle cx="104" cy="97" r="6" fill="#4a90d9"/><circle cx="136" cy="97" r="6" fill="#4a90d9"/><circle cx="105" cy="95" r="2.5" fill="#1a3a5c"/><circle cx="137" cy="95" r="2.5" fill="#1a3a5c"/><circle cx="106" cy="93" r="1.5" fill="#fff"/><circle cx="138" cy="93" r="1.5" fill="#fff"/><path d="M108 122 Q120 132 132 122" stroke="#5e3920" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M92 144 Q120 156 148 144" stroke="#8a3a2a" stroke-width="7" fill="none"/><circle cx="120" cy="154" r="7" fill="#e8b84a"/><circle cx="120" cy="154" r="2" fill="#8a6a1a"/></svg></div>
+  <div class="bubble">
+    <div class="who">Кайл</div>
+    <p>Дорогие студенты-Яндексоиды. Сегодня разберём путь от голого JavaScript до React. Без воды: сначала база — функции и массивы, потом <code>filter()</code> и <code>map()</code>, а в конце соберём из этого настоящий интерфейс. Поехали.</p>
+  </div>
+</div>
+
+<!-- ============ SECTION 1: FUNCTIONS ============ -->
+<section class="reveal">
+  <div class="sec-num">01 · ОСНОВА</div>
+  <h2>Функции — это станки</h2>
+  <p class="lead">Функция — это станок: кладёшь сырьё на вход, получаешь готовое на выходе. Один раз настроил — пользуешься тысячу раз.</p>
+
+  <p>Смысл простой. У тебя есть кусок работы, который повторяется. Вместо того чтобы копировать его по всему коду, ты заворачиваешь его в функцию и зовёшь по имени. Поменялась логика — правишь в одном месте, а не в сорока.</p>
+
+  <div class="code">
+    <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">functions.js</span></div>
+    <pre><code><span class="tc">// станок: на вход имя, на выход приветствие</span>
+<span class="tk">function</span> <span class="tf">greet</span>(name) {
+  <span class="tk">return</span> <span class="ts">'Привет, '</span> <span class="to">+</span> name;
+}
+
+<span class="tf">greet</span>(<span class="ts">'Аня'</span>);   <span class="tc">// 'Привет, Аня'</span>
+<span class="tf">greet</span>(<span class="ts">'Макс'</span>);  <span class="tc">// 'Привет, Макс'</span></code></pre>
+  </div>
+
+  <p>Сейчас чаще пишут <strong>стрелочные функции</strong> — короче и компактнее. Та же логика, меньше букв:</p>
+
+  <div class="code">
+    <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">arrow.js</span></div>
+    <pre><code><span class="tc">// то же самое, стрелочная запись</span>
+<span class="tk">const</span> greet <span class="to">=</span> (name) <span class="to">=></span> <span class="ts">'Привет, '</span> <span class="to">+</span> name;
+
+<span class="tc">// если тело — одно выражение, return подразумевается</span>
+<span class="tk">const</span> <span class="tf">double</span> <span class="to">=</span> (n) <span class="to">=></span> n <span class="to">*</span> <span class="tn">2</span>;
+<span class="tf">double</span>(<span class="tn">21</span>);  <span class="tc">// 42</span></code></pre>
+  </div>
+
+  <div class="say maxi">
+    <div class="ava"><svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg"><path d="M84 58 L72 12 L108 46 Z" fill="#3fa86a"/><path d="M156 58 L168 12 L132 46 Z" fill="#3fa86a"/><path d="M86 52 L80 26 L100 46 Z" fill="#1a1a1a"/><path d="M154 52 L160 26 L140 46 Z" fill="#1a1a1a"/><ellipse cx="120" cy="102" rx="50" ry="46" fill="#3fa86a"/><path d="M120 72 Q96 80 100 112 Q120 128 140 112 Q144 80 120 72 Z" fill="#f0f4f0"/><path d="M112 110 Q120 122 128 110 Q124 118 120 118 Q116 118 112 110 Z" fill="#f0f4f0"/><ellipse cx="120" cy="112" rx="6" ry="4.5" fill="#1a1a1a"/><ellipse cx="106" cy="98" rx="8" ry="10" fill="#fff"/><ellipse cx="134" cy="98" rx="8" ry="10" fill="#fff"/><circle cx="107" cy="99" r="5.5" fill="#e8a020"/><circle cx="133" cy="99" r="5.5" fill="#e8a020"/><circle cx="107" cy="98" r="2.5" fill="#3a2a00"/><circle cx="133" cy="98" r="2.5" fill="#3a2a00"/><circle cx="108" cy="96" r="1.5" fill="#fff"/><circle cx="134" cy="96" r="1.5" fill="#fff"/><path d="M111 120 Q120 127 129 120" stroke="#1a4a2a" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+    <div class="bubble">
+      <div class="who">Макси</div>
+      <p>Стрелка <code>=></code> читается как «превращается в». <code>n => n * 2</code> — «эн превращается в эн умножить на два». Запомнишь так — больше не будешь путаться.</p>
+    </div>
+  </div>
+
+  <div class="box info">
+    <div class="bt">▸ Зачем это нужно для React</div>
+    <p>React целиком построен на функциях. Каждый компонент — это функция, которая возвращает кусок интерфейса. Так что то, что ты сейчас читаешь, — фундамент под всё остальное.</p>
+  </div>
+</section>
+
+<!-- ============ SECTION 2: ARRAYS ============ -->
+<section class="reveal">
+  <div class="sec-num">02 · ДАННЫЕ</div>
+  <h2>Массивы — это списки</h2>
+  <p class="lead">Массив — пронумерованный список. Лента постов, товары в корзине, результаты поиска — под капотом всё это массивы.</p>
+
+  <p>Главное, что надо принять сразу: <strong>нумерация идёт с нуля</strong>. Первый элемент — это индекс 0, второй — индекс 1. Это не прихоть JS, так устроены вообще все языки. Привыкнешь.</p>
+
+  <div class="viz">
+    <div class="viz-title">массив fruits и его индексы</div>
+    <div class="arr">
+      <div class="cell"><div class="v">'яблоко'</div><div class="i">[0]</div></div>
+      <div class="cell"><div class="v">'банан'</div><div class="i">[1]</div></div>
+      <div class="cell"><div class="v">'манго'</div><div class="i">[2]</div></div>
+      <div class="cell"><div class="v">'киви'</div><div class="i">[3]</div></div>
+    </div>
+  </div>
+
+  <div class="code">
+    <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">arrays.js</span></div>
+    <pre><code><span class="tk">const</span> fruits <span class="to">=</span> [<span class="ts">'яблоко'</span>, <span class="ts">'банан'</span>, <span class="ts">'манго'</span>, <span class="ts">'киви'</span>];
+
+fruits[<span class="tn">0</span>];        <span class="tc">// 'яблоко' — первый</span>
+fruits[<span class="tn">2</span>];        <span class="tc">// 'манго'</span>
+fruits.length;    <span class="tc">// 4 — сколько всего</span></code></pre>
+  </div>
+
+  <div class="say ren">
+    <div class="ava"><svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg"><circle cx="84" cy="62" r="16" fill="#7a8499"/><circle cx="156" cy="62" r="16" fill="#7a8499"/><circle cx="84" cy="62" r="8" fill="#4a5468"/><circle cx="156" cy="62" r="8" fill="#4a5468"/><ellipse cx="120" cy="104" rx="52" ry="48" fill="#7a8499"/><ellipse cx="120" cy="120" rx="34" ry="26" fill="#e0e4ec"/><ellipse cx="120" cy="112" rx="11" ry="8" fill="#3a3a44"/><path d="M120 120 L120 130" stroke="#3a3a44" stroke-width="2"/><circle cx="103" cy="96" r="15" fill="#bce0f0" stroke="#3a4a5a" stroke-width="3" opacity="0.9"/><circle cx="137" cy="96" r="15" fill="#bce0f0" stroke="#3a4a5a" stroke-width="3" opacity="0.9"/><path d="M118 96 L122 96" stroke="#3a4a5a" stroke-width="3"/><circle cx="103" cy="97" r="6" fill="#3a3a44"/><circle cx="137" cy="97" r="6" fill="#3a3a44"/><circle cx="105" cy="95" r="2" fill="#fff"/><circle cx="139" cy="95" r="2" fill="#fff"/><path d="M96 118 Q78 116 70 120" stroke="#9aa4b8" stroke-width="1.5" fill="none"/><path d="M96 124 Q78 126 72 130" stroke="#9aa4b8" stroke-width="1.5" fill="none"/><path d="M144 118 Q162 116 170 120" stroke="#9aa4b8" stroke-width="1.5" fill="none"/><path d="M144 124 Q162 126 168 130" stroke="#9aa4b8" stroke-width="1.5" fill="none"/><path d="M110 128 Q120 134 130 128" stroke="#4a5468" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+    <div class="bubble">
+      <div class="who">Рен</div>
+      <p>Почему с нуля? Индекс — это смещение от начала. Первый элемент стоит в самом начале, смещение ноль. Второй сдвинут на одну ячейку — смещение один. Память так и адресуется. Как только увидишь индекс как «насколько сдвинуться», вопросы отпадут.</p>
+    </div>
+  </div>
+
+  <h3>Перебрать массив: цикл for</h3>
+  <p>Когда надо пройтись по каждому элементу, нужен цикл. Классический <code>for</code> состоит из трёх частей: откуда стартуем, до каких пор идём, какой делаем шаг.</p>
+
+  <div class="code">
+    <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">loop.js</span></div>
+    <pre><code><span class="tc">//      старт     условие        шаг</span>
+<span class="tk">for</span> (<span class="tk">let</span> i <span class="to">=</span> <span class="tn">0</span>; i <span class="to">&lt;</span> fruits.length; i<span class="to">++</span>) {
+  <span class="tf">console</span>.<span class="tf">log</span>(fruits[i]);
+}
+<span class="tc">// яблоко → банан → манго → киви</span></code></pre>
+  </div>
+
+  <p>Но есть запись приятнее — <code>for...of</code>. Когда индекс не нужен, а нужны сами значения:</p>
+
+  <div class="code">
+    <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">for-of.js</span></div>
+    <pre><code><span class="tk">for</span> (<span class="tk">const</span> fruit <span class="tk">of</span> fruits) {
+  <span class="tf">console</span>.<span class="tf">log</span>(fruit);
+}
+<span class="tc">// читается как русский: «для каждого fruit из fruits»</span></code></pre>
+  </div>
+
+  <div class="meme-row">
+    <span class="meme"><span class="mava"><svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg"><circle cx="84" cy="62" r="16" fill="#7a8499"/><circle cx="156" cy="62" r="16" fill="#7a8499"/><circle cx="84" cy="62" r="8" fill="#4a5468"/><circle cx="156" cy="62" r="8" fill="#4a5468"/><ellipse cx="120" cy="104" rx="52" ry="48" fill="#7a8499"/><ellipse cx="120" cy="120" rx="34" ry="26" fill="#e0e4ec"/><ellipse cx="120" cy="112" rx="11" ry="8" fill="#3a3a44"/><path d="M120 120 L120 130" stroke="#3a3a44" stroke-width="2"/><circle cx="103" cy="96" r="15" fill="#bce0f0" stroke="#3a4a5a" stroke-width="3" opacity="0.9"/><circle cx="137" cy="96" r="15" fill="#bce0f0" stroke="#3a4a5a" stroke-width="3" opacity="0.9"/><path d="M118 96 L122 96" stroke="#3a4a5a" stroke-width="3"/><circle cx="103" cy="97" r="6" fill="#3a3a44"/><circle cx="137" cy="97" r="6" fill="#3a3a44"/><circle cx="105" cy="95" r="2" fill="#fff"/><circle cx="139" cy="95" r="2" fill="#fff"/><path d="M96 118 Q78 116 70 120" stroke="#9aa4b8" stroke-width="1.5" fill="none"/><path d="M96 124 Q78 126 72 130" stroke="#9aa4b8" stroke-width="1.5" fill="none"/><path d="M144 118 Q162 116 170 120" stroke="#9aa4b8" stroke-width="1.5" fill="none"/><path d="M144 124 Q162 126 168 130" stroke="#9aa4b8" stroke-width="1.5" fill="none"/><path d="M110 128 Q120 134 130 128" stroke="#4a5468" stroke-width="2" fill="none" stroke-linecap="round"/></svg></span>«индекс с нуля — это смещение, а не каприз»</span>
+  </div>
+</section>
+
+<!-- ============ SECTION 3: FILTER ============ -->
+<section class="reveal">
+  <div class="sec-num">03 · ОБРАБОТКА</div>
+  <h2>filter() — фейсконтроль</h2>
+  <p class="lead">filter() проходит по массиву и каждого спрашивает: «проходишь?». Кто ответил да — попадает в новый массив. Остальные остаются за дверью.</p>
+
+  <p>Ты даёшь функцию-условие. Она возвращает <code>true</code> или <code>false</code>. Всё, для чего вышло <code>true</code>, складывается в новый массив. <strong>Исходный массив не меняется</strong> — это важно, его никто не трогает.</p>
+
+  <div class="viz">
+    <div class="viz-title">filter(age => age >= 18)</div>
+    <div class="flow">
+      <div class="stage">
+        <div class="pill" style="border:2px solid var(--blue)">[12, 25, 17, 30]</div>
+        <div class="lbl">было</div>
+      </div>
+      <span class="arr-ico">→</span>
+      <div class="op">age => age >= 18</div>
+      <span class="arr-ico">→</span>
+      <div class="stage">
+        <div class="pill" style="border:2px solid var(--maxi);color:var(--maxi)">[25, 30]</div>
+        <div class="lbl">прошли фейсконтроль</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="code">
+    <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">filter.js</span></div>
+    <pre><code><span class="tk">const</span> ages <span class="to">=</span> [<span class="tn">12</span>, <span class="tn">25</span>, <span class="tn">17</span>, <span class="tn">30</span>, <span class="tn">15</span>, <span class="tn">22</span>];
+
+<span class="tk">const</span> adults <span class="to">=</span> ages.<span class="tf">filter</span>(age <span class="to">=></span> age <span class="to">>=</span> <span class="tn">18</span>);
+
+adults;  <span class="tc">// [25, 30, 22]</span>
+ages;    <span class="tc">// [12, 25, 17, 30, 15, 22] — целый!</span></code></pre>
+  </div>
+
+  <div class="say kyle">
+    <div class="ava"><svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg"><path d="M70 110 Q44 100 50 64 Q60 88 80 88 Q66 100 72 116 Z" fill="#5e3920"/><path d="M170 110 Q196 100 190 64 Q180 88 160 88 Q174 100 168 116 Z" fill="#5e3920"/><path d="M82 56 L70 18 L104 44 Z" fill="#a86a3d"/><path d="M158 56 L170 18 L136 44 Z" fill="#a86a3d"/><path d="M84 52 L78 30 L98 46 Z" fill="#2a2a2a"/><path d="M156 52 L162 30 L142 46 Z" fill="#2a2a2a"/><ellipse cx="120" cy="100" rx="52" ry="48" fill="#a86a3d"/><path d="M120 56 Q86 60 78 96 Q120 86 162 96 Q154 60 120 56 Z" fill="#d9b88a"/><path d="M120 60 Q98 64 90 92 Q120 84 150 92 Q142 64 120 60 Z" fill="#e8cfa8"/><ellipse cx="120" cy="118" rx="26" ry="20" fill="#e8cfa8"/><ellipse cx="120" cy="110" rx="8" ry="6" fill="#2a2020"/><ellipse cx="103" cy="96" rx="9" ry="11" fill="#fff"/><ellipse cx="137" cy="96" rx="9" ry="11" fill="#fff"/><circle cx="104" cy="97" r="6" fill="#4a90d9"/><circle cx="136" cy="97" r="6" fill="#4a90d9"/><circle cx="105" cy="95" r="2.5" fill="#1a3a5c"/><circle cx="137" cy="95" r="2.5" fill="#1a3a5c"/><circle cx="106" cy="93" r="1.5" fill="#fff"/><circle cx="138" cy="93" r="1.5" fill="#fff"/><path d="M108 122 Q120 132 132 122" stroke="#5e3920" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M92 144 Q120 156 148 144" stroke="#8a3a2a" stroke-width="7" fill="none"/><circle cx="120" cy="154" r="7" fill="#e8b84a"/><circle cx="120" cy="154" r="2" fill="#8a6a1a"/></svg></div>
+    <div class="bubble">
+      <div class="who">Кайл</div>
+      <p>На реальных проектах <code>filter()</code> — это поиск, фильтры в каталоге, отсев ошибок из логов, скрытие неактивных элементов. Один из самых частых методов в боевом коде, серьёзно.</p>
+    </div>
+  </div>
+
+  <p>Работает и со списком объектов — это как раз то, что приходит с сервера:</p>
+
+  <div class="code">
+    <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">filter-objects.js</span></div>
+    <pre><code><span class="tk">const</span> products <span class="to">=</span> [
+  { name: <span class="ts">'Телефон'</span>, price: <span class="tn">15000</span>, inStock: <span class="tp">true</span> },
+  { name: <span class="ts">'Ноутбук'</span>, price: <span class="tn">80000</span>, inStock: <span class="tp">false</span> },
+  { name: <span class="ts">'Планшет'</span>, price: <span class="tn">25000</span>, inStock: <span class="tp">true</span> },
+];
+
+<span class="tc">// только то, что есть в наличии</span>
+<span class="tk">const</span> available <span class="to">=</span> products.<span class="tf">filter</span>(p <span class="to">=></span> p.inStock);
+
+<span class="tc">// только дешевле 30к</span>
+<span class="tk">const</span> cheap <span class="to">=</span> products.<span class="tf">filter</span>(p <span class="to">=></span> p.price <span class="to">&lt;</span> <span class="tn">30000</span>);</code></pre>
+  </div>
+
+  <div class="box warn">
+    <div class="bt">▸ Частая ошибка новичков</div>
+    <p>filter ждёт <code>true/false</code>. Если забыть условие и просто написать <code>filter(p => p.price)</code> — оно тоже «сработает», но не так, как ты думаешь: любое ненулевое число считается за true. Всегда пиши явное сравнение.</p>
+  </div>
+</section>
+
+<!-- ============ SECTION 4: MAP ============ -->
+<section class="reveal">
+  <div class="sec-num">04 · ОБРАБОТКА</div>
+  <h2>map() — конвейер</h2>
+  <p class="lead">map() прогоняет каждый элемент через функцию и выдаёт новый. Сколько элементов зашло — столько и вышло. Меняется содержимое, не количество.</p>
+
+  <p>Если <code>filter()</code> отсеивает, то <code>map()</code> <strong>преобразует</strong>. Зашло число — вышло удвоенное. Зашёл объект — вышло одно его поле. Зашли сырые данные — вышли в нужном формате.</p>
+
+  <div class="viz">
+    <div class="viz-title">map(n => n * 2)</div>
+    <div class="flow">
+      <div class="stage">
+        <div class="pill" style="border:2px solid var(--blue)">[1, 2, 3, 4]</div>
+        <div class="lbl">было (4 шт)</div>
+      </div>
+      <span class="arr-ico">→</span>
+      <div class="op">n => n * 2</div>
+      <span class="arr-ico">→</span>
+      <div class="stage">
+        <div class="pill" style="border:2px solid var(--maxi);color:var(--maxi)">[2, 4, 6, 8]</div>
+        <div class="lbl">стало (тоже 4 шт)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="code">
+    <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">map.js</span></div>
+    <pre><code><span class="tk">const</span> prices <span class="to">=</span> [<span class="tn">100</span>, <span class="tn">200</span>, <span class="tn">350</span>];
+
+<span class="tc">// поднять все цены на 20%</span>
+<span class="tk">const</span> raised <span class="to">=</span> prices.<span class="tf">map</span>(p <span class="to">=></span> p <span class="to">*</span> <span class="tn">1.2</span>);
+raised;  <span class="tc">// [120, 240, 420]</span>
+
+<span class="tc">// из объектов — вытащить только имена</span>
+<span class="tk">const</span> names <span class="to">=</span> products.<span class="tf">map</span>(p <span class="to">=></span> p.name);
+names;   <span class="tc">// ['Телефон', 'Ноутбук', 'Планшет']</span></code></pre>
+  </div>
+
+  <div class="say maxi">
+    <div class="ava"><svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg"><path d="M84 58 L72 12 L108 46 Z" fill="#3fa86a"/><path d="M156 58 L168 12 L132 46 Z" fill="#3fa86a"/><path d="M86 52 L80 26 L100 46 Z" fill="#1a1a1a"/><path d="M154 52 L160 26 L140 46 Z" fill="#1a1a1a"/><ellipse cx="120" cy="102" rx="50" ry="46" fill="#3fa86a"/><path d="M120 72 Q96 80 100 112 Q120 128 140 112 Q144 80 120 72 Z" fill="#f0f4f0"/><path d="M112 110 Q120 122 128 110 Q124 118 120 118 Q116 118 112 110 Z" fill="#f0f4f0"/><ellipse cx="120" cy="112" rx="6" ry="4.5" fill="#1a1a1a"/><ellipse cx="106" cy="98" rx="8" ry="10" fill="#fff"/><ellipse cx="134" cy="98" rx="8" ry="10" fill="#fff"/><circle cx="107" cy="99" r="5.5" fill="#e8a020"/><circle cx="133" cy="99" r="5.5" fill="#e8a020"/><circle cx="107" cy="98" r="2.5" fill="#3a2a00"/><circle cx="133" cy="98" r="2.5" fill="#3a2a00"/><circle cx="108" cy="96" r="1.5" fill="#fff"/><circle cx="134" cy="96" r="1.5" fill="#fff"/><path d="M111 120 Q120 127 129 120" stroke="#1a4a2a" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+    <div class="bubble">
+      <div class="who">Макси</div>
+      <p>Главное отличие держи в голове так: <strong>filter меняет длину, map — нет</strong>. filter может вернуть меньше элементов. map всегда вернёт ровно столько же, сколько было.</p>
+    </div>
+  </div>
+
+  <h3>Цепочка: filter → map</h3>
+  <p>Вот где начинается магия. Методы соединяются в цепочку — результат одного сразу идёт в следующий. Получил данные, отфильтровал, преобразовал — в три строки.</p>
+
+  <div class="code">
+    <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">chain.js</span></div>
+    <pre><code><span class="tk">const</span> result <span class="to">=</span> products
+  .<span class="tf">filter</span>(p <span class="to">=></span> p.inStock)      <span class="tc">// 1. оставили в наличии</span>
+  .<span class="tf">map</span>(p <span class="to">=></span> p.name);          <span class="tc">// 2. взяли только имена</span>
+
+result;  <span class="tc">// ['Телефон', 'Планшет']</span></code></pre>
+  </div>
+
+  <!-- INTERACTIVE TRY-IT -->
+  <div class="tryit">
+    <h4>▸ Покрути сам: что вернёт цепочка?</h4>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:14px;">Нажимай — смотри, как меняется результат на тех же данных <code>[1..8]</code></p>
+    <div class="controls" id="tryControls">
+      <button data-mode="all" class="active">исходный</button>
+      <button data-mode="even">.filter(чётные)</button>
+      <button data-mode="double">.map(×2)</button>
+      <button data-mode="chain">.filter(чёт).map(×2)</button>
+    </div>
+    <div class="out" id="tryOut"></div>
+  </div>
+
+  <div class="meme-row">
+    <span class="meme"><span class="mava"><svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg"><path d="M84 58 L72 12 L108 46 Z" fill="#3fa86a"/><path d="M156 58 L168 12 L132 46 Z" fill="#3fa86a"/><path d="M86 52 L80 26 L100 46 Z" fill="#1a1a1a"/><path d="M154 52 L160 26 L140 46 Z" fill="#1a1a1a"/><ellipse cx="120" cy="102" rx="50" ry="46" fill="#3fa86a"/><path d="M120 72 Q96 80 100 112 Q120 128 140 112 Q144 80 120 72 Z" fill="#f0f4f0"/><path d="M112 110 Q120 122 128 110 Q124 118 120 118 Q116 118 112 110 Z" fill="#f0f4f0"/><ellipse cx="120" cy="112" rx="6" ry="4.5" fill="#1a1a1a"/><ellipse cx="106" cy="98" rx="8" ry="10" fill="#fff"/><ellipse cx="134" cy="98" rx="8" ry="10" fill="#fff"/><circle cx="107" cy="99" r="5.5" fill="#e8a020"/><circle cx="133" cy="99" r="5.5" fill="#e8a020"/><circle cx="107" cy="98" r="2.5" fill="#3a2a00"/><circle cx="133" cy="98" r="2.5" fill="#3a2a00"/><circle cx="108" cy="96" r="1.5" fill="#fff"/><circle cx="134" cy="96" r="1.5" fill="#fff"/><path d="M111 120 Q120 127 129 120" stroke="#1a4a2a" stroke-width="2" fill="none" stroke-linecap="round"/></svg></span>«filter режет, map красит»</span>
+    <span class="meme"><span class="mava"><svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg"><path d="M70 110 Q44 100 50 64 Q60 88 80 88 Q66 100 72 116 Z" fill="#5e3920"/><path d="M170 110 Q196 100 190 64 Q180 88 160 88 Q174 100 168 116 Z" fill="#5e3920"/><path d="M82 56 L70 18 L104 44 Z" fill="#a86a3d"/><path d="M158 56 L170 18 L136 44 Z" fill="#a86a3d"/><path d="M84 52 L78 30 L98 46 Z" fill="#2a2a2a"/><path d="M156 52 L162 30 L142 46 Z" fill="#2a2a2a"/><ellipse cx="120" cy="100" rx="52" ry="48" fill="#a86a3d"/><path d="M120 56 Q86 60 78 96 Q120 86 162 96 Q154 60 120 56 Z" fill="#d9b88a"/><path d="M120 60 Q98 64 90 92 Q120 84 150 92 Q142 64 120 60 Z" fill="#e8cfa8"/><ellipse cx="120" cy="118" rx="26" ry="20" fill="#e8cfa8"/><ellipse cx="120" cy="110" rx="8" ry="6" fill="#2a2020"/><ellipse cx="103" cy="96" rx="9" ry="11" fill="#fff"/><ellipse cx="137" cy="96" rx="9" ry="11" fill="#fff"/><circle cx="104" cy="97" r="6" fill="#4a90d9"/><circle cx="136" cy="97" r="6" fill="#4a90d9"/><circle cx="105" cy="95" r="2.5" fill="#1a3a5c"/><circle cx="137" cy="95" r="2.5" fill="#1a3a5c"/><circle cx="106" cy="93" r="1.5" fill="#fff"/><circle cx="138" cy="93" r="1.5" fill="#fff"/><path d="M108 122 Q120 132 132 122" stroke="#5e3920" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M92 144 Q120 156 148 144" stroke="#8a3a2a" stroke-width="7" fill="none"/><circle cx="120" cy="154" r="7" fill="#e8b84a"/><circle cx="120" cy="154" r="2" fill="#8a6a1a"/></svg></span>«три строки вместо пятнадцати»</span>
+  </div>
+</section>
+
+<!-- ============ SECTION 5: REACT INTRO ============ -->
+<section class="reveal">
+  <div class="sec-num">05 · REACT</div>
+  <h2>Компоненты — кубики Lego</h2>
+  <p class="lead">React-приложение собирается из компонентов, как постройка из Lego. Компонент — это функция, которая возвращает кусок интерфейса.</p>
+
+  <p>Помнишь, в начале мы говорили, что функция — это станок? Так вот, <strong>компонент — это станок, который выдаёт не текст, а кусок страницы</strong>. Кнопка, карточка товара, шапка сайта — каждый такой кусок можно завернуть в отдельный компонент и переиспользовать.</p>
+
+  <div class="code">
+    <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">Welcome.jsx</span></div>
+    <pre><code><span class="tc">// простейший компонент — функция, возвращающая разметку</span>
+<span class="tk">function</span> <span class="ty">Welcome</span>() {
+  <span class="tk">return</span> <span class="tx">&lt;</span><span class="tf">h1</span><span class="tx">&gt;</span>Привет, Яндексоиды!<span class="tx">&lt;/</span><span class="tf">h1</span><span class="tx">&gt;</span>;
+}
+
+<span class="tc">// используется как HTML-тег:</span>
+<span class="tx">&lt;</span><span class="ty">Welcome</span> <span class="tx">/&gt;</span></code></pre>
+  </div>
+
+  <div class="say kyle">
+    <div class="ava"><svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg"><path d="M70 110 Q44 100 50 64 Q60 88 80 88 Q66 100 72 116 Z" fill="#5e3920"/><path d="M170 110 Q196 100 190 64 Q180 88 160 88 Q174 100 168 116 Z" fill="#5e3920"/><path d="M82 56 L70 18 L104 44 Z" fill="#a86a3d"/><path d="M158 56 L170 18 L136 44 Z" fill="#a86a3d"/><path d="M84 52 L78 30 L98 46 Z" fill="#2a2a2a"/><path d="M156 52 L162 30 L142 46 Z" fill="#2a2a2a"/><ellipse cx="120" cy="100" rx="52" ry="48" fill="#a86a3d"/><path d="M120 56 Q86 60 78 96 Q120 86 162 96 Q154 60 120 56 Z" fill="#d9b88a"/><path d="M120 60 Q98 64 90 92 Q120 84 150 92 Q142 64 120 60 Z" fill="#e8cfa8"/><ellipse cx="120" cy="118" rx="26" ry="20" fill="#e8cfa8"/><ellipse cx="120" cy="110" rx="8" ry="6" fill="#2a2020"/><ellipse cx="103" cy="96" rx="9" ry="11" fill="#fff"/><ellipse cx="137" cy="96" rx="9" ry="11" fill="#fff"/><circle cx="104" cy="97" r="6" fill="#4a90d9"/><circle cx="136" cy="97" r="6" fill="#4a90d9"/><circle cx="105" cy="95" r="2.5" fill="#1a3a5c"/><circle cx="137" cy="95" r="2.5" fill="#1a3a5c"/><circle cx="106" cy="93" r="1.5" fill="#fff"/><circle cx="138" cy="93" r="1.5" fill="#fff"/><path d="M108 122 Q120 132 132 122" stroke="#5e3920" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M92 144 Q120 156 148 144" stroke="#8a3a2a" stroke-width="7" fill="none"/><circle cx="120" cy="154" r="7" fill="#e8b84a"/><circle cx="120" cy="154" r="2" fill="#8a6a1a"/></svg></div>
+    <div class="bubble">
+      <div class="who">Кайл</div>
+      <p>Заметь две вещи. Первое: имя компонента всегда с <strong>большой буквы</strong> — так React отличает твой компонент от обычного html-тега. Второе: вот эта странная смесь JS и HTML внутри называется JSX. Привыкнешь за день.</p>
+    </div>
+  </div>
+
+  <p>А дальше — компонент можно вкладывать в компонент. Так и строится дерево интерфейса:</p>
+
+  <div class="viz">
+    <div class="viz-title">дерево компонентов</div>
+    <div class="tree">
+      <div class="node">&lt;App /&gt;</div>
+      <div class="vline"></div>
+      <div class="branch" style="border-top:2px solid var(--line);padding-top:24px;">
+        <div style="display:flex;flex-direction:column;align-items:center;">
+          <div class="node child">&lt;Header /&gt;</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;">
+          <div class="node child">&lt;ProductList /&gt;</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;">
+          <div class="node child">&lt;Footer /&gt;</div>
+        </div>
+      </div>
+    </div>
+    <p style="text-align:center;color:var(--muted);font-size:13px;margin-top:20px;margin-bottom:0;">App — это корень. Внутри — Header, список товаров и Footer. Каждый сам по себе.</p>
+  </div>
+</section>
+
+<!-- ============ SECTION 6: PROPS ============ -->
+<section class="reveal">
+  <div class="sec-num">06 · REACT</div>
+  <h2>Props — данные сверху вниз</h2>
+  <p class="lead">Props — это параметры компонента. Точно как аргументы функции: родитель передаёт данные ребёнку, и тот показывает что прислали.</p>
+
+  <p>Данные в React текут <strong>в одну сторону — сверху вниз</strong>. Родительский компонент передаёт значения дочернему через props. Дочерний их получает и отображает. Обратно данные так просто не ходят — это и есть «однонаправленный поток», за который React любят.</p>
+
+  <div class="viz">
+    <div class="viz-title">props текут вниз</div>
+    <div class="props-demo">
+      <div class="node">&lt;App /&gt;</div>
+      <div style="display:flex;flex-direction:column;align-items:center;color:var(--maxi);font-family:'JetBrains Mono',monospace;font-size:12px;">
+        <div class="vline" style="background:var(--maxi);height:18px;"></div>
+        <div>name="Телефон" price={15000}</div>
+        <div style="font-size:20px;">↓</div>
+      </div>
+      <div class="node child">&lt;ProductCard /&gt;</div>
+    </div>
+  </div>
+
+  <div class="code">
+    <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">ProductCard.jsx</span></div>
+    <pre><code><span class="tc">// ребёнок принимает props и показывает их</span>
+<span class="tk">function</span> <span class="ty">ProductCard</span>(props) {
+  <span class="tk">return</span> (
+    <span class="tx">&lt;</span><span class="tf">div</span><span class="tx">&gt;</span>
+      <span class="tx">&lt;</span><span class="tf">h3</span><span class="tx">&gt;</span>{props.name}<span class="tx">&lt;/</span><span class="tf">h3</span><span class="tx">&gt;</span>
+      <span class="tx">&lt;</span><span class="tf">p</span><span class="tx">&gt;</span>{props.price} ₽<span class="tx">&lt;/</span><span class="tf">p</span><span class="tx">&gt;</span>
+    <span class="tx">&lt;/</span><span class="tf">div</span><span class="tx">&gt;</span>
+  );
+}
+
+<span class="tc">// родитель передаёт данные вниз</span>
+<span class="tx">&lt;</span><span class="ty">ProductCard</span> name<span class="to">=</span><span class="ts">"Телефон"</span> price<span class="to">=</span>{<span class="tn">15000</span>} <span class="tx">/&gt;</span></code></pre>
+  </div>
+
+  <div class="say ren">
+    <div class="ava"><svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg"><circle cx="84" cy="62" r="16" fill="#7a8499"/><circle cx="156" cy="62" r="16" fill="#7a8499"/><circle cx="84" cy="62" r="8" fill="#4a5468"/><circle cx="156" cy="62" r="8" fill="#4a5468"/><ellipse cx="120" cy="104" rx="52" ry="48" fill="#7a8499"/><ellipse cx="120" cy="120" rx="34" ry="26" fill="#e0e4ec"/><ellipse cx="120" cy="112" rx="11" ry="8" fill="#3a3a44"/><path d="M120 120 L120 130" stroke="#3a3a44" stroke-width="2"/><circle cx="103" cy="96" r="15" fill="#bce0f0" stroke="#3a4a5a" stroke-width="3" opacity="0.9"/><circle cx="137" cy="96" r="15" fill="#bce0f0" stroke="#3a4a5a" stroke-width="3" opacity="0.9"/><path d="M118 96 L122 96" stroke="#3a4a5a" stroke-width="3"/><circle cx="103" cy="97" r="6" fill="#3a3a44"/><circle cx="137" cy="97" r="6" fill="#3a3a44"/><circle cx="105" cy="95" r="2" fill="#fff"/><circle cx="139" cy="95" r="2" fill="#fff"/><path d="M96 118 Q78 116 70 120" stroke="#9aa4b8" stroke-width="1.5" fill="none"/><path d="M96 124 Q78 126 72 130" stroke="#9aa4b8" stroke-width="1.5" fill="none"/><path d="M144 118 Q162 116 170 120" stroke="#9aa4b8" stroke-width="1.5" fill="none"/><path d="M144 124 Q162 126 168 130" stroke="#9aa4b8" stroke-width="1.5" fill="none"/><path d="M110 128 Q120 134 130 128" stroke="#4a5468" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+    <div class="bubble">
+      <div class="who">Рен</div>
+      <p>Почему поток только вниз? Так проще искать баги. Если на экране не то значение — ты точно знаешь, что оно пришло сверху, от родителя. Не надо гадать, кто и откуда его поменял. Предсказуемость дороже удобства.</p>
+    </div>
+  </div>
+
+  <div class="box info">
+    <div class="bt">▸ Фигурные скобки в JSX</div>
+    <p>Внутри разметки <code>{ }</code> — это «здесь будет JavaScript». <code>{props.name}</code> значит «вставь сюда значение из JS». Текст пишем как есть, а динамику — в скобках.</p>
+  </div>
+</section>
+
+<!-- ============ SECTION 7: MAP IN REACT (the payoff) ============ -->
+<section class="reveal">
+  <div class="sec-num">07 · REACT × MAP</div>
+  <h2>map() рисует списки</h2>
+  <p class="lead">Вот ради чего всё затевалось. В React списки на экране рисуются через тот самый <code>.map()</code>. Массив данных превращается в массив компонентов.</p>
+
+  <p>Логика та же, что в начале лекции. <code>map()</code> берёт массив и преобразует каждый элемент. Только теперь он преобразует не число в число, а <strong>объект с данными — в кусок интерфейса</strong>. Массив товаров → массив карточек. Массив сообщений → массив пузырьков чата.</p>
+
+  <div class="viz">
+    <div class="viz-title">данные превращаются в интерфейс</div>
+    <div class="flow">
+      <div class="stage">
+        <div class="pill" style="border:2px solid var(--blue);text-align:left;line-height:1.5;">[<br>&nbsp;{name:'Телефон'},<br>&nbsp;{name:'Планшет'}<br>]</div>
+        <div class="lbl">массив данных</div>
+      </div>
+      <span class="arr-ico">→</span>
+      <div class="op">.map(p => &lt;Card /&gt;)</div>
+      <span class="arr-ico">→</span>
+      <div class="stage">
+        <div class="pill" style="border:2px solid var(--react);color:var(--react);text-align:left;line-height:1.5;">&lt;Card 'Телефон'/&gt;<br>&lt;Card 'Планшет'/&gt;</div>
+        <div class="lbl">массив карточек</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="code">
+    <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">ProductList.jsx</span></div>
+    <pre><code><span class="tk">function</span> <span class="ty">ProductList</span>() {
+  <span class="tk">const</span> products <span class="to">=</span> [
+    { id: <span class="tn">1</span>, name: <span class="ts">'Телефон'</span>, price: <span class="tn">15000</span> },
+    { id: <span class="tn">2</span>, name: <span class="ts">'Планшет'</span>, price: <span class="tn">25000</span> },
+  ];
+
+  <span class="tk">return</span> (
+    <span class="tx">&lt;</span><span class="tf">div</span><span class="tx">&gt;</span>
+      {products.<span class="tf">map</span>(p <span class="to">=></span> (
+        <span class="tx">&lt;</span><span class="ty">ProductCard</span>
+          key<span class="to">=</span>{p.id}
+          name<span class="to">=</span>{p.name}
+          price<span class="to">=</span>{p.price}
+        <span class="tx">/&gt;</span>
+      ))}
+    <span class="tx">&lt;/</span><span class="tf">div</span><span class="tx">&gt;</span>
+  );
+}</code></pre>
+  </div>
+
+  <div class="say kyle">
+    <div class="ava"><svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg"><path d="M70 110 Q44 100 50 64 Q60 88 80 88 Q66 100 72 116 Z" fill="#5e3920"/><path d="M170 110 Q196 100 190 64 Q180 88 160 88 Q174 100 168 116 Z" fill="#5e3920"/><path d="M82 56 L70 18 L104 44 Z" fill="#a86a3d"/><path d="M158 56 L170 18 L136 44 Z" fill="#a86a3d"/><path d="M84 52 L78 30 L98 46 Z" fill="#2a2a2a"/><path d="M156 52 L162 30 L142 46 Z" fill="#2a2a2a"/><ellipse cx="120" cy="100" rx="52" ry="48" fill="#a86a3d"/><path d="M120 56 Q86 60 78 96 Q120 86 162 96 Q154 60 120 56 Z" fill="#d9b88a"/><path d="M120 60 Q98 64 90 92 Q120 84 150 92 Q142 64 120 60 Z" fill="#e8cfa8"/><ellipse cx="120" cy="118" rx="26" ry="20" fill="#e8cfa8"/><ellipse cx="120" cy="110" rx="8" ry="6" fill="#2a2020"/><ellipse cx="103" cy="96" rx="9" ry="11" fill="#fff"/><ellipse cx="137" cy="96" rx="9" ry="11" fill="#fff"/><circle cx="104" cy="97" r="6" fill="#4a90d9"/><circle cx="136" cy="97" r="6" fill="#4a90d9"/><circle cx="105" cy="95" r="2.5" fill="#1a3a5c"/><circle cx="137" cy="95" r="2.5" fill="#1a3a5c"/><circle cx="106" cy="93" r="1.5" fill="#fff"/><circle cx="138" cy="93" r="1.5" fill="#fff"/><path d="M108 122 Q120 132 132 122" stroke="#5e3920" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M92 144 Q120 156 148 144" stroke="#8a3a2a" stroke-width="7" fill="none"/><circle cx="120" cy="154" r="7" fill="#e8b84a"/><circle cx="120" cy="154" r="2" fill="#8a6a1a"/></svg></div>
+    <div class="bubble">
+      <div class="who">Кайл</div>
+      <p>Смотри, что произошло. Мы взяли массив <code>products</code> и через <code>.map()</code> превратили каждый объект в <code>&lt;ProductCard /&gt;</code>, прокинув данные через props. Это связало всё, что мы учили: массивы, map, компоненты и props в одной конструкции. Вот так и выглядит реальная разработка.</p>
+    </div>
+  </div>
+
+  <div class="box warn">
+    <div class="bt">▸ Зачем key={p.id}</div>
+    <p>Когда рисуешь список через map, React требует уникальный <code>key</code> у каждого элемента. По нему он понимает, что изменилось, и не перерисовывает весь список целиком. Забудешь key — получишь предупреждение в консоли и тормоза. Бери <code>id</code>, а не индекс массива.</p>
+  </div>
+
+  <!-- LIVE: data -> cards -->
+  <div class="tryit">
+    <h4>▸ Вживую: массив → карточки</h4>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:14px;">Ниже — реальный результат map() по массиву из 3 объектов. Каждая карточка отрисована из данных:</p>
+    <div id="liveCards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;"></div>
+  </div>
+</section>
+
+<!-- ============ SECTION 8: STATE + EVENTS ============ -->
+<section class="reveal">
+  <div class="sec-num">08 · REACT</div>
+  <h2>Состояние — память компонента</h2>
+  <p class="lead">Props приходят сверху и не меняются. А состояние (state) — это собственная память компонента, которая живёт и меняется от действий пользователя.</p>
+
+  <p>Нажал лайк — счётчик вырос. Отметил задачу — она зачеркнулась. Эти изменения хранятся в <strong>состоянии</strong>. В React за это отвечает <code>useState</code>. И вот ключевой момент: <strong>когда состояние меняется, React сам перерисовывает компонент</strong>. Тебе не надо вручную лезть в DOM — поменял данные, интерфейс обновился сам.</p>
+
+  <div class="code">
+    <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">Counter.jsx</span></div>
+    <pre><code><span class="tk">import</span> { useState } <span class="tk">from</span> <span class="ts">'react'</span>;
+
+<span class="tk">function</span> <span class="ty">Counter</span>() {
+  <span class="tc">// [значение, функция-меняла] = useState(начало)</span>
+  <span class="tk">const</span> [count, setCount] <span class="to">=</span> <span class="tf">useState</span>(<span class="tn">0</span>);
+
+  <span class="tk">return</span> (
+    <span class="tx">&lt;</span><span class="tf">button</span> onClick<span class="to">=</span>{() <span class="to">=></span> <span class="tf">setCount</span>(count <span class="to">+</span> <span class="tn">1</span>)}<span class="tx">&gt;</span>
+      Лайков: {count}
+    <span class="tx">&lt;/</span><span class="tf">button</span><span class="tx">&gt;</span>
+  );
+}</code></pre>
+  </div>
+
+  <div class="say maxi">
+    <div class="ava"><svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg"><path d="M84 58 L72 12 L108 46 Z" fill="#3fa86a"/><path d="M156 58 L168 12 L132 46 Z" fill="#3fa86a"/><path d="M86 52 L80 26 L100 46 Z" fill="#1a1a1a"/><path d="M154 52 L160 26 L140 46 Z" fill="#1a1a1a"/><ellipse cx="120" cy="102" rx="50" ry="46" fill="#3fa86a"/><path d="M120 72 Q96 80 100 112 Q120 128 140 112 Q144 80 120 72 Z" fill="#f0f4f0"/><path d="M112 110 Q120 122 128 110 Q124 118 120 118 Q116 118 112 110 Z" fill="#f0f4f0"/><ellipse cx="120" cy="112" rx="6" ry="4.5" fill="#1a1a1a"/><ellipse cx="106" cy="98" rx="8" ry="10" fill="#fff"/><ellipse cx="134" cy="98" rx="8" ry="10" fill="#fff"/><circle cx="107" cy="99" r="5.5" fill="#e8a020"/><circle cx="133" cy="99" r="5.5" fill="#e8a020"/><circle cx="107" cy="98" r="2.5" fill="#3a2a00"/><circle cx="133" cy="98" r="2.5" fill="#3a2a00"/><circle cx="108" cy="96" r="1.5" fill="#fff"/><circle cx="134" cy="96" r="1.5" fill="#fff"/><path d="M111 120 Q120 127 129 120" stroke="#1a4a2a" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+    <div class="bubble">
+      <div class="who">Макси</div>
+      <p>Разбор строки <code>const [count, setCount] = useState(0)</code>: <code>count</code> — текущее значение, <code>setCount</code> — функция чтобы его поменять, <code>0</code> — стартовое значение. Менять <code>count</code> напрямую нельзя, только через <code>setCount</code> — иначе React не заметит и не перерисует.</p>
+    </div>
+  </div>
+
+  <h3>События: реагируем на клик</h3>
+  <p>Видел <code>onClick</code> в коде выше? Это обработчик события. Пользователь кликнул — вызвалась функция. Точно так же есть <code>onChange</code> для полей ввода, <code>onSubmit</code> для форм и так далее.</p>
+
+  <!-- LIVE counter -->
+  <div class="tryit">
+    <h4>▸ Живой счётчик (это работающий React-паттерн)</h4>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:14px;">Жми — состояние меняется, «компонент» перерисовывается:</p>
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+      <button id="likeBtn" style="font-size:15px;padding:12px 22px;">❤️ Лайков: <span id="likeCount">0</span></button>
+      <span id="likeMeme" style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);"></span>
+    </div>
+  </div>
+
+  <h3>Состояние + map вместе: список задач</h3>
+  <p>А теперь финал — соединим всё. Список задач хранится в состоянии, рисуется через <code>map()</code>, а клик по задаче меняет состояние и перерисовывает список. Это уже мини-приложение.</p>
+
+  <!-- LIVE todo -->
+  <div class="tryit">
+    <h4>▸ Кликай по задачам — они отмечаются</h4>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:14px;">Состояние меняется по клику, список перерисовывается через map():</p>
+    <ul class="demo-list" id="todoList"></ul>
+    <p style="font-size:13px;color:var(--muted);margin:12px 0 0;text-align:center;" id="todoCount"></p>
+  </div>
+
+  <div class="meme-row">
+    <span class="meme"><span class="mava"><svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg"><circle cx="84" cy="62" r="16" fill="#7a8499"/><circle cx="156" cy="62" r="16" fill="#7a8499"/><circle cx="84" cy="62" r="8" fill="#4a5468"/><circle cx="156" cy="62" r="8" fill="#4a5468"/><ellipse cx="120" cy="104" rx="52" ry="48" fill="#7a8499"/><ellipse cx="120" cy="120" rx="34" ry="26" fill="#e0e4ec"/><ellipse cx="120" cy="112" rx="11" ry="8" fill="#3a3a44"/><path d="M120 120 L120 130" stroke="#3a3a44" stroke-width="2"/><circle cx="103" cy="96" r="15" fill="#bce0f0" stroke="#3a4a5a" stroke-width="3" opacity="0.9"/><circle cx="137" cy="96" r="15" fill="#bce0f0" stroke="#3a4a5a" stroke-width="3" opacity="0.9"/><path d="M118 96 L122 96" stroke="#3a4a5a" stroke-width="3"/><circle cx="103" cy="97" r="6" fill="#3a3a44"/><circle cx="137" cy="97" r="6" fill="#3a3a44"/><circle cx="105" cy="95" r="2" fill="#fff"/><circle cx="139" cy="95" r="2" fill="#fff"/><path d="M96 118 Q78 116 70 120" stroke="#9aa4b8" stroke-width="1.5" fill="none"/><path d="M96 124 Q78 126 72 130" stroke="#9aa4b8" stroke-width="1.5" fill="none"/><path d="M144 118 Q162 116 170 120" stroke="#9aa4b8" stroke-width="1.5" fill="none"/><path d="M144 124 Q162 126 168 130" stroke="#9aa4b8" stroke-width="1.5" fill="none"/><path d="M110 128 Q120 134 130 128" stroke="#4a5468" stroke-width="2" fill="none" stroke-linecap="round"/></svg></span>«поменял state — UI обновился сам»</span>
+    <span class="meme"><span class="mava"><svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg"><path d="M70 110 Q44 100 50 64 Q60 88 80 88 Q66 100 72 116 Z" fill="#5e3920"/><path d="M170 110 Q196 100 190 64 Q180 88 160 88 Q174 100 168 116 Z" fill="#5e3920"/><path d="M82 56 L70 18 L104 44 Z" fill="#a86a3d"/><path d="M158 56 L170 18 L136 44 Z" fill="#a86a3d"/><path d="M84 52 L78 30 L98 46 Z" fill="#2a2a2a"/><path d="M156 52 L162 30 L142 46 Z" fill="#2a2a2a"/><ellipse cx="120" cy="100" rx="52" ry="48" fill="#a86a3d"/><path d="M120 56 Q86 60 78 96 Q120 86 162 96 Q154 60 120 56 Z" fill="#d9b88a"/><path d="M120 60 Q98 64 90 92 Q120 84 150 92 Q142 64 120 60 Z" fill="#e8cfa8"/><ellipse cx="120" cy="118" rx="26" ry="20" fill="#e8cfa8"/><ellipse cx="120" cy="110" rx="8" ry="6" fill="#2a2020"/><ellipse cx="103" cy="96" rx="9" ry="11" fill="#fff"/><ellipse cx="137" cy="96" rx="9" ry="11" fill="#fff"/><circle cx="104" cy="97" r="6" fill="#4a90d9"/><circle cx="136" cy="97" r="6" fill="#4a90d9"/><circle cx="105" cy="95" r="2.5" fill="#1a3a5c"/><circle cx="137" cy="95" r="2.5" fill="#1a3a5c"/><circle cx="106" cy="93" r="1.5" fill="#fff"/><circle cx="138" cy="93" r="1.5" fill="#fff"/><path d="M108 122 Q120 132 132 122" stroke="#5e3920" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M92 144 Q120 156 148 144" stroke="#8a3a2a" stroke-width="7" fill="none"/><circle cx="120" cy="154" r="7" fill="#e8b84a"/><circle cx="120" cy="154" r="2" fill="#8a6a1a"/></svg></span>«это уже приложение, поздравляю»</span>
+  </div>
+</section>
+
+<!-- ============ RECAP ============ -->
+<section class="reveal">
+  <div class="sec-num">09 · ИТОГ</div>
+  <h2>Как всё связано</h2>
+  <p class="lead">Вся лекция в одной мысли: ты учил не отдельные штуки, а одну цепочку, которая ведёт к реальной разработке.</p>
+
+  <div class="viz">
+    <div class="viz-title">путь, который ты прошёл</div>
+    <div style="display:flex;flex-direction:column;gap:14px;max-width:560px;margin:0 auto;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="background:rgba(247,223,30,.15);border:1px solid var(--yellow);border-radius:10px;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--yellow);min-width:130px;text-align:center;">функция</div>
+        <span style="color:var(--muted);">станок: вход → выход</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="background:rgba(97,175,239,.15);border:1px solid var(--blue);border-radius:10px;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--blue);min-width:130px;text-align:center;">массив + map</div>
+        <span style="color:var(--muted);">преобразуем каждый элемент</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="background:rgba(97,218,251,.15);border:1px solid var(--react);border-radius:10px;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--react);min-width:130px;text-align:center;">компонент</div>
+        <span style="color:var(--muted);">станок, выдающий интерфейс</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="background:rgba(63,176,111,.15);border:1px solid var(--maxi);border-radius:10px;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--maxi);min-width:130px;text-align:center;">map + props</div>
+        <span style="color:var(--muted);">массив данных → список карточек</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="background:rgba(224,108,117,.15);border:1px solid var(--red);border-radius:10px;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--red);min-width:130px;text-align:center;">state + события</div>
+        <span style="color:var(--muted);">интерфейс реагирует и живёт</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="say kyle">
+    <div class="ava"><svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg"><path d="M70 110 Q44 100 50 64 Q60 88 80 88 Q66 100 72 116 Z" fill="#5e3920"/><path d="M170 110 Q196 100 190 64 Q180 88 160 88 Q174 100 168 116 Z" fill="#5e3920"/><path d="M82 56 L70 18 L104 44 Z" fill="#a86a3d"/><path d="M158 56 L170 18 L136 44 Z" fill="#a86a3d"/><path d="M84 52 L78 30 L98 46 Z" fill="#2a2a2a"/><path d="M156 52 L162 30 L142 46 Z" fill="#2a2a2a"/><ellipse cx="120" cy="100" rx="52" ry="48" fill="#a86a3d"/><path d="M120 56 Q86 60 78 96 Q120 86 162 96 Q154 60 120 56 Z" fill="#d9b88a"/><path d="M120 60 Q98 64 90 92 Q120 84 150 92 Q142 64 120 60 Z" fill="#e8cfa8"/><ellipse cx="120" cy="118" rx="26" ry="20" fill="#e8cfa8"/><ellipse cx="120" cy="110" rx="8" ry="6" fill="#2a2020"/><ellipse cx="103" cy="96" rx="9" ry="11" fill="#fff"/><ellipse cx="137" cy="96" rx="9" ry="11" fill="#fff"/><circle cx="104" cy="97" r="6" fill="#4a90d9"/><circle cx="136" cy="97" r="6" fill="#4a90d9"/><circle cx="105" cy="95" r="2.5" fill="#1a3a5c"/><circle cx="137" cy="95" r="2.5" fill="#1a3a5c"/><circle cx="106" cy="93" r="1.5" fill="#fff"/><circle cx="138" cy="93" r="1.5" fill="#fff"/><path d="M108 122 Q120 132 132 122" stroke="#5e3920" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M92 144 Q120 156 148 144" stroke="#8a3a2a" stroke-width="7" fill="none"/><circle cx="120" cy="154" r="7" fill="#e8b84a"/><circle cx="120" cy="154" r="2" fill="#8a6a1a"/></svg></div>
+    <div class="bubble">
+      <div class="who">Кайл</div>
+      <p>Дорогие студенты-Яндексоиды, вот и всё на сегодня. Если поняли, что <code>.map()</code> из второго раздела и <code>.map()</code> из седьмого — это одно и то же, просто в разных декорациях, значит лекция отработала. Дальше — только практика. Открывайте редактор и пишите.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="reveal">
+  <div class="big">Удачи в разработке 🚀</div>
+  <p>Напиши 10 компонентов со списками через map() — и ты уже джуниор.</p>
+  <div class="meme-row" style="margin-top:24px;">
+    <span class="meme"><span class="mava"><svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg"><path d="M70 110 Q44 100 50 64 Q60 88 80 88 Q66 100 72 116 Z" fill="#5e3920"/><path d="M170 110 Q196 100 190 64 Q180 88 160 88 Q174 100 168 116 Z" fill="#5e3920"/><path d="M82 56 L70 18 L104 44 Z" fill="#a86a3d"/><path d="M158 56 L170 18 L136 44 Z" fill="#a86a3d"/><path d="M84 52 L78 30 L98 46 Z" fill="#2a2a2a"/><path d="M156 52 L162 30 L142 46 Z" fill="#2a2a2a"/><ellipse cx="120" cy="100" rx="52" ry="48" fill="#a86a3d"/><path d="M120 56 Q86 60 78 96 Q120 86 162 96 Q154 60 120 56 Z" fill="#d9b88a"/><path d="M120 60 Q98 64 90 92 Q120 84 150 92 Q142 64 120 60 Z" fill="#e8cfa8"/><ellipse cx="120" cy="118" rx="26" ry="20" fill="#e8cfa8"/><ellipse cx="120" cy="110" rx="8" ry="6" fill="#2a2020"/><ellipse cx="103" cy="96" rx="9" ry="11" fill="#fff"/><ellipse cx="137" cy="96" rx="9" ry="11" fill="#fff"/><circle cx="104" cy="97" r="6" fill="#4a90d9"/><circle cx="136" cy="97" r="6" fill="#4a90d9"/><circle cx="105" cy="95" r="2.5" fill="#1a3a5c"/><circle cx="137" cy="95" r="2.5" fill="#1a3a5c"/><circle cx="106" cy="93" r="1.5" fill="#fff"/><circle cx="138" cy="93" r="1.5" fill="#fff"/><path d="M108 122 Q120 132 132 122" stroke="#5e3920" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M92 144 Q120 156 148 144" stroke="#8a3a2a" stroke-width="7" fill="none"/><circle cx="120" cy="154" r="7" fill="#e8b84a"/><circle cx="120" cy="154" r="2" fill="#8a6a1a"/></svg></span>Кайл</span>
+    <span class="meme"><span class="mava"><svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg"><path d="M84 58 L72 12 L108 46 Z" fill="#3fa86a"/><path d="M156 58 L168 12 L132 46 Z" fill="#3fa86a"/><path d="M86 52 L80 26 L100 46 Z" fill="#1a1a1a"/><path d="M154 52 L160 26 L140 46 Z" fill="#1a1a1a"/><ellipse cx="120" cy="102" rx="50" ry="46" fill="#3fa86a"/><path d="M120 72 Q96 80 100 112 Q120 128 140 112 Q144 80 120 72 Z" fill="#f0f4f0"/><path d="M112 110 Q120 122 128 110 Q124 118 120 118 Q116 118 112 110 Z" fill="#f0f4f0"/><ellipse cx="120" cy="112" rx="6" ry="4.5" fill="#1a1a1a"/><ellipse cx="106" cy="98" rx="8" ry="10" fill="#fff"/><ellipse cx="134" cy="98" rx="8" ry="10" fill="#fff"/><circle cx="107" cy="99" r="5.5" fill="#e8a020"/><circle cx="133" cy="99" r="5.5" fill="#e8a020"/><circle cx="107" cy="98" r="2.5" fill="#3a2a00"/><circle cx="133" cy="98" r="2.5" fill="#3a2a00"/><circle cx="108" cy="96" r="1.5" fill="#fff"/><circle cx="134" cy="96" r="1.5" fill="#fff"/><path d="M111 120 Q120 127 129 120" stroke="#1a4a2a" stroke-width="2" fill="none" stroke-linecap="round"/></svg></span>Макси</span>
+    <span class="meme"><span class="mava"><svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg"><circle cx="84" cy="62" r="16" fill="#7a8499"/><circle cx="156" cy="62" r="16" fill="#7a8499"/><circle cx="84" cy="62" r="8" fill="#4a5468"/><circle cx="156" cy="62" r="8" fill="#4a5468"/><ellipse cx="120" cy="104" rx="52" ry="48" fill="#7a8499"/><ellipse cx="120" cy="120" rx="34" ry="26" fill="#e0e4ec"/><ellipse cx="120" cy="112" rx="11" ry="8" fill="#3a3a44"/><path d="M120 120 L120 130" stroke="#3a3a44" stroke-width="2"/><circle cx="103" cy="96" r="15" fill="#bce0f0" stroke="#3a4a5a" stroke-width="3" opacity="0.9"/><circle cx="137" cy="96" r="15" fill="#bce0f0" stroke="#3a4a5a" stroke-width="3" opacity="0.9"/><path d="M118 96 L122 96" stroke="#3a4a5a" stroke-width="3"/><circle cx="103" cy="97" r="6" fill="#3a3a44"/><circle cx="137" cy="97" r="6" fill="#3a3a44"/><circle cx="105" cy="95" r="2" fill="#fff"/><circle cx="139" cy="95" r="2" fill="#fff"/><path d="M96 118 Q78 116 70 120" stroke="#9aa4b8" stroke-width="1.5" fill="none"/><path d="M96 124 Q78 126 72 130" stroke="#9aa4b8" stroke-width="1.5" fill="none"/><path d="M144 118 Q162 116 170 120" stroke="#9aa4b8" stroke-width="1.5" fill="none"/><path d="M144 124 Q162 126 168 130" stroke="#9aa4b8" stroke-width="1.5" fill="none"/><path d="M110 128 Q120 134 130 128" stroke="#4a5468" stroke-width="2" fill="none" stroke-linecap="round"/></svg></span>Рен</span>
+  </div>
+</footer>
+
+
+</div>
+
+</div>
+<script>
+// progress bar
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
+  document.getElementById('prog').style.width = pct + '%';
+});
+
+// reveal on scroll
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+// ---- TRY-IT: filter/map chain ----
+const base = [1,2,3,4,5,6,7,8];
+const tryOut = document.getElementById('tryOut');
+function renderTry(mode){
+  let arr = base.slice();
+  if(mode==='even') arr = base.filter(n=>n%2===0);
+  if(mode==='double') arr = base.map(n=>n*2);
+  if(mode==='chain') arr = base.filter(n=>n%2===0).map(n=>n*2);
+  tryOut.innerHTML = arr.map(n=>`<span class="tag">${n}</span>`).join('') +
+    `<span style="color:#5c6680;margin-left:8px;">→ ${arr.length} шт</span>`;
+}
+document.querySelectorAll('#tryControls button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('#tryControls button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    renderTry(b.dataset.mode);
+  });
+});
+renderTry('all');
+
+// ---- LIVE: data -> cards ----
+const liveData = [
+  {id:1,name:'Телефон',price:15000,emoji:'📱'},
+  {id:2,name:'Наушники',price:8000,emoji:'🎧'},
+  {id:3,name:'Часы',price:22000,emoji:'⌚'},
+];
+document.getElementById('liveCards').innerHTML = liveData.map(p=>`
+  <div style="background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center;">
+    <div style="font-size:30px;">${p.emoji}</div>
+    <div style="font-weight:700;font-size:14px;margin-top:6px;">${p.name}</div>
+    <div style="color:var(--maxi);font-family:'JetBrains Mono',monospace;font-size:13px;margin-top:2px;">${p.price} ₽</div>
+  </div>
+`).join('');
+
+// ---- LIVE counter (useState pattern) ----
+let count = 0;
+const memes = ['','начало положено','уже что-то','ого, втянулся','машина','стоп, хватит хD','ну ты понял идею'];
+const likeBtn = document.getElementById('likeBtn');
+likeBtn.addEventListener('click',()=>{
+  count++;
+  document.getElementById('likeCount').textContent = count;
+  document.getElementById('likeMeme').textContent = memes[Math.min(count,memes.length-1)];
+});
+
+// ---- LIVE todo (state + map) ----
+let todos = [
+  {id:1,text:'Понять функции',done:true},
+  {id:2,text:'Разобраться с map()',done:true},
+  {id:3,text:'Собрать компонент',done:false},
+  {id:4,text:'Прокинуть props',done:false},
+  {id:5,text:'Добавить состояние',done:false},
+];
+function renderTodos(){
+  const list = document.getElementById('todoList');
+  list.innerHTML = todos.map(t=>`
+    <li class="${t.done?'done':''}" data-id="${t.id}">
+      <span class="bx"></span>${t.text}
+    </li>
+  `).join('');
+  list.querySelectorAll('li').forEach(li=>{
+    li.addEventListener('click',()=>{
+      const id = +li.dataset.id;
+      todos = todos.map(t => t.id===id ? {...t, done:!t.done} : t);
+      renderTodos();
+    });
+  });
+  const done = todos.filter(t=>t.done).length;
+  document.getElementById('todoCount').textContent = `сделано ${done} из ${todos.length} · (фильтрация через .filter, отрисовка через .map)`;
+}
+renderTodos();
+</script>
+
+</body>
+</html>

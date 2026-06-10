@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Дата-менеджмент · fetch · Zod · Zustand · FSD — большая лекция</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700;800&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+  :root{
+    --bg:#120e15; --bg2:#1a121c; --card:#241823; --card2:#2f1f2d; --line:#43293c;
+    --ink:#f3e9ef; --muted:#b291a4;
+    --acc:#e23b50; --acc2:#ff7a5c; --acc3:#ff5470; --acc-deep:#b1283b;
+    --kyle:#d98b54; --maxi:#46b877; --ren:#9aa6c0;
+    --yellow:#f7df1e; --blue:#61afef; --react:#61dafb; --ts:#5aa6f0;
+    --purple:#c678dd; --green:#98c379; --orange:#e5a35a; --red:#e06c75; --cyan:#56b6c2;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--ink);line-height:1.7;}
+  body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(circle, rgba(226,59,80,0.06) 1px, transparent 1px);background-size:34px 34px;}
+  .progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--acc-deep),var(--acc),var(--acc2));z-index:200;width:0;}
+
+  .topbar{position:sticky;top:0;z-index:100;background:rgba(18,14,21,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);}
+  .topbar-inner{max-width:1040px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:16px;height:62px;}
+  .brand{font-family:'Unbounded',sans-serif;font-weight:700;font-size:15px;white-space:nowrap;color:var(--acc2);}
+  .brand b{color:var(--acc3);}
+  .tabs{display:flex;gap:4px;margin-left:auto;overflow-x:auto;scrollbar-width:none;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;
+    background:transparent;border:1px solid transparent;border-radius:10px;padding:8px 13px;color:var(--muted);transition:all .15s;}
+  .tab:hover{color:var(--ink);background:var(--card);}
+  .tab.active{color:var(--ink);background:var(--card2);border-color:var(--acc);}
+  .tab .n{font-family:'JetBrains Mono',monospace;font-size:11px;opacity:.6;margin-right:6px;color:var(--acc2);}
+
+  .wrap{max-width:1040px;margin:0 auto;padding:0 20px;position:relative;z-index:1;}
+  .page{display:none;animation:fade .4s;}
+  .page.active{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+  .phero{padding:46px 0 30px;border-bottom:1px solid var(--line);margin-bottom:8px;}
+  .phero .kicker{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:3px;text-transform:uppercase;margin-bottom:14px;color:var(--acc2);}
+  .phero h1{font-family:'Unbounded',sans-serif;font-weight:800;font-size:clamp(30px,6vw,50px);line-height:1.06;margin-bottom:14px;}
+  .phero p{color:var(--muted);font-size:17px;max-width:640px;}
+
+  section{padding:30px 0;}
+  section + section{border-top:1px solid var(--line);}
+  .sec-num{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--acc);letter-spacing:2px;margin-bottom:8px;}
+  h2{font-family:'Unbounded',sans-serif;font-weight:700;font-size:clamp(23px,4vw,33px);margin-bottom:10px;line-height:1.14;}
+  h3{font-family:'Unbounded',sans-serif;font-weight:600;font-size:20px;margin:26px 0 10px;}
+  h4{font-family:'Unbounded',sans-serif;font-weight:600;font-size:15.5px;margin:18px 0 8px;color:var(--acc2);}
+  p{margin-bottom:14px;color:#dccad4;}
+  p strong{color:#fff;}
+  ul.plain{margin:0 0 16px 0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:8px;}
+  ul.plain li{padding-left:24px;position:relative;color:#dccad4;}
+  ul.plain li::before{content:"▸";position:absolute;left:4px;color:var(--acc);}
+  .lead{font-size:18px;color:#ecdde6;}
+  code:not(pre code){font-family:'JetBrains Mono',monospace;font-size:.87em;background:#3a2433;color:var(--acc2);padding:2px 7px;border-radius:6px;}
+
+  .say{display:flex;gap:13px;align-items:flex-start;margin:20px 0;}
+  .say .ava{flex-shrink:0;width:58px;height:58px;border-radius:15px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .say .ava svg{width:54px;height:54px;}
+  .say.kyle .ava{background:rgba(217,139,84,.16);border:1.5px solid rgba(217,139,84,.42);}
+  .say.maxi .ava{background:rgba(70,184,119,.16);border:1.5px solid rgba(70,184,119,.42);}
+  .say.ren .ava{background:rgba(154,166,192,.16);border:1.5px solid rgba(154,166,192,.42);}
+  .bubble{background:var(--card);border:1px solid var(--line);border-radius:5px 16px 16px 16px;padding:13px 17px;flex:1;}
+  .bubble .who{font-family:'Unbounded',sans-serif;font-weight:600;font-size:12.5px;margin-bottom:3px;}
+  .say.kyle .who{color:var(--kyle);} .say.maxi .who{color:var(--maxi);} .say.ren .who{color:var(--ren);}
+  .bubble p{margin:0;font-size:15px;color:#e6d6e0;}
+
+  .code{background:#1c1320;border:1px solid var(--line);border-radius:13px;margin:18px 0;overflow:hidden;}
+  .code-top{display:flex;align-items:center;gap:7px;padding:10px 14px;background:#160e19;border-bottom:1px solid var(--line);}
+  .code-top .dot{width:10px;height:10px;border-radius:50%;}
+  .dot.r{background:#ff5f57;}.dot.y{background:#febc2e;}.dot.g{background:#28c840;}
+  .code-top .fn{margin-left:6px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted);flex:1;}
+  .runbtn{font-family:'Nunito',sans-serif;font-weight:700;font-size:12.5px;cursor:pointer;
+    background:var(--acc);color:#fff;border:none;border-radius:8px;padding:6px 14px;display:flex;align-items:center;gap:6px;transition:all .15s;}
+  .runbtn:hover{filter:brightness(1.12);transform:translateY(-1px);}
+  .runbtn:active{transform:translateY(0);}
+  pre{margin:0;padding:16px 18px;overflow-x:auto;}
+  pre code{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.62;}
+  .tk{color:var(--purple);}.ts2{color:var(--green);}.tn{color:var(--orange);}.tc{color:#6b5566;font-style:italic;}
+  .tf{color:var(--blue);}.tp{color:var(--red);}.to{color:var(--cyan);}.ty{color:#e5c07b;}.tx{color:#cdbcca;}
+
+  .console{background:#0e0a11;border-top:1px solid var(--line);padding:0;max-height:0;overflow:hidden;transition:max-height .3s ease;}
+  .console.show{max-height:500px;overflow:auto;}
+  .console-inner{padding:14px 18px;font-family:'JetBrains Mono',monospace;font-size:12.5px;}
+  .console-label{color:#6b5566;font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+  .console-label::before{content:"▶";color:var(--acc);font-size:9px;}
+  .cline{color:#d8c6d2;white-space:pre-wrap;padding:1px 0;}
+  .cline.err{color:var(--red);}
+  .cline.dim{color:#6b5566;}
+
+  .box{border-radius:13px;padding:15px 18px;margin:18px 0;border-left:4px solid;}
+  .box .bt{font-family:'Unbounded',sans-serif;font-weight:600;font-size:13.5px;margin-bottom:5px;}
+  .box p{margin:0;font-size:14.5px;}
+  .box.tip{background:rgba(247,223,30,.07);border-color:var(--yellow);} .box.tip .bt{color:var(--yellow);}
+  .box.warn{background:rgba(224,108,117,.09);border-color:var(--red);} .box.warn .bt{color:var(--red);}
+  .box.info{background:rgba(226,59,80,.08);border-color:var(--acc);} .box.info .bt{color:var(--acc2);}
+  .box.ts{background:rgba(90,166,240,.1);border-color:var(--ts);} .box.ts .bt{color:#7bb4f0;}
+
+  .viz{background:linear-gradient(160deg,#241723,#1a121c);border:1px solid var(--line);border-radius:16px;padding:24px;margin:20px 0;}
+  .viz-title{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;text-align:center;margin-bottom:18px;}
+  .flow{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;}
+  .flow .pill{background:var(--card2);border-radius:11px;padding:11px 14px;font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;border:1px solid var(--line);}
+  .flow .lbl{font-size:11px;color:var(--muted);margin-top:6px;font-family:'JetBrains Mono',monospace;text-align:center;}
+  .flow .op{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--acc2);background:rgba(255,122,92,.12);border:1px solid rgba(255,122,92,.3);border-radius:100px;padding:5px 11px;white-space:nowrap;}
+  .flow .arr-ico{color:var(--acc);font-size:20px;}
+
+  .meme-row{text-align:center;margin:22px 0;}
+  .meme{display:inline-flex;align-items:center;gap:9px;background:var(--card2);border:1px dashed var(--line);border-radius:100px;padding:5px 15px 5px 7px;margin:5px 4px;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--muted);}
+  .meme .mava{width:28px;height:28px;border-radius:50%;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+  .meme .mava svg{width:28px;height:28px;}
+
+  .cmp{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:13px;overflow:hidden;margin:18px 0;}
+  @media(max-width:640px){.cmp{grid-template-columns:1fr;}}
+  .cmp .ch{padding:10px 14px;font-family:'Unbounded',sans-serif;font-weight:600;font-size:13px;}
+  .cmp .ch.a{background:rgba(70,184,119,.14);color:var(--maxi);}
+  .cmp .ch.b{background:rgba(226,59,80,.16);color:var(--acc2);}
+  .cmp .cc{padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:12px;background:#1c1320;border-top:1px solid var(--line);white-space:pre-wrap;line-height:1.6;color:#cdbcca;}
+
+  /* ===== FILE TREE ===== */
+  .ftree{background:#160e19;border:1px solid var(--line);border-radius:12px;padding:16px 18px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.85;margin:18px 0;overflow-x:auto;}
+  .ftree .dir{color:var(--acc2);}
+  .ftree .fl{color:#c4b4c0;}
+  .ftree .cm{color:#6b5566;}
+
+  /* ===== HTTP STATUS EXPLORER ===== */
+  .stx{margin:20px 0;}
+  .stx-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+  .stx-chip{cursor:pointer;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;padding:9px 15px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);transition:all .15s;}
+  .stx-chip:hover{transform:translateY(-2px);}
+  .stx-chip.c2{border-color:#2faf6a;} .stx-chip.c3{border-color:#d6a13a;}
+  .stx-chip.c4{border-color:var(--acc);} .stx-chip.c5{border-color:#a03048;}
+  .stx-chip.active{background:var(--card2);box-shadow:0 0 0 2px var(--acc) inset;}
+  .stx-detail{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:18px 20px;min-height:90px;}
+  .stx-detail .stx-code{font-family:'Unbounded',sans-serif;font-weight:800;font-size:30px;}
+  .stx-detail .stx-name{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);margin-bottom:8px;}
+  .stx-detail .stx-desc{font-size:14.5px;color:#e6d6e0;}
+
+  /* ===== STORE / CART WIDGET ===== */
+  .widget{background:linear-gradient(160deg,#241723,#1a121c);border:1px solid var(--line);border-radius:16px;padding:20px;margin:20px 0;}
+  .widget-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:16px;}
+  @media(max-width:640px){.widget-grid{grid-template-columns:1fr;}}
+  .w-panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;}
+  .w-panel h5{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+  .shop-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .shop-item:last-child{border-bottom:none;}
+  .shop-item .nm{font-weight:700;font-size:14px;}
+  .shop-item .pr{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);}
+  .minibtn{cursor:pointer;font-family:'Nunito';font-weight:700;font-size:12.5px;border:none;border-radius:8px;padding:6px 12px;background:var(--acc);color:#fff;transition:all .12s;}
+  .minibtn:hover{filter:brightness(1.12);} .minibtn.ghost{background:var(--card2);color:var(--ink);border:1px solid var(--line);}
+  .state-json{font-family:'JetBrains Mono',monospace;font-size:12px;color:#cdbcca;white-space:pre-wrap;background:#160e19;border-radius:8px;padding:12px;min-height:80px;line-height:1.55;}
+  .state-json .k{color:var(--acc2);} .state-json .v{color:var(--green);} .state-json .num{color:var(--orange);}
+  .subs{display:flex;flex-direction:column;gap:8px;}
+  .sub-card{background:#160e19;border:1px solid var(--line);border-radius:9px;padding:9px 12px;font-size:13px;transition:all .2s;}
+  .sub-card.flash{box-shadow:0 0 0 2px var(--acc);}
+  .sub-card .tag{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);}
+
+  /* ===== ZOD PLAYGROUND ===== */
+  .zod{background:linear-gradient(160deg,#241723,#1a121c);border:1px solid var(--line);border-radius:16px;padding:20px;margin:20px 0;}
+  .zod textarea{width:100%;font-family:'JetBrains Mono',monospace;font-size:12.5px;background:#160e19;color:#cdbcca;border:1px solid var(--line);border-radius:10px;padding:12px;min-height:120px;resize:vertical;line-height:1.5;}
+  .zod .zrow{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;}
+  .zod-result{border-radius:10px;padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:12.5px;white-space:pre-wrap;min-height:50px;line-height:1.55;}
+  .zod-result.ok{background:rgba(70,184,119,.1);border:1px solid rgba(70,184,119,.4);color:#9fe0bb;}
+  .zod-result.bad{background:rgba(226,59,80,.1);border:1px solid rgba(226,59,80,.4);color:#f0a4b0;}
+  .zod-result.idle{background:#160e19;border:1px solid var(--line);color:var(--muted);}
+
+  /* ===== FETCH DEMO ===== */
+  .fetchout{background:#0e0a11;border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#cdbcca;white-space:pre-wrap;max-height:260px;overflow:auto;min-height:46px;line-height:1.5;}
+  .fetchout .k{color:var(--acc2);}.fetchout .v{color:var(--green);}.fetchout .num{color:var(--orange);}.fetchout .muted{color:#6b5566;}
+
+  /* ===== NETWORK ANIMATION ===== */
+  .net{background:linear-gradient(160deg,#241723,#1a121c);border:1px solid var(--line);border-radius:16px;padding:26px 20px;margin:20px 0;}
+  .net-stage{display:flex;align-items:center;justify-content:space-between;gap:10px;position:relative;}
+  .net-node{flex-shrink:0;text-align:center;width:120px;}
+  .net-node .nbox{font-size:32px;background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:14px 0;}
+  .net-node .nlbl{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-top:8px;}
+  .net-wire{flex:1;height:3px;background:var(--line);border-radius:2px;position:relative;margin:0 4px;align-self:flex-start;margin-top:36px;}
+  .net-packet{position:absolute;top:-7px;left:0;width:16px;height:16px;border-radius:4px;font-size:10px;display:flex;align-items:center;justify-content:center;opacity:0;}
+  .net-packet.req{background:var(--acc);}
+  .net-packet.res{background:var(--maxi);}
+  @keyframes flyR{0%{left:0;opacity:1;}100%{left:calc(100% - 16px);opacity:1;}}
+  @keyframes flyL{0%{left:calc(100% - 16px);opacity:1;}100%{left:0;opacity:1;}}
+  .net-packet.go-req{animation:flyR 1s ease forwards;}
+  .net-packet.go-res{animation:flyL 1s ease forwards;}
+  .net-log{margin-top:18px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#cdbcca;min-height:24px;}
+
+  /* ===== FSD CAKE (тортик) ===== */
+  .cake{display:flex;flex-direction:column;align-items:center;gap:0;margin:24px 0 8px;perspective:1000px;}
+  .cake-layer{width:100%;max-width:560px;color:#fff;border-radius:10px;padding:13px 20px;margin-top:-2px;cursor:pointer;transition:transform .2s, box-shadow .2s;
+    transform:rotateX(8deg);box-shadow:0 4px 0 rgba(0,0,0,.25);display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid rgba(255,255,255,.12);}
+  .cake-layer:hover{transform:rotateX(8deg) translateY(-3px) scale(1.015);box-shadow:0 10px 22px rgba(0,0,0,.4);}
+  .cake-layer .cl-name{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;}
+  .cake-layer .cl-tag{font-size:12px;opacity:.92;text-align:right;}
+  .cl-app{background:#c0392b;width:46%;} .cl-pages{background:#d96a2e;width:56%;}
+  .cl-widgets{background:#cf9a2c;width:66%;} .cl-features{background:#3a9a5e;width:76%;}
+  .cl-entities{background:#3a72b8;width:86%;} .cl-shared{background:#6b5a86;width:96%;}
+  .cake-detail{max-width:560px;margin:14px auto 0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;font-size:14px;color:#e6d6e0;min-height:60px;}
+  .cake-detail .cd-t{font-family:'Unbounded';font-weight:600;font-size:14px;margin-bottom:5px;}
+
+  /* ===== DATA PIPELINE (the payoff) ===== */
+  .pipe{background:linear-gradient(160deg,#241723,#1a121c);border:1px solid var(--line);border-radius:16px;padding:22px;margin:20px 0;}
+  .pipe-track{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;}
+  .pipe-step{flex:1;min-width:150px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 14px;margin:5px;transition:all .3s;opacity:.45;}
+  .pipe-step.lit{opacity:1;border-color:var(--acc);box-shadow:0 0 18px rgba(226,59,80,.3);transform:translateY(-3px);}
+  .pipe-step .ps-layer{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--acc2);margin-bottom:5px;}
+  .pipe-step .ps-t{font-weight:700;font-size:14px;margin-bottom:4px;}
+  .pipe-step .ps-d{font-size:12px;color:var(--muted);line-height:1.4;}
+  .pipe-step .ps-ico{font-size:20px;margin-bottom:6px;}
+
+  footer{text-align:center;padding:44px 20px 70px;border-top:1px solid var(--line);margin-top:24px;}
+  footer .big{font-family:'Unbounded',sans-serif;font-weight:700;font-size:22px;color:var(--acc2);margin-bottom:8px;}
+  footer p{color:var(--muted);}
+  .pager{display:flex;justify-content:space-between;gap:12px;padding:24px 0 8px;}
+  .pager button{font-family:'Nunito',sans-serif;font-weight:700;font-size:14px;cursor:pointer;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:12px 20px;transition:all .15s;}
+  .pager button:hover{border-color:var(--acc);color:var(--acc2);}
+  .pager button:disabled{opacity:.3;cursor:not-allowed;}
+  .pager button.next{margin-left:auto;}
+</style>
+</head>
+<body>
+<div class="progress" id="prog"></div>
+<div class="topbar"><div class="topbar-inner">
+  <div class="brand">DATA<b>·</b>FLOW</div>
+  <div class="tabs" id="tabs"><button class="tab active" data-page="net"><span class="n">01</span>Сеть</button><button class="tab" data-page="tools"><span class="n">02</span>fetch / axios</button><button class="tab" data-page="types"><span class="n">03</span>TS &amp; Zod</button><button class="tab" data-page="data"><span class="n">04</span>Дата-менеджмент</button><button class="tab" data-page="fsd"><span class="n">05</span>FSD</button></div>
+</div></div>
+<div class="wrap"><div id="PAGES">
+<div class="page active" id="page-net"><div class="phero"><div class="kicker">Раздел 01 · Сеть</div><h1>Как фронт и бэк разговаривают</h1><p>Прежде чем таскать данные по проекту, надо понять откуда они вообще берутся. Сейчас разберём, что происходит между браузером и сервером, что такое HTTP, коды ответов и JSON. Всё наглядно и кликабельно.</p></div><div class="say kyle"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="kFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#b87a48"/><stop offset="100%" stop-color="#9a6238"/></linearGradient><radialGradient id="kCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#e8957a" stop-opacity="0.5"/><stop offset="100%" stop-color="#e8957a" stop-opacity="0"/></radialGradient></defs><ellipse cx="58" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="142" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="64" cy="90" rx="22" ry="26" fill="#6e4426"/><ellipse cx="136" cy="90" rx="22" ry="26" fill="#6e4426"/><path d="M68 58 Q60 22 88 44 Q80 56 72 60 Z" fill="url(#kFur__U)"/><path d="M132 58 Q140 22 112 44 Q120 56 128 60 Z" fill="url(#kFur__U)"/><path d="M71 54 Q67 36 82 48 Z" fill="#3a3230"/><path d="M129 54 Q133 36 118 48 Z" fill="#3a3230"/><circle cx="100" cy="100" r="50" fill="url(#kFur__U)"/><path d="M100 56 Q62 62 60 104 Q100 92 140 104 Q138 62 100 56 Z" fill="#e8cfa8"/><ellipse cx="100" cy="98" rx="40" ry="30" fill="#ecd6b4"/><ellipse cx="100" cy="116" rx="30" ry="24" fill="#f2e1c8"/><ellipse cx="72" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="128" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="100" cy="106" rx="9" ry="7" fill="#3a2a26"/><ellipse cx="97" cy="104" rx="3" ry="2" fill="#5a4a44" opacity="0.7"/><ellipse cx="80" cy="94" rx="13" ry="15" fill="#fff"/><ellipse cx="120" cy="94" rx="13" ry="15" fill="#fff"/><circle cx="81" cy="96" r="9.5" fill="#4a90d9"/><circle cx="119" cy="96" r="9.5" fill="#4a90d9"/><circle cx="81" cy="96" r="5" fill="#1a2f4a"/><circle cx="119" cy="96" r="5" fill="#1a2f4a"/><circle cx="84" cy="91" r="3.5" fill="#fff"/><circle cx="122" cy="91" r="3.5" fill="#fff"/><circle cx="77" cy="98" r="1.8" fill="#fff" opacity="0.8"/><circle cx="115" cy="98" r="1.8" fill="#fff" opacity="0.8"/><path d="M88 120 Q100 130 112 120" stroke="#7a5238" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M74 142 Q100 154 126 142" stroke="#9a4030" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="100" cy="151" r="7" fill="#f0c44e"/><circle cx="100" cy="153" r="1.8" fill="#9a7a1a"/></svg></div>
+    <div class="bubble"><div class="who">Кайл</div><p>Дорогие студенты-Яндексоиды, начнём с фундамента. Фронтенд живёт в браузере, данные живут на сервере. Между ними — сеть. Всё, что мы делаем дальше, это переписка двух программ через интернет.</p></div></div><section><div class="sec-num">01 · КЛИЕНТ И СЕРВЕР</div><h2>Двое на проводе</h2><p class="lead">Браузер (клиент) спрашивает. Сервер (бэкенд) отвечает. Точка.</p><p>Когда ты открываешь страницу, браузер по имени сайта находит его IP через <strong>DNS</strong> (телефонная книга интернета), стучится на сервер и говорит: «дай мне вот это». Сервер думает, лезет в базу, и присылает ответ. Один запрос — один ответ. Сервер сам тебе ничего не шлёт, пока не спросишь (если это не вебсокеты, но это другая история).</p><div class="net"><div class="net-stage"><div class="net-node"><div class="nbox">🧑‍💻</div><div class="nlbl">Браузер<br>(твой фронт)</div></div><div class="net-wire" id="net-wire"></div><div class="net-node"><div class="nbox">🖥️</div><div class="nlbl">Сервер<br>(бэкенд + БД)</div></div></div><div class="net-log" id="net-log">нажми кнопку — отправим запрос</div><div style="text-align:center;margin-top:14px;"><button class="minibtn" onclick="flyPacket()">▶ Отправить запрос</button></div></div><div class="say ren"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="rFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8893ab"/><stop offset="100%" stop-color="#6e7a94"/></linearGradient></defs><circle cx="70" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="130" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="70" cy="62" r="7.5" fill="#525c70"/><circle cx="130" cy="62" r="7.5" fill="#525c70"/><circle cx="100" cy="102" r="50" fill="url(#rFur__U)"/><ellipse cx="100" cy="116" rx="38" ry="30" fill="#e6eaf2"/><ellipse cx="100" cy="120" rx="30" ry="22" fill="#eef1f7"/><ellipse cx="100" cy="110" rx="11" ry="8" fill="#3e3e48"/><ellipse cx="96" cy="108" rx="3" ry="2" fill="#5e5e68" opacity="0.7"/><path d="M100 117 L100 126" stroke="#3e3e48" stroke-width="2" stroke-linecap="round"/><circle cx="80" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><circle cx="120" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><path d="M96 94 Q100 90 104 94" stroke="#4a5a6a" stroke-width="2.5" fill="none"/><circle cx="80" cy="95" r="8" fill="#3e3e48"/><circle cx="120" cy="95" r="8" fill="#3e3e48"/><circle cx="83" cy="92" r="3" fill="#fff"/><circle cx="123" cy="92" r="3" fill="#fff"/><circle cx="77" cy="97" r="1.5" fill="#fff" opacity="0.7"/><circle cx="117" cy="97" r="1.5" fill="#fff" opacity="0.7"/><path d="M72 88 Q78 84 84 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M112 88 Q118 84 124 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M78 116 Q60 114 52 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M78 122 Q60 124 54 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 116 Q140 114 148 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 122 Q140 124 146 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M90 124 Q100 131 110 124" stroke="#525c70" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg></div>
+    <div class="bubble"><div class="who">Рен</div><p>Красный пакет — запрос, зелёный — ответ. В реальности туда-обратно это десятки миллисекунд, но цикл всегда один: спросил → подождал → получил. Запомни ритм, на нём держится весь async.</p></div></div></section><section><div class="sec-num">02 · HTTP-МЕТОДЫ</div><h2>Глаголы запроса</h2><p>HTTP — это протокол, язык переписки. У каждого запроса есть <strong>метод</strong> — что мы хотим сделать с ресурсом. Их немного, и они читаются как глаголы.</p><div class="cmp"><div class="ch a">Метод</div><div class="ch b">Что делает</div><div class="cc">GET</div><div class="cc">Прочитать. «Дай мне список юзеров.» Ничего не меняет.</div><div class="cc">POST</div><div class="cc">Создать. «Заведи нового юзера вот с этими данными.»</div><div class="cc">PUT / PATCH</div><div class="cc">Обновить. PUT меняет целиком, PATCH — кусочек.</div><div class="cc">DELETE</div><div class="cc">Удалить. «Снеси заказ №42.»</div></div><div class="box tip"><div class="bt">Правило</div><p>GET только читает и не имеет тела. Если ты что-то меняешь на сервере — это никогда не GET. Иначе поисковый робот, зайдя по ссылке, случайно удалит тебе пол-базы.</p></div></section><section><div class="sec-num">03 · КОДЫ ОТВЕТОВ</div><h2>Сервер отвечает цифрой</h2><p>На каждый запрос сервер возвращает трёхзначный <strong>код статуса</strong>. Первая цифра — категория. Это первое, на что смотришь, когда что-то сломалось. Потыкай:</p><div class="stx"><div class="stx-chips"><button class="stx-chip c2" data-code="200" onclick="pickStatus('200')">200</button><button class="stx-chip c2" data-code="201" onclick="pickStatus('201')">201</button><button class="stx-chip c3" data-code="301" onclick="pickStatus('301')">301</button><button class="stx-chip c3" data-code="304" onclick="pickStatus('304')">304</button><button class="stx-chip c4" data-code="400" onclick="pickStatus('400')">400</button><button class="stx-chip c4" data-code="401" onclick="pickStatus('401')">401</button><button class="stx-chip c4" data-code="403" onclick="pickStatus('403')">403</button><button class="stx-chip c4" data-code="404" onclick="pickStatus('404')">404</button><button class="stx-chip c4" data-code="429" onclick="pickStatus('429')">429</button><button class="stx-chip c5" data-code="500" onclick="pickStatus('500')">500</button><button class="stx-chip c5" data-code="503" onclick="pickStatus('503')">503</button></div><div class="stx-detail" id="stx-detail"></div></div><ul class="plain"><li><strong>2xx</strong> — всё хорошо, держи данные.</li><li><strong>3xx</strong> — иди в другое место (редирект, кэш).</li><li><strong>4xx</strong> — ошибся <em>ты</em> (клиент). Кривой запрос, нет прав, не туда.</li><li><strong>5xx</strong> — упал <em>сервер</em>. Не твоя вина, иди к бэкендерам.</li></ul><div class="meme-row"><span class="meme"><span class="mava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#46b877"/><stop offset="100%" stop-color="#359a5e"/></linearGradient><radialGradient id="mCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#f0a890" stop-opacity="0.45"/><stop offset="100%" stop-color="#f0a890" stop-opacity="0"/></radialGradient></defs><path d="M66 56 Q56 18 90 42 Q80 54 72 58 Z" fill="url(#mFur__U)"/><path d="M134 56 Q144 18 110 42 Q120 54 128 58 Z" fill="url(#mFur__U)"/><path d="M70 50 Q64 30 82 44 Z" fill="#1f1f1f"/><path d="M130 50 Q136 30 118 44 Z" fill="#1f1f1f"/><circle cx="100" cy="100" r="50" fill="url(#mFur__U)"/><path d="M100 64 Q66 72 70 112 Q100 128 130 112 Q134 72 100 64 Z" fill="#f2f6f2"/><ellipse cx="100" cy="104" rx="34" ry="26" fill="#f7faf7"/><ellipse cx="74" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="126" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="100" cy="108" rx="6.5" ry="5" fill="#2a2a2a"/><path d="M100 113 L100 120" stroke="#2a2a2a" stroke-width="1.5" stroke-linecap="round"/><ellipse cx="82" cy="96" rx="12" ry="14" fill="#fff"/><ellipse cx="118" cy="96" rx="12" ry="14" fill="#fff"/><circle cx="83" cy="98" r="8.5" fill="#e8a020"/><circle cx="117" cy="98" r="8.5" fill="#e8a020"/><circle cx="83" cy="98" r="4.5" fill="#3a2400"/><circle cx="117" cy="98" r="4.5" fill="#3a2400"/><circle cx="86" cy="93" r="3.2" fill="#fff"/><circle cx="120" cy="93" r="3.2" fill="#fff"/><circle cx="79" cy="100" r="1.6" fill="#fff" opacity="0.8"/><circle cx="113" cy="100" r="1.6" fill="#fff" opacity="0.8"/><path d="M90 119 Q100 127 110 119" stroke="#1f5a32" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M97 124 Q100 129 103 124 Z" fill="#e87a8a"/></svg></span>4xx — это «ты дурак», 5xx — это «я дурак»</span></div></section><section><div class="sec-num">04 · JSON</div><h2>Формат, на котором все договорились</h2><p>Данные по сети летят текстом. Нужен формат, который понимают и JS, и Python, и Go, и кто угодно. Этот формат — <strong>JSON</strong> (JavaScript Object Notation). Объекты в фигурных скобках, массивы в квадратных, строки в кавычках. Выглядит как объект JS, но это просто текст.</p><div class="say maxi"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#46b877"/><stop offset="100%" stop-color="#359a5e"/></linearGradient><radialGradient id="mCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#f0a890" stop-opacity="0.45"/><stop offset="100%" stop-color="#f0a890" stop-opacity="0"/></radialGradient></defs><path d="M66 56 Q56 18 90 42 Q80 54 72 58 Z" fill="url(#mFur__U)"/><path d="M134 56 Q144 18 110 42 Q120 54 128 58 Z" fill="url(#mFur__U)"/><path d="M70 50 Q64 30 82 44 Z" fill="#1f1f1f"/><path d="M130 50 Q136 30 118 44 Z" fill="#1f1f1f"/><circle cx="100" cy="100" r="50" fill="url(#mFur__U)"/><path d="M100 64 Q66 72 70 112 Q100 128 130 112 Q134 72 100 64 Z" fill="#f2f6f2"/><ellipse cx="100" cy="104" rx="34" ry="26" fill="#f7faf7"/><ellipse cx="74" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="126" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="100" cy="108" rx="6.5" ry="5" fill="#2a2a2a"/><path d="M100 113 L100 120" stroke="#2a2a2a" stroke-width="1.5" stroke-linecap="round"/><ellipse cx="82" cy="96" rx="12" ry="14" fill="#fff"/><ellipse cx="118" cy="96" rx="12" ry="14" fill="#fff"/><circle cx="83" cy="98" r="8.5" fill="#e8a020"/><circle cx="117" cy="98" r="8.5" fill="#e8a020"/><circle cx="83" cy="98" r="4.5" fill="#3a2400"/><circle cx="117" cy="98" r="4.5" fill="#3a2400"/><circle cx="86" cy="93" r="3.2" fill="#fff"/><circle cx="120" cy="93" r="3.2" fill="#fff"/><circle cx="79" cy="100" r="1.6" fill="#fff" opacity="0.8"/><circle cx="113" cy="100" r="1.6" fill="#fff" opacity="0.8"/><path d="M90 119 Q100 127 110 119" stroke="#1f5a32" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M97 124 Q100 129 103 124 Z" fill="#e87a8a"/></svg></div>
+    <div class="bubble"><div class="who">Макси</div><p>Ключевая мысль: по сети летит строка. JSON.parse превращает строку в живой объект, JSON.stringify — наоборот. Жми ▶️, увидишь оба превращения.</p></div></div><div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">json.js</span><button class="runbtn" onclick="runJS(this)" data-src="%2F%2F%20%D1%82%D0%BE%2C%20%D1%87%D1%82%D0%BE%20%D1%80%D0%B5%D0%B0%D0%BB%D1%8C%D0%BD%D0%BE%20%D0%BF%D1%80%D0%B8%D0%BB%D0%B5%D1%82%D0%B5%D0%BB%D0%BE%20%D1%81%20%D1%81%D0%B5%D1%80%D0%B2%D0%B5%D1%80%D0%B0%20%E2%80%94%20%D1%8D%D1%82%D0%BE%20%D0%A2%D0%95%D0%9A%D0%A1%D0%A2%0Aconst%20raw%20%3D%20%27%7B%22name%22%3A%22%D0%90%D0%BD%D1%8F%22%2C%22age%22%3A27%2C%22skills%22%3A%5B%22js%22%2C%22ts%22%5D%7D%27%3B%0Aconsole.log%28typeof%20raw%29%3B%20%20%20%20%20%20%20%20%20%20%20%20%2F%2F%20string%20%E2%80%94%20%D0%BF%D0%BE%D0%BA%D0%B0%20%D0%BF%D1%80%D0%BE%D1%81%D1%82%D0%BE%20%D1%81%D1%82%D1%80%D0%BE%D0%BA%D0%B0%0A%0A%2F%2F%20%D0%BF%D0%B0%D1%80%D1%81%D0%B8%D0%BC%20%D1%82%D0%B5%D0%BA%D1%81%D1%82%20%D0%B2%20%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D1%8F%D1%89%D0%B8%D0%B9%20%D0%BE%D0%B1%D1%8A%D0%B5%D0%BA%D1%82%0Aconst%20user%20%3D%20JSON.parse%28raw%29%3B%0Aconsole.log%28typeof%20user%29%3B%20%20%20%20%20%20%20%20%20%20%20%2F%2F%20object%0Aconsole.log%28user.name%2C%20user.age%29%3B%20%20%20%2F%2F%20%D0%90%D0%BD%D1%8F%2027%0Aconsole.log%28user.skills%5B0%5D%29%3B%20%20%20%20%20%20%20%20%2F%2F%20js%0A%0A%2F%2F%20%D0%B8%20%D0%BE%D0%B1%D1%80%D0%B0%D1%82%D0%BD%D0%BE%20%E2%80%94%20%D0%BE%D0%B1%D1%8A%D0%B5%D0%BA%D1%82%20%D0%B2%20%D1%81%D1%82%D1%80%D0%BE%D0%BA%D1%83%2C%20%D1%87%D1%82%D0%BE%D0%B1%D1%8B%20%D0%BE%D1%82%D0%BF%D1%80%D0%B0%D0%B2%D0%B8%D1%82%D1%8C%20%D0%BD%D0%B0%20%D1%81%D0%B5%D1%80%D0%B2%D0%B5%D1%80%0Aconst%20back%20%3D%20JSON.stringify%28%7B%20ok%3A%20true%2C%20count%3A%203%20%7D%29%3B%0Aconsole.log%28back%29%3B%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%2F%2F%20%7B%22ok%22%3Atrue%2C%22count%22%3A3%7D"><span>▶</span><span class="rlabel">Запустить</span></button></div>
+  <pre><code><span class="tc">// то, что реально прилетело с сервера — это ТЕКСТ</span>
+<span class="tk">const</span> <span class="tx">raw</span> <span class="to">=</span> <span class="ts2">'{"name":"Аня","age":27,"skills":["js","ts"]}'</span><span class="tx">;</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="tk">typeof</span> <span class="tx">raw</span><span class="tx">)</span><span class="tx">;</span>            <span class="tc">// string — пока просто строка</span>
+
+<span class="tc">// парсим текст в настоящий объект</span>
+<span class="tk">const</span> <span class="tx">user</span> <span class="to">=</span> <span class="ty">JSON</span><span class="tx">.</span><span class="tf">parse</span><span class="tx">(</span><span class="tx">raw</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="tk">typeof</span> <span class="tx">user</span><span class="tx">)</span><span class="tx">;</span>           <span class="tc">// object</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="tx">user</span><span class="tx">.</span><span class="tx">name</span><span class="tx">,</span> <span class="tx">user</span><span class="tx">.</span><span class="tx">age</span><span class="tx">)</span><span class="tx">;</span>   <span class="tc">// Аня 27</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="tx">user</span><span class="tx">.</span><span class="tx">skills</span><span class="tx">[</span><span class="tn">0</span><span class="tx">]</span><span class="tx">)</span><span class="tx">;</span>        <span class="tc">// js</span>
+
+<span class="tc">// и обратно — объект в строку, чтобы отправить на сервер</span>
+<span class="tk">const</span> <span class="tx">back</span> <span class="to">=</span> <span class="ty">JSON</span><span class="tx">.</span><span class="tf">stringify</span><span class="tx">(</span><span class="tx">{</span> <span class="tx">ok</span><span class="to">:</span> <span class="tn">true</span><span class="tx">,</span> <span class="tx">count</span><span class="to">:</span> <span class="tn">3</span> <span class="tx">}</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="tx">back</span><span class="tx">)</span><span class="tx">;</span>                  <span class="tc">// {"ok":true,"count":3}</span></code></pre>
+  <div class="console"><div class="console-inner"><div class="console-label">console</div></div></div>
+</div><div class="box info"><div class="bt">Зачем это знать фронтендеру</div><p>Сервер почти всегда отдаёт JSON. Любой fetch заканчивается на .json(). Любая ошибка «cannot read property of undefined» часто значит, что структура JSON не та, что ты ждал. Поэтому дальше — валидация.</p></div></section><div class="pager"><button onclick="pager(1)" class="next">Дальше: чем делаем запросы →</button></div></div>
+<div class="page" id="page-tools"><div class="phero"><div class="kicker">Раздел 02 · Инструменты</div><h1>Чем делаем запросы: fetch и axios</h1><p>Теперь сами стучимся на сервер из кода. Два инструмента: нативный <code>fetch</code> и библиотека <code>axios</code>. Демки ниже бьют по настоящему публичному API — это реальные запросы, а не картинки.</p></div><div class="say kyle"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="kFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#b87a48"/><stop offset="100%" stop-color="#9a6238"/></linearGradient><radialGradient id="kCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#e8957a" stop-opacity="0.5"/><stop offset="100%" stop-color="#e8957a" stop-opacity="0"/></radialGradient></defs><ellipse cx="58" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="142" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="64" cy="90" rx="22" ry="26" fill="#6e4426"/><ellipse cx="136" cy="90" rx="22" ry="26" fill="#6e4426"/><path d="M68 58 Q60 22 88 44 Q80 56 72 60 Z" fill="url(#kFur__U)"/><path d="M132 58 Q140 22 112 44 Q120 56 128 60 Z" fill="url(#kFur__U)"/><path d="M71 54 Q67 36 82 48 Z" fill="#3a3230"/><path d="M129 54 Q133 36 118 48 Z" fill="#3a3230"/><circle cx="100" cy="100" r="50" fill="url(#kFur__U)"/><path d="M100 56 Q62 62 60 104 Q100 92 140 104 Q138 62 100 56 Z" fill="#e8cfa8"/><ellipse cx="100" cy="98" rx="40" ry="30" fill="#ecd6b4"/><ellipse cx="100" cy="116" rx="30" ry="24" fill="#f2e1c8"/><ellipse cx="72" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="128" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="100" cy="106" rx="9" ry="7" fill="#3a2a26"/><ellipse cx="97" cy="104" rx="3" ry="2" fill="#5a4a44" opacity="0.7"/><ellipse cx="80" cy="94" rx="13" ry="15" fill="#fff"/><ellipse cx="120" cy="94" rx="13" ry="15" fill="#fff"/><circle cx="81" cy="96" r="9.5" fill="#4a90d9"/><circle cx="119" cy="96" r="9.5" fill="#4a90d9"/><circle cx="81" cy="96" r="5" fill="#1a2f4a"/><circle cx="119" cy="96" r="5" fill="#1a2f4a"/><circle cx="84" cy="91" r="3.5" fill="#fff"/><circle cx="122" cy="91" r="3.5" fill="#fff"/><circle cx="77" cy="98" r="1.8" fill="#fff" opacity="0.8"/><circle cx="115" cy="98" r="1.8" fill="#fff" opacity="0.8"/><path d="M88 120 Q100 130 112 120" stroke="#7a5238" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M74 142 Q100 154 126 142" stroke="#9a4030" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="100" cy="151" r="7" fill="#f0c44e"/><circle cx="100" cy="153" r="1.8" fill="#9a7a1a"/></svg></div>
+    <div class="bubble"><div class="who">Кайл</div><p>fetch встроен в браузер, ставить ничего не надо. axios — отдельная библиотека, которая делает то же самое, но удобнее. Сначала fetch, потом разберём чем axios лучше.</p></div></div><section><div class="sec-num">01 · FETCH</div><h2>Нативный способ</h2><p class="lead">fetch возвращает <strong>промис</strong> — обещание, что ответ придёт позже. Поэтому его ждут через <code>await</code>.</p><p>Тонкость номер один: fetch отдаёт ответ в два этапа. Сначала прилетают заголовки и статус (первый <code>await</code>), потом распаковываешь тело через <code>.json()</code> (второй <code>await</code>). Тонкость номер два: fetch <strong>не считает ошибкой</strong> коды 404 или 500 — для него «сервер ответил» уже успех. Проверять <code>response.ok</code> приходится руками.</p><div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">fetch.js</span><button class="runbtn" onclick="runJS(this)" data-src="%2F%2F%20%D1%80%D0%B5%D0%B0%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9%20%D0%B7%D0%B0%D0%BF%D1%80%D0%BE%D1%81%20%D0%BD%D0%B0%20%D0%BF%D1%83%D0%B1%D0%BB%D0%B8%D1%87%D0%BD%D1%8B%D0%B9%20%D1%82%D0%B5%D1%81%D1%82%D0%BE%D0%B2%D1%8B%D0%B9%20API%0Aconst%20res%20%3D%20await%20fetch%28%27https%3A%2F%2Fjsonplaceholder.typicode.com%2Fusers%2F2%27%29%3B%0A%0Aconsole.log%28%27%D1%81%D1%82%D0%B0%D1%82%D1%83%D1%81%3A%27%2C%20res.status%29%3B%20%20%20%2F%2F%20200%0Aconsole.log%28%27%D0%B2%D1%81%D1%91%20%D0%BE%D0%BA%3F%27%2C%20res.ok%29%3B%20%20%20%20%20%20%20%2F%2F%20true%0A%0A%2F%2F%20%D0%B2%D1%82%D0%BE%D1%80%D0%BE%D0%B9%20await%20%E2%80%94%20%D1%80%D0%B0%D1%81%D0%BF%D0%B0%D0%BA%D0%BE%D0%B2%D1%8B%D0%B2%D0%B0%D0%B5%D0%BC%20%D1%82%D0%B5%D0%BB%D0%BE%20%D0%B8%D0%B7%20JSON%0Aconst%20user%20%3D%20await%20res.json%28%29%3B%0Aconsole.log%28%27%D0%B8%D0%BC%D1%8F%3A%27%2C%20user.name%29%3B%0Aconsole.log%28%27%D0%B3%D0%BE%D1%80%D0%BE%D0%B4%3A%27%2C%20user.address.city%29%3B"><span>▶</span><span class="rlabel">Запустить</span></button></div>
+  <pre><code><span class="tc">// реальный запрос на публичный тестовый API</span>
+<span class="tk">const</span> <span class="tx">res</span> <span class="to">=</span> <span class="tk">await</span> <span class="tf">fetch</span><span class="tx">(</span><span class="ts2">'https://jsonplaceholder.typicode.com/users/2'</span><span class="tx">)</span><span class="tx">;</span>
+
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="ts2">'статус:'</span><span class="tx">,</span> <span class="tx">res</span><span class="tx">.</span><span class="tx">status</span><span class="tx">)</span><span class="tx">;</span>   <span class="tc">// 200</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="ts2">'всё ок?'</span><span class="tx">,</span> <span class="tx">res</span><span class="tx">.</span><span class="tx">ok</span><span class="tx">)</span><span class="tx">;</span>       <span class="tc">// true</span>
+
+<span class="tc">// второй await — распаковываем тело из JSON</span>
+<span class="tk">const</span> <span class="tx">user</span> <span class="to">=</span> <span class="tk">await</span> <span class="tx">res</span><span class="tx">.</span><span class="tf">json</span><span class="tx">(</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="ts2">'имя:'</span><span class="tx">,</span> <span class="tx">user</span><span class="tx">.</span><span class="tx">name</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="ts2">'город:'</span><span class="tx">,</span> <span class="tx">user</span><span class="tx">.</span><span class="tx">address</span><span class="tx">.</span><span class="tx">city</span><span class="tx">)</span><span class="tx">;</span></code></pre>
+  <div class="console"><div class="console-inner"><div class="console-label">console</div></div></div>
+</div><div style="text-align:center;margin:6px 0 0;"><button class="minibtn" onclick="realFetch(this,'fetch')">▶ Сделать реальный GET-запрос</button></div><div class="fetchout">нажми кнопку — увидишь живой ответ настоящего сервера здесь</div><div class="box warn"><div class="bt">Грабли fetch</div><p>fetch НЕ кидает ошибку на 404/500. Этот код спокойно «отработает» на сломанном запросе и упадёт уже на user.name. Всегда проверяй if (!res.ok) throw ... сам.</p></div></section><section><div class="sec-num">02 · AXIOS</div><h2>То же, но с комфортом</h2><p>axios — обёртка над тем же HTTP, но снимает рутину. Что он даёт сверху:</p><ul class="plain"><li>Сам парсит JSON — никакого второго <code>.json()</code>, данные сразу в <code>res.data</code>.</li><li>Сам кидает ошибку на 4xx/5xx — попадаешь в <code>catch</code>, а не ловишь баг на ровном месте.</li><li><strong>baseURL и interceptors</strong> — один раз настроил адрес и токен, дальше пишешь короткие пути. Перехватчики цепляют заголовки и логируют каждый запрос централизованно.</li></ul><div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">axios.js</span></div>
+  <pre><code><span class="tk">import</span> <span class="tx">axios</span> <span class="tk">from</span> <span class="ts2">'axios'</span><span class="tx">;</span>
+
+<span class="tc">// настроил один раз на весь проект</span>
+<span class="tk">const</span> <span class="tx">api</span> <span class="to">=</span> <span class="tx">axios</span><span class="tx">.</span><span class="tf">create</span><span class="tx">(</span><span class="tx">{</span>
+  <span class="tx">baseURL</span><span class="to">:</span> <span class="ts2">'https://api.yandex.ru'</span><span class="tx">,</span>
+  <span class="tx">timeout</span><span class="to">:</span> <span class="tn">5000</span><span class="tx">,</span>
+<span class="tx">}</span><span class="tx">)</span><span class="tx">;</span>
+
+<span class="tc">// interceptor: вешаем токен на каждый запрос автоматически</span>
+<span class="tx">api</span><span class="tx">.</span><span class="tx">interceptors</span><span class="tx">.</span><span class="tx">request</span><span class="tx">.</span><span class="tf">use</span><span class="tx">(</span><span class="tx">(</span><span class="tx">config</span><span class="tx">)</span> <span class="to">=&gt;</span> <span class="tx">{</span>
+  <span class="tx">config</span><span class="tx">.</span><span class="tx">headers</span><span class="tx">.</span><span class="ty">Authorization</span> <span class="to">=</span> <span class="ts2">`Bearer ${getToken()}`</span><span class="tx">;</span>
+  <span class="tk">return</span> <span class="tx">config</span><span class="tx">;</span>
+<span class="tx">}</span><span class="tx">)</span><span class="tx">;</span>
+
+<span class="tc">// сам запрос — коротко, JSON уже распарсен, ошибки в catch</span>
+<span class="tk">const</span> <span class="tx">{</span> <span class="tx">data</span> <span class="tx">}</span> <span class="to">=</span> <span class="tk">await</span> <span class="tx">api</span><span class="tx">.</span><span class="tk">get</span><span class="tx">(</span><span class="ts2">'/users/2'</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="tx">data</span><span class="tx">.</span><span class="tx">name</span><span class="tx">)</span><span class="tx">;</span></code></pre>
+</div><div class="fetchout">демо «как будто axios» (тот же реальный API, axios сам бы распарсил JSON):</div><div style="text-align:center;margin-top:10px;"><button class="minibtn" onclick="realFetch(this,'axios')">▶ Запросить через axios-стиль</button></div><div class="say ren"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="rFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8893ab"/><stop offset="100%" stop-color="#6e7a94"/></linearGradient></defs><circle cx="70" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="130" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="70" cy="62" r="7.5" fill="#525c70"/><circle cx="130" cy="62" r="7.5" fill="#525c70"/><circle cx="100" cy="102" r="50" fill="url(#rFur__U)"/><ellipse cx="100" cy="116" rx="38" ry="30" fill="#e6eaf2"/><ellipse cx="100" cy="120" rx="30" ry="22" fill="#eef1f7"/><ellipse cx="100" cy="110" rx="11" ry="8" fill="#3e3e48"/><ellipse cx="96" cy="108" rx="3" ry="2" fill="#5e5e68" opacity="0.7"/><path d="M100 117 L100 126" stroke="#3e3e48" stroke-width="2" stroke-linecap="round"/><circle cx="80" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><circle cx="120" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><path d="M96 94 Q100 90 104 94" stroke="#4a5a6a" stroke-width="2.5" fill="none"/><circle cx="80" cy="95" r="8" fill="#3e3e48"/><circle cx="120" cy="95" r="8" fill="#3e3e48"/><circle cx="83" cy="92" r="3" fill="#fff"/><circle cx="123" cy="92" r="3" fill="#fff"/><circle cx="77" cy="97" r="1.5" fill="#fff" opacity="0.7"/><circle cx="117" cy="97" r="1.5" fill="#fff" opacity="0.7"/><path d="M72 88 Q78 84 84 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M112 88 Q118 84 124 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M78 116 Q60 114 52 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M78 122 Q60 124 54 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 116 Q140 114 148 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 122 Q140 124 146 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M90 124 Q100 131 110 124" stroke="#525c70" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg></div>
+    <div class="bubble"><div class="who">Рен</div><p>На пет-проекте хватит fetch. Как только появляется авторизация, базовый адрес и единая обработка ошибок на десятках запросов — axios экономит кучу копипасты. Это вопрос масштаба, а не вкуса.</p></div></div></section><section><div class="sec-num">03 · ASYNC / AWAIT</div><h2>Как читать асинхронный код</h2><p>Запрос идёт время. JS не стоит и не ждёт — он идёт дальше, а результат приходит потом. <code>async/await</code> позволяет писать асинхронный код так, будто он синхронный: сверху вниз, по-человечески.</p><div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">async.js</span><button class="runbtn" onclick="runJS(this)" data-src="function%20getData%28%29%20%7B%0A%20%20%2F%2F%20%D0%B8%D0%BC%D0%B8%D1%82%D0%B8%D1%80%D1%83%D0%B5%D0%BC%20%D0%B7%D0%B0%D0%B4%D0%B5%D1%80%D0%B6%D0%BA%D1%83%20%D1%81%D0%B5%D1%82%D0%B8%20%D0%BD%D0%B0%20600%D0%BC%D1%81%0A%20%20return%20new%20Promise%28resolve%20%3D%3E%20%7B%0A%20%20%20%20setTimeout%28%28%29%20%3D%3E%20resolve%28%7B%20name%3A%20%27%D0%90%D0%BD%D1%8F%27%2C%20online%3A%20true%20%7D%29%2C%20600%29%3B%0A%20%20%7D%29%3B%0A%7D%0A%0Aconsole.log%28%271.%20%D0%BE%D1%82%D0%BF%D1%80%D0%B0%D0%B2%D0%BB%D1%8F%D1%8E%20%D0%B7%D0%B0%D0%BF%D1%80%D0%BE%D1%81...%27%29%3B%0Aconst%20user%20%3D%20await%20getData%28%29%3B%20%20%20%20%20%20%20%20%2F%2F%20%D1%82%D1%83%D1%82%20%D0%BA%D0%BE%D0%B4%20%22%D0%B6%D0%B4%D1%91%D1%82%22%20%D0%BD%D0%B5%20%D0%B1%D0%BB%D0%BE%D0%BA%D0%B8%D1%80%D1%83%D1%8F%0Aconsole.log%28%272.%20%D0%BF%D1%80%D0%B8%D1%88%D1%91%D0%BB%20%D0%BE%D1%82%D0%B2%D0%B5%D1%82%3A%27%2C%20user.name%29%3B%0Aconsole.log%28%273.%20%D0%BF%D0%BE%D0%B5%D1%85%D0%B0%D0%BB%D0%B8%20%D0%B4%D0%B0%D0%BB%D1%8C%D1%88%D0%B5%27%29%3B"><span>▶</span><span class="rlabel">Запустить</span></button></div>
+  <pre><code><span class="tk">function</span> <span class="tf">getData</span><span class="tx">(</span><span class="tx">)</span> <span class="tx">{</span>
+  <span class="tc">// имитируем задержку сети на 600мс</span>
+  <span class="tk">return</span> <span class="tk">new</span> <span class="ty">Promise</span><span class="tx">(</span><span class="tx">resolve</span> <span class="to">=&gt;</span> <span class="tx">{</span>
+    <span class="tf">setTimeout</span><span class="tx">(</span><span class="tx">(</span><span class="tx">)</span> <span class="to">=&gt;</span> <span class="tf">resolve</span><span class="tx">(</span><span class="tx">{</span> <span class="tx">name</span><span class="to">:</span> <span class="ts2">'Аня'</span><span class="tx">,</span> <span class="tx">online</span><span class="to">:</span> <span class="tn">true</span> <span class="tx">}</span><span class="tx">)</span><span class="tx">,</span> <span class="tn">600</span><span class="tx">)</span><span class="tx">;</span>
+  <span class="tx">}</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">}</span>
+
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="ts2">'1. отправляю запрос...'</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tk">const</span> <span class="tx">user</span> <span class="to">=</span> <span class="tk">await</span> <span class="tf">getData</span><span class="tx">(</span><span class="tx">)</span><span class="tx">;</span>        <span class="tc">// тут код "ждёт" не блокируя</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="ts2">'2. пришёл ответ:'</span><span class="tx">,</span> <span class="tx">user</span><span class="tx">.</span><span class="tx">name</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="ts2">'3. поехали дальше'</span><span class="tx">)</span><span class="tx">;</span></code></pre>
+  <div class="console"><div class="console-inner"><div class="console-label">console</div></div></div>
+</div><div class="box tip"><div class="bt">Мнемоника</div><p>async на функции = «внутри будут ожидания». await перед вызовом = «постой тут, пока не придёт результат». Всё, что после await, выполнится только когда данные на руках.</p></div></section><div class="pager"><button onclick="pager(-1)">← Сеть</button><button onclick="pager(1)" class="next">Дальше: типы и Zod →</button></div></div>
+<div class="page" id="page-types"><div class="phero"><div class="kicker">Раздел 03 · Типы</div><h1>Объекты, классы и Zod</h1><p>Данные приехали. Теперь надо их описать типами и не доверять серверу на слово. Разберём объекты vs классы, почему TS-типы исчезают в рантайме, и как Zod проверяет данные по-настоящему.</p></div><div class="say kyle"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="kFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#b87a48"/><stop offset="100%" stop-color="#9a6238"/></linearGradient><radialGradient id="kCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#e8957a" stop-opacity="0.5"/><stop offset="100%" stop-color="#e8957a" stop-opacity="0"/></radialGradient></defs><ellipse cx="58" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="142" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="64" cy="90" rx="22" ry="26" fill="#6e4426"/><ellipse cx="136" cy="90" rx="22" ry="26" fill="#6e4426"/><path d="M68 58 Q60 22 88 44 Q80 56 72 60 Z" fill="url(#kFur__U)"/><path d="M132 58 Q140 22 112 44 Q120 56 128 60 Z" fill="url(#kFur__U)"/><path d="M71 54 Q67 36 82 48 Z" fill="#3a3230"/><path d="M129 54 Q133 36 118 48 Z" fill="#3a3230"/><circle cx="100" cy="100" r="50" fill="url(#kFur__U)"/><path d="M100 56 Q62 62 60 104 Q100 92 140 104 Q138 62 100 56 Z" fill="#e8cfa8"/><ellipse cx="100" cy="98" rx="40" ry="30" fill="#ecd6b4"/><ellipse cx="100" cy="116" rx="30" ry="24" fill="#f2e1c8"/><ellipse cx="72" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="128" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="100" cy="106" rx="9" ry="7" fill="#3a2a26"/><ellipse cx="97" cy="104" rx="3" ry="2" fill="#5a4a44" opacity="0.7"/><ellipse cx="80" cy="94" rx="13" ry="15" fill="#fff"/><ellipse cx="120" cy="94" rx="13" ry="15" fill="#fff"/><circle cx="81" cy="96" r="9.5" fill="#4a90d9"/><circle cx="119" cy="96" r="9.5" fill="#4a90d9"/><circle cx="81" cy="96" r="5" fill="#1a2f4a"/><circle cx="119" cy="96" r="5" fill="#1a2f4a"/><circle cx="84" cy="91" r="3.5" fill="#fff"/><circle cx="122" cy="91" r="3.5" fill="#fff"/><circle cx="77" cy="98" r="1.8" fill="#fff" opacity="0.8"/><circle cx="115" cy="98" r="1.8" fill="#fff" opacity="0.8"/><path d="M88 120 Q100 130 112 120" stroke="#7a5238" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M74 142 Q100 154 126 142" stroke="#9a4030" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="100" cy="151" r="7" fill="#f0c44e"/><circle cx="100" cy="153" r="1.8" fill="#9a7a1a"/></svg></div>
+    <div class="bubble"><div class="who">Кайл</div><p>Данные в JS живут в объектах. TypeScript добавляет к ним типы — описание формы. Но есть подвох на границе с сервером, и его закрывает Zod. Разберём по порядку.</p></div></div><section><div class="sec-num">01 · ОБЪЕКТЫ</div><h2>Базовая структура данных</h2><p class="lead">Объект — это набор пар «ключ: значение». 90% данных во фронте — объекты и массивы объектов.</p><div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">object.js</span><button class="runbtn" onclick="runJS(this)" data-src="%2F%2F%20%D0%BE%D0%B1%D1%8A%D0%B5%D0%BA%D1%82%20%E2%80%94%20%D0%B4%D0%B0%D0%BD%D0%BD%D1%8B%D0%B5%20%D1%81%D0%B3%D1%80%D1%83%D0%BF%D0%BF%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D1%8B%20%D0%BF%D0%BE%20%D1%81%D0%BC%D1%8B%D1%81%D0%BB%D1%83%0Aconst%20user%20%3D%20%7B%0A%20%20name%3A%20%27%D0%90%D0%BD%D1%8F%27%2C%0A%20%20age%3A%2027%2C%0A%20%20isAdmin%3A%20false%2C%0A%7D%3B%0A%0Aconsole.log%28user.name%29%3B%20%20%20%20%20%20%20%20%20%20%2F%2F%20%D0%B4%D0%BE%D1%81%D1%82%D1%83%D0%BF%20%D0%BF%D0%BE%20%D0%BA%D0%BB%D1%8E%D1%87%D1%83%0Auser.age%20%3D%2028%3B%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%2F%2F%20%D0%BC%D0%B5%D0%BD%D1%8F%D0%B5%D0%BC%20%D0%BF%D0%BE%D0%BB%D0%B5%0A%0A%2F%2F%20%D0%BC%D0%B0%D1%81%D1%81%D0%B8%D0%B2%20%D0%BE%D0%B1%D1%8A%D0%B5%D0%BA%D1%82%D0%BE%D0%B2%20%E2%80%94%20%D1%82%D0%BE%2C%20%D1%87%D1%82%D0%BE%20%D0%BE%D0%B1%D1%8B%D1%87%D0%BD%D0%BE%20%D0%BF%D1%80%D0%B8%D1%85%D0%BE%D0%B4%D0%B8%D1%82%20%D1%81%20%D1%81%D0%B5%D1%80%D0%B2%D0%B5%D1%80%D0%B0%0Aconst%20users%20%3D%20%5B%0A%20%20%7B%20name%3A%20%27%D0%90%D0%BD%D1%8F%27%2C%20age%3A%2027%20%7D%2C%0A%20%20%7B%20name%3A%20%27%D0%9C%D0%B0%D0%BA%D1%81%27%2C%20age%3A%2031%20%7D%2C%0A%5D%3B%0Aconsole.log%28users.map%28u%20%3D%3E%20u.name%29%29%3B%20%20%20%2F%2F%20%5B%27%D0%90%D0%BD%D1%8F%27%2C%20%27%D0%9C%D0%B0%D0%BA%D1%81%27%5D"><span>▶</span><span class="rlabel">Запустить</span></button></div>
+  <pre><code><span class="tc">// объект — данные сгруппированы по смыслу</span>
+<span class="tk">const</span> <span class="tx">user</span> <span class="to">=</span> <span class="tx">{</span>
+  <span class="tx">name</span><span class="to">:</span> <span class="ts2">'Аня'</span><span class="tx">,</span>
+  <span class="tx">age</span><span class="to">:</span> <span class="tn">27</span><span class="tx">,</span>
+  <span class="tx">isAdmin</span><span class="to">:</span> <span class="tn">false</span><span class="tx">,</span>
+<span class="tx">}</span><span class="tx">;</span>
+
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="tx">user</span><span class="tx">.</span><span class="tx">name</span><span class="tx">)</span><span class="tx">;</span>          <span class="tc">// доступ по ключу</span>
+<span class="tx">user</span><span class="tx">.</span><span class="tx">age</span> <span class="to">=</span> <span class="tn">28</span><span class="tx">;</span>                   <span class="tc">// меняем поле</span>
+
+<span class="tc">// массив объектов — то, что обычно приходит с сервера</span>
+<span class="tk">const</span> <span class="tx">users</span> <span class="to">=</span> <span class="tx">[</span>
+  <span class="tx">{</span> <span class="tx">name</span><span class="to">:</span> <span class="ts2">'Аня'</span><span class="tx">,</span> <span class="tx">age</span><span class="to">:</span> <span class="tn">27</span> <span class="tx">}</span><span class="tx">,</span>
+  <span class="tx">{</span> <span class="tx">name</span><span class="to">:</span> <span class="ts2">'Макс'</span><span class="tx">,</span> <span class="tx">age</span><span class="to">:</span> <span class="tn">31</span> <span class="tx">}</span><span class="tx">,</span>
+<span class="tx">]</span><span class="tx">;</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="tx">users</span><span class="tx">.</span><span class="tf">map</span><span class="tx">(</span><span class="tx">u</span> <span class="to">=&gt;</span> <span class="tx">u</span><span class="tx">.</span><span class="tx">name</span><span class="tx">)</span><span class="tx">)</span><span class="tx">;</span>   <span class="tc">// ['Аня', 'Макс']</span></code></pre>
+  <div class="console"><div class="console-inner"><div class="console-label">console</div></div></div>
+</div></section><section><div class="sec-num">02 · КЛАССЫ vs ИНТЕРФЕЙСЫ</div><h2>Когда что</h2><p>Тут новички путаются. Разница простая по сути.</p><ul class="plain"><li><strong>interface / type</strong> — это только <em>описание формы</em>. Существует на этапе компиляции, в рантайме его нет. Не создаёт ничего, просто говорит «объект должен выглядеть так».</li><li><strong>class</strong> — это <em>фабрика объектов с поведением</em>. Существует в рантайме, через <code>new</code> создаёт экземпляры, держит данные и методы вместе.</li></ul><div class="cmp"><div class="ch a">interface — форма данных</div><div class="ch b">class — объект с логикой</div><div class="cc">interface User {
+  name: string;
+  age: number;
+}
+
+// просто контракт, кода нет</div><div class="cc">class User {
+  constructor(public name: string) {}
+  greet() {
+    return `Привет, ${this.name}`;
+  }
+}
+// new User('Аня').greet()</div></div><div class="box info"><div class="bt">Практика фронта</div><p>В React-проектах ты в 95% случаев берёшь interface/type для описания данных (props, ответы API, состояние). Классы всплывают редко — для сервисов или сложной доменной логики. Не плоди классы там, где хватает интерфейса.</p></div></section><section><div class="sec-num">03 · ГЛАВНЫЙ ПОДВОХ</div><h2>Типы врут на границе сети</h2><p>Вот ловушка, на которую попадаются все. Ты пишешь тип ответа сервера. TS верит тебе на слово и больше ничего не проверяет — <strong>типы исчезают при компиляции</strong>. А сервер возьмёт и пришлёт не то. И ты узнаешь об этом, когда приложение уже упало у пользователя.</p><div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">lie.js</span><button class="runbtn" onclick="runJS(this)" data-src="%2F%2F%20%D1%82%D1%8B%20%D0%94%D0%A3%D0%9C%D0%90%D0%95%D0%A8%D0%AC%20%D1%87%D1%82%D0%BE%20age%20%E2%80%94%20%D1%87%D0%B8%D1%81%D0%BB%D0%BE%20%28%D1%82%D0%B0%D0%BA%20%D0%BD%D0%B0%D0%BF%D0%B8%D1%81%D0%B0%D0%BD%D0%BE%20%D0%B2%20%D1%82%D0%B8%D0%BF%D0%B5%29%0A%2F%2F%20%D0%BD%D0%BE%20%D1%81%D0%B5%D1%80%D0%B2%D0%B5%D1%80%20%D0%BF%D1%80%D0%B8%D1%81%D0%BB%D0%B0%D0%BB%20%D1%81%D1%82%D1%80%D0%BE%D0%BA%D1%83.%20TS%20%D1%83%D0%B6%D0%B5%20%D0%BD%D0%B8%D1%87%D0%B5%D0%B3%D0%BE%20%D0%BD%D0%B5%20%D0%BF%D1%80%D0%BE%D0%B2%D0%B5%D1%80%D1%8F%D0%B5%D1%82%20%D0%B2%20%D1%80%D0%B0%D0%BD%D1%82%D0%B0%D0%B9%D0%BC%D0%B5.%0Aconst%20fromServer%20%3D%20%7B%20name%3A%20%27%D0%90%D0%BD%D1%8F%27%2C%20age%3A%20%2727%27%20%7D%3B%20%20%20%2F%2F%20%E2%86%90%20%D1%81%D1%82%D1%80%D0%BE%D0%BA%D0%B0%21%0A%0A%2F%2F%20%D1%81%D1%87%D0%B8%D1%82%D0%B0%D0%B5%D0%BC%20%D1%81%D1%80%D0%B5%D0%B4%D0%BD%D0%B8%D0%B9%20%D0%B2%D0%BE%D0%B7%D1%80%D0%B0%D1%81%D1%82%20%E2%80%94%20%D0%B8%20%D0%BF%D0%BE%D0%BB%D1%83%D1%87%D0%B0%D0%B5%D0%BC%20%D0%BC%D1%83%D1%81%D0%BE%D1%80%0Aconst%20avg%20%3D%20%28fromServer.age%20%2B%203%29%3B%0Aconsole.log%28%27%D0%BE%D0%B6%D0%B8%D0%B4%D0%B0%D0%BB%D0%B8%2030%2C%20%D0%BF%D0%BE%D0%BB%D1%83%D1%87%D0%B8%D0%BB%D0%B8%3A%27%2C%20avg%29%3B%20%20%20%2F%2F%20%22273%22%20%E2%80%94%20%D1%81%D0%BA%D0%BB%D0%B5%D0%B9%D0%BA%D0%B0%20%D1%81%D1%82%D1%80%D0%BE%D0%BA%21%0Aconsole.log%28%27%D1%82%D0%B8%D0%BF%3A%27%2C%20typeof%20avg%29%3B%20%20%20%20%20%20%20%20%20%20%20%20%20%2F%2F%20string%0A%0A%2F%2F%20%D0%B1%D0%B0%D0%B3%20%D1%82%D0%B8%D1%85%D0%BE%20%D0%BF%D1%80%D0%BE%D1%82%D1%91%D0%BA%20%D0%B4%D0%B0%D0%BB%D1%8C%D1%88%D0%B5%20%D0%BF%D0%BE%20%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D1%8E"><span>▶</span><span class="rlabel">Запустить</span></button></div>
+  <pre><code><span class="tc">// ты ДУМАЕШЬ что age — число (так написано в типе)</span>
+<span class="tc">// но сервер прислал строку. TS уже ничего не проверяет в рантайме.</span>
+<span class="tk">const</span> <span class="tx">fromServer</span> <span class="to">=</span> <span class="tx">{</span> <span class="tx">name</span><span class="to">:</span> <span class="ts2">'Аня'</span><span class="tx">,</span> <span class="tx">age</span><span class="to">:</span> <span class="ts2">'27'</span> <span class="tx">}</span><span class="tx">;</span>   <span class="tc">// ← строка!</span>
+
+<span class="tc">// считаем средний возраст — и получаем мусор</span>
+<span class="tk">const</span> <span class="tx">avg</span> <span class="to">=</span> <span class="tx">(</span><span class="tx">fromServer</span><span class="tx">.</span><span class="tx">age</span> <span class="to">+</span> <span class="tn">3</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="ts2">'ожидали 30, получили:'</span><span class="tx">,</span> <span class="tx">avg</span><span class="tx">)</span><span class="tx">;</span>   <span class="tc">// "273" — склейка строк!</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="ts2">'тип:'</span><span class="tx">,</span> <span class="tk">typeof</span> <span class="tx">avg</span><span class="tx">)</span><span class="tx">;</span>             <span class="tc">// string</span>
+
+<span class="tc">// баг тихо протёк дальше по приложению</span></code></pre>
+  <div class="console"><div class="console-inner"><div class="console-label">console</div></div></div>
+</div><div class="say maxi"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#46b877"/><stop offset="100%" stop-color="#359a5e"/></linearGradient><radialGradient id="mCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#f0a890" stop-opacity="0.45"/><stop offset="100%" stop-color="#f0a890" stop-opacity="0"/></radialGradient></defs><path d="M66 56 Q56 18 90 42 Q80 54 72 58 Z" fill="url(#mFur__U)"/><path d="M134 56 Q144 18 110 42 Q120 54 128 58 Z" fill="url(#mFur__U)"/><path d="M70 50 Q64 30 82 44 Z" fill="#1f1f1f"/><path d="M130 50 Q136 30 118 44 Z" fill="#1f1f1f"/><circle cx="100" cy="100" r="50" fill="url(#mFur__U)"/><path d="M100 64 Q66 72 70 112 Q100 128 130 112 Q134 72 100 64 Z" fill="#f2f6f2"/><ellipse cx="100" cy="104" rx="34" ry="26" fill="#f7faf7"/><ellipse cx="74" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="126" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="100" cy="108" rx="6.5" ry="5" fill="#2a2a2a"/><path d="M100 113 L100 120" stroke="#2a2a2a" stroke-width="1.5" stroke-linecap="round"/><ellipse cx="82" cy="96" rx="12" ry="14" fill="#fff"/><ellipse cx="118" cy="96" rx="12" ry="14" fill="#fff"/><circle cx="83" cy="98" r="8.5" fill="#e8a020"/><circle cx="117" cy="98" r="8.5" fill="#e8a020"/><circle cx="83" cy="98" r="4.5" fill="#3a2400"/><circle cx="117" cy="98" r="4.5" fill="#3a2400"/><circle cx="86" cy="93" r="3.2" fill="#fff"/><circle cx="120" cy="93" r="3.2" fill="#fff"/><circle cx="79" cy="100" r="1.6" fill="#fff" opacity="0.8"/><circle cx="113" cy="100" r="1.6" fill="#fff" opacity="0.8"/><path d="M90 119 Q100 127 110 119" stroke="#1f5a32" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M97 124 Q100 129 103 124 Z" fill="#e87a8a"/></svg></div>
+    <div class="bubble"><div class="who">Макси</div><p>Видишь? TS на этапе написания зелёный, всё «типизировано». А в рантайме сервер подсунул строку, и 27 + 3 стало "273". Типы не защищают от реальных данных. Нужен сторож на входе.</p></div></div></section><section><div class="sec-num">04 · ZOD</div><h2>Валидация, которая работает в рантайме</h2><p>Zod — это схема данных, которая <strong>проверяет по-настоящему, во время выполнения</strong>. Ты описываешь форму один раз, и Zod на входе режет всё, что не подходит. Бонус: из схемы автоматически выводится TS-тип через <code>z.infer</code> — один источник правды.</p><div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">schema.ts</span></div>
+  <pre><code><span class="tk">import</span> <span class="tx">{</span> <span class="tx">z</span> <span class="tx">}</span> <span class="tk">from</span> <span class="ts2">'zod'</span><span class="tx">;</span>
+
+<span class="tc">// одна схема = и проверка в рантайме, и тип для TS</span>
+<span class="tk">const</span> <span class="ty">UserSchema</span> <span class="to">=</span> <span class="tx">z</span><span class="tx">.</span><span class="ty">object</span><span class="tx">(</span><span class="tx">{</span>
+  <span class="tx">name</span><span class="to">:</span> <span class="tx">z</span><span class="tx">.</span><span class="ty">string</span><span class="tx">(</span><span class="tx">)</span><span class="tx">.</span><span class="tf">min</span><span class="tx">(</span><span class="tn">1</span><span class="tx">)</span><span class="tx">,</span>
+  <span class="tx">age</span><span class="to">:</span> <span class="tx">z</span><span class="tx">.</span><span class="ty">number</span><span class="tx">(</span><span class="tx">)</span><span class="tx">.</span><span class="tf">min</span><span class="tx">(</span><span class="tn">0</span><span class="tx">)</span><span class="tx">.</span><span class="tf">max</span><span class="tx">(</span><span class="tn">120</span><span class="tx">)</span><span class="tx">,</span>
+  <span class="tx">email</span><span class="to">:</span> <span class="tx">z</span><span class="tx">.</span><span class="ty">string</span><span class="tx">(</span><span class="tx">)</span><span class="tx">.</span><span class="tf">email</span><span class="tx">(</span><span class="tx">)</span><span class="tx">,</span>
+<span class="tx">}</span><span class="tx">)</span><span class="tx">;</span>
+
+<span class="tc">// тип выводится из схемы автоматически</span>
+<span class="tk">type</span> <span class="ty">User</span> <span class="to">=</span> <span class="tx">z</span><span class="tx">.</span><span class="tx">infer</span><span class="to">&lt;</span><span class="tk">typeof</span> <span class="ty">UserSchema</span><span class="to">&gt;</span><span class="tx">;</span>
+
+<span class="tc">// на границе сети: проверяем ответ ДО того как доверять</span>
+<span class="tk">const</span> <span class="tx">res</span> <span class="to">=</span> <span class="tk">await</span> <span class="tf">fetch</span><span class="tx">(</span><span class="ts2">'/api/user/2'</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tk">const</span> <span class="tx">data</span> <span class="to">=</span> <span class="tk">await</span> <span class="tx">res</span><span class="tx">.</span><span class="tf">json</span><span class="tx">(</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tk">const</span> <span class="tx">parsed</span> <span class="to">=</span> <span class="ty">UserSchema</span><span class="tx">.</span><span class="tf">safeParse</span><span class="tx">(</span><span class="tx">data</span><span class="tx">)</span><span class="tx">;</span>
+
+<span class="tk">if</span> <span class="tx">(</span><span class="tx">parsed</span><span class="tx">.</span><span class="tx">success</span><span class="tx">)</span> <span class="tx">{</span>
+  <span class="tf">use</span><span class="tx">(</span><span class="tx">parsed</span><span class="tx">.</span><span class="tx">data</span><span class="tx">)</span><span class="tx">;</span>   <span class="tc">// тут уже гарантированно правильная форма</span>
+<span class="tx">}</span> <span class="tk">else</span> <span class="tx">{</span>
+  <span class="tx">console</span><span class="tx">.</span><span class="tf">error</span><span class="tx">(</span><span class="tx">parsed</span><span class="tx">.</span><span class="tx">error</span><span class="tx">)</span><span class="tx">;</span>   <span class="tc">// сервер прислал мусор — ловим тут</span>
+<span class="tx">}</span></code></pre>
+</div><div class="say ren"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="rFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8893ab"/><stop offset="100%" stop-color="#6e7a94"/></linearGradient></defs><circle cx="70" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="130" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="70" cy="62" r="7.5" fill="#525c70"/><circle cx="130" cy="62" r="7.5" fill="#525c70"/><circle cx="100" cy="102" r="50" fill="url(#rFur__U)"/><ellipse cx="100" cy="116" rx="38" ry="30" fill="#e6eaf2"/><ellipse cx="100" cy="120" rx="30" ry="22" fill="#eef1f7"/><ellipse cx="100" cy="110" rx="11" ry="8" fill="#3e3e48"/><ellipse cx="96" cy="108" rx="3" ry="2" fill="#5e5e68" opacity="0.7"/><path d="M100 117 L100 126" stroke="#3e3e48" stroke-width="2" stroke-linecap="round"/><circle cx="80" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><circle cx="120" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><path d="M96 94 Q100 90 104 94" stroke="#4a5a6a" stroke-width="2.5" fill="none"/><circle cx="80" cy="95" r="8" fill="#3e3e48"/><circle cx="120" cy="95" r="8" fill="#3e3e48"/><circle cx="83" cy="92" r="3" fill="#fff"/><circle cx="123" cy="92" r="3" fill="#fff"/><circle cx="77" cy="97" r="1.5" fill="#fff" opacity="0.7"/><circle cx="117" cy="97" r="1.5" fill="#fff" opacity="0.7"/><path d="M72 88 Q78 84 84 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M112 88 Q118 84 124 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M78 116 Q60 114 52 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M78 122 Q60 124 54 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 116 Q140 114 148 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 122 Q140 124 146 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M90 124 Q100 131 110 124" stroke="#525c70" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg></div>
+    <div class="bubble"><div class="who">Рен</div><p>Ниже — живая песочница. Логика та же, что у Zod: схема ждёт непустое имя, возраст-число 0..120 и валидный email. Подсунь сломанные данные и посмотри, как валидатор их завернёт.</p></div></div><div class="zod"><div style="font-family:JetBrains Mono,monospace;font-size:11px;color:var(--muted);margin-bottom:8px;">схема: { name: string(min 1), age: number(0..120), email: email }</div><textarea id="zod-input">{
+  "name": "Аня",
+  "age": 27,
+  "email": "anya@yandex.ru"
+}</textarea><div class="zrow"><button class="minibtn" onclick="runZod()">▶ Проверить схемой</button><button class="minibtn ghost" onclick="zodPreset('good')">подставить валидные</button><button class="minibtn ghost" onclick="zodPreset('bad')">подставить битые</button></div><div class="zod-result idle" id="zod-result">результат проверки появится здесь</div></div><div class="box tip"><div class="bt">Где это живёт в проекте</div><p>Zod-схемы кладут в слой данных — рядом с запросами, в api/model сущности. Граница «сеть → приложение» это единственное место, где данные надо валидировать. Прошли схему — дальше им можно верить везде.</p></div></section><div class="pager"><button onclick="pager(-1)">← Инструменты</button><button onclick="pager(1)" class="next">Дальше: дата-менеджмент →</button></div></div>
+<div class="page" id="page-data"><div class="phero"><div class="kicker">Раздел 04 · Состояние</div><h1>Дата-менеджмент: Zustand vs Redux</h1><p>Данные получены и проверены. Где они теперь живут, пока приложение работает? Разберём теорию состояния, проблему prop drilling, и два инструмента: минималистичный Zustand и классический Redux. Со живым стором, который можно потыкать.</p></div><div class="say kyle"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="kFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#b87a48"/><stop offset="100%" stop-color="#9a6238"/></linearGradient><radialGradient id="kCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#e8957a" stop-opacity="0.5"/><stop offset="100%" stop-color="#e8957a" stop-opacity="0"/></radialGradient></defs><ellipse cx="58" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="142" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="64" cy="90" rx="22" ry="26" fill="#6e4426"/><ellipse cx="136" cy="90" rx="22" ry="26" fill="#6e4426"/><path d="M68 58 Q60 22 88 44 Q80 56 72 60 Z" fill="url(#kFur__U)"/><path d="M132 58 Q140 22 112 44 Q120 56 128 60 Z" fill="url(#kFur__U)"/><path d="M71 54 Q67 36 82 48 Z" fill="#3a3230"/><path d="M129 54 Q133 36 118 48 Z" fill="#3a3230"/><circle cx="100" cy="100" r="50" fill="url(#kFur__U)"/><path d="M100 56 Q62 62 60 104 Q100 92 140 104 Q138 62 100 56 Z" fill="#e8cfa8"/><ellipse cx="100" cy="98" rx="40" ry="30" fill="#ecd6b4"/><ellipse cx="100" cy="116" rx="30" ry="24" fill="#f2e1c8"/><ellipse cx="72" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="128" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="100" cy="106" rx="9" ry="7" fill="#3a2a26"/><ellipse cx="97" cy="104" rx="3" ry="2" fill="#5a4a44" opacity="0.7"/><ellipse cx="80" cy="94" rx="13" ry="15" fill="#fff"/><ellipse cx="120" cy="94" rx="13" ry="15" fill="#fff"/><circle cx="81" cy="96" r="9.5" fill="#4a90d9"/><circle cx="119" cy="96" r="9.5" fill="#4a90d9"/><circle cx="81" cy="96" r="5" fill="#1a2f4a"/><circle cx="119" cy="96" r="5" fill="#1a2f4a"/><circle cx="84" cy="91" r="3.5" fill="#fff"/><circle cx="122" cy="91" r="3.5" fill="#fff"/><circle cx="77" cy="98" r="1.8" fill="#fff" opacity="0.8"/><circle cx="115" cy="98" r="1.8" fill="#fff" opacity="0.8"/><path d="M88 120 Q100 130 112 120" stroke="#7a5238" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M74 142 Q100 154 126 142" stroke="#9a4030" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="100" cy="151" r="7" fill="#f0c44e"/><circle cx="100" cy="153" r="1.8" fill="#9a7a1a"/></svg></div>
+    <div class="bubble"><div class="who">Кайл</div><p>Состояние — это память приложения прямо сейчас: что в корзине, кто залогинен, какой фильтр выбран. Вопрос дата-менеджмента простой: где это хранить, чтобы любой компонент мог взять и не утонуть.</p></div></div><section><div class="sec-num">01 · ТЕОРИЯ</div><h2>Два вида состояния</h2><p>Сначала важное различие, которое экономит кучу нервов:</p><ul class="plain"><li><strong>Server state</strong> — данные, которые живут на сервере, а у тебя их копия: список товаров, профиль. Их надо грузить, кэшировать, обновлять (этим часто рулит отдельный инструмент типа TanStack Query).</li><li><strong>Client state</strong> — то, что существует только в браузере: открыто ли меню, что в корзине, тема. Вот этим и занимаются Zustand / Redux.</li></ul><div class="box warn"><div class="bt">Проблема prop drilling</div><p>Без стора состояние приходится протаскивать пропсами через 5 уровней компонентов: A → B → C → D → E, хотя нужно только A и E. Промежуточные компоненты тащат чужие пропсы просто как курьеры. Стор убирает этот туннель: положил в одно место, взял где угодно.</p></div></section><section><div class="sec-num">02 · ZUSTAND</div><h2>Стор как один объект</h2><p class="lead">Zustand до неприличия простой. Один <code>create</code>, внутри состояние и функции, которые его меняют. Никаких провайдеров, редьюсеров и церемоний.</p><div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">cartStore.ts</span></div>
+  <pre><code><span class="tk">import</span> <span class="tx">{</span> <span class="tx">create</span> <span class="tx">}</span> <span class="tk">from</span> <span class="ts2">'zustand'</span><span class="tx">;</span>
+
+<span class="tc">// весь стор — один хук</span>
+<span class="tk">export</span> <span class="tk">const</span> <span class="tx">useCart</span> <span class="to">=</span> <span class="tf">create</span><span class="tx">(</span><span class="tx">(</span><span class="tk">set</span><span class="tx">)</span> <span class="to">=&gt;</span> <span class="tx">(</span><span class="tx">{</span>
+  <span class="tx">items</span><span class="to">:</span> <span class="tx">[</span><span class="tx">]</span><span class="tx">,</span>
+  <span class="tx">total</span><span class="to">:</span> <span class="tn">0</span><span class="tx">,</span>
+  <span class="tc">// экшены прямо тут, рядом с данными</span>
+  <span class="tx">add</span><span class="to">:</span> <span class="tx">(</span><span class="tx">product</span><span class="tx">)</span> <span class="to">=&gt;</span> <span class="tk">set</span><span class="tx">(</span><span class="tx">(</span><span class="tx">state</span><span class="tx">)</span> <span class="to">=&gt;</span> <span class="tx">(</span><span class="tx">{</span>
+    <span class="tx">items</span><span class="to">:</span> <span class="tx">[</span><span class="to">...</span><span class="tx">state</span><span class="tx">.</span><span class="tx">items</span><span class="tx">,</span> <span class="tx">product</span><span class="tx">]</span><span class="tx">,</span>
+    <span class="tx">total</span><span class="to">:</span> <span class="tx">state</span><span class="tx">.</span><span class="tx">total</span> <span class="to">+</span> <span class="tx">product</span><span class="tx">.</span><span class="tx">price</span><span class="tx">,</span>
+  <span class="tx">}</span><span class="tx">)</span><span class="tx">)</span><span class="tx">,</span>
+  <span class="tx">clear</span><span class="to">:</span> <span class="tx">(</span><span class="tx">)</span> <span class="to">=&gt;</span> <span class="tk">set</span><span class="tx">(</span><span class="tx">{</span> <span class="tx">items</span><span class="to">:</span> <span class="tx">[</span><span class="tx">]</span><span class="tx">,</span> <span class="tx">total</span><span class="to">:</span> <span class="tn">0</span> <span class="tx">}</span><span class="tx">)</span><span class="tx">,</span>
+<span class="tx">}</span><span class="tx">)</span><span class="tx">)</span><span class="tx">;</span>
+
+<span class="tc">// в компоненте — берёшь ровно то, что нужно (селектор)</span>
+<span class="tk">function</span> <span class="ty">Badge</span><span class="tx">(</span><span class="tx">)</span> <span class="tx">{</span>
+  <span class="tk">const</span> <span class="tx">count</span> <span class="to">=</span> <span class="tf">useCart</span><span class="tx">(</span><span class="tx">(</span><span class="tx">s</span><span class="tx">)</span> <span class="to">=&gt;</span> <span class="tx">s</span><span class="tx">.</span><span class="tx">items</span><span class="tx">.</span><span class="tx">length</span><span class="tx">)</span><span class="tx">;</span>
+  <span class="tk">return</span> <span class="to">&lt;</span><span class="tx">span</span><span class="to">&gt;</span> <span class="tx">{</span><span class="tx">count</span><span class="tx">}</span><span class="to">&lt;</span><span class="to">/</span><span class="tx">span</span><span class="to">&gt;</span><span class="tx">;</span>
+<span class="tx">}</span></code></pre>
+</div><div class="say maxi"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#46b877"/><stop offset="100%" stop-color="#359a5e"/></linearGradient><radialGradient id="mCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#f0a890" stop-opacity="0.45"/><stop offset="100%" stop-color="#f0a890" stop-opacity="0"/></radialGradient></defs><path d="M66 56 Q56 18 90 42 Q80 54 72 58 Z" fill="url(#mFur__U)"/><path d="M134 56 Q144 18 110 42 Q120 54 128 58 Z" fill="url(#mFur__U)"/><path d="M70 50 Q64 30 82 44 Z" fill="#1f1f1f"/><path d="M130 50 Q136 30 118 44 Z" fill="#1f1f1f"/><circle cx="100" cy="100" r="50" fill="url(#mFur__U)"/><path d="M100 64 Q66 72 70 112 Q100 128 130 112 Q134 72 100 64 Z" fill="#f2f6f2"/><ellipse cx="100" cy="104" rx="34" ry="26" fill="#f7faf7"/><ellipse cx="74" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="126" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="100" cy="108" rx="6.5" ry="5" fill="#2a2a2a"/><path d="M100 113 L100 120" stroke="#2a2a2a" stroke-width="1.5" stroke-linecap="round"/><ellipse cx="82" cy="96" rx="12" ry="14" fill="#fff"/><ellipse cx="118" cy="96" rx="12" ry="14" fill="#fff"/><circle cx="83" cy="98" r="8.5" fill="#e8a020"/><circle cx="117" cy="98" r="8.5" fill="#e8a020"/><circle cx="83" cy="98" r="4.5" fill="#3a2400"/><circle cx="117" cy="98" r="4.5" fill="#3a2400"/><circle cx="86" cy="93" r="3.2" fill="#fff"/><circle cx="120" cy="93" r="3.2" fill="#fff"/><circle cx="79" cy="100" r="1.6" fill="#fff" opacity="0.8"/><circle cx="113" cy="100" r="1.6" fill="#fff" opacity="0.8"/><path d="M90 119 Q100 127 110 119" stroke="#1f5a32" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M97 124 Q100 129 103 124 Z" fill="#e87a8a"/></svg></div>
+    <div class="bubble"><div class="who">Макси</div><p>Ниже — настоящий работающий стор (та же механика: состояние + set + подписчики). Жми «В корзину» и смотри: меняется одно место, а оба подписчика — счётчик и сумма — перерисовываются сами. Никто никому не передавал пропсы.</p></div></div><div class="widget"><div class="widget-grid"><div class="w-panel"><h5>магазин — экшены меняют стор</h5><div class="shop-item"><div><div class="nm">📱 Телефон</div><div class="pr">15000 ₽</div></div><button class="minibtn" onclick="cartAdd('Телефон',15000)">+ в корзину</button></div><div class="shop-item"><div><div class="nm">🎧 Наушники</div><div class="pr">5000 ₽</div></div><button class="minibtn" onclick="cartAdd('Наушники',5000)">+ в корзину</button></div><div class="shop-item"><div><div class="nm">⌚ Часы</div><div class="pr">22000 ₽</div></div><button class="minibtn" onclick="cartAdd('Часы',22000)">+ в корзину</button></div><div style="margin-top:12px;"><button class="minibtn ghost" onclick="cartClear()">очистить</button></div></div><div class="w-panel"><h5>состояние стора (живое)</h5><div class="state-json" id="store-state"></div><h5 style="margin-top:14px;">подписчики (перерисовываются сами)</h5><div class="subs"><div class="sub-card" id="sub-badge"><span class="tag">&lt;Badge/&gt;</span><br>🛒 товаров: <b class="cnt">0</b></div><div class="sub-card" id="sub-total"><span class="tag">&lt;Total/&gt;</span><br>💰 сумма: <b class="cnt">0 ₽</b></div></div></div></div></div></section><section><div class="sec-num">03 · REDUX</div><h2>Классика с церемонией</h2><p>Redux старше и строже. Данные неизменяемы, любое изменение идёт через <strong>action → reducer → новый стейт</strong>. Поток строго однонаправленный и предсказуемый, но кода ощутимо больше.</p><div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">cartSlice.ts</span></div>
+  <pre><code><span class="tk">import</span> <span class="tx">{</span> <span class="tx">createSlice</span> <span class="tx">}</span> <span class="tk">from</span> <span class="ts2">'@reduxjs/toolkit'</span><span class="tx">;</span>
+
+<span class="tk">const</span> <span class="tx">cartSlice</span> <span class="to">=</span> <span class="tf">createSlice</span><span class="tx">(</span><span class="tx">{</span>
+  <span class="tx">name</span><span class="to">:</span> <span class="ts2">'cart'</span><span class="tx">,</span>
+  <span class="tx">initialState</span><span class="to">:</span> <span class="tx">{</span> <span class="tx">items</span><span class="to">:</span> <span class="tx">[</span><span class="tx">]</span><span class="tx">,</span> <span class="tx">total</span><span class="to">:</span> <span class="tn">0</span> <span class="tx">}</span><span class="tx">,</span>
+  <span class="tx">reducers</span><span class="to">:</span> <span class="tx">{</span>
+    <span class="tc">// редьюсер: получает стейт и action, возвращает новый стейт</span>
+    <span class="tx">add</span><span class="to">:</span> <span class="tx">(</span><span class="tx">state</span><span class="tx">,</span> <span class="tx">action</span><span class="tx">)</span> <span class="to">=&gt;</span> <span class="tx">{</span>
+      <span class="tx">state</span><span class="tx">.</span><span class="tx">items</span><span class="tx">.</span><span class="tf">push</span><span class="tx">(</span><span class="tx">action</span><span class="tx">.</span><span class="tx">payload</span><span class="tx">)</span><span class="tx">;</span>
+      <span class="tx">state</span><span class="tx">.</span><span class="tx">total</span> <span class="to">+</span><span class="to">=</span> <span class="tx">action</span><span class="tx">.</span><span class="tx">payload</span><span class="tx">.</span><span class="tx">price</span><span class="tx">;</span>
+    <span class="tx">}</span><span class="tx">,</span>
+    <span class="tx">clear</span><span class="to">:</span> <span class="tx">(</span><span class="tx">state</span><span class="tx">)</span> <span class="to">=&gt;</span> <span class="tx">{</span> <span class="tx">state</span><span class="tx">.</span><span class="tx">items</span> <span class="to">=</span> <span class="tx">[</span><span class="tx">]</span><span class="tx">;</span> <span class="tx">state</span><span class="tx">.</span><span class="tx">total</span> <span class="to">=</span> <span class="tn">0</span><span class="tx">;</span> <span class="tx">}</span><span class="tx">,</span>
+  <span class="tx">}</span><span class="tx">,</span>
+<span class="tx">}</span><span class="tx">)</span><span class="tx">;</span>
+
+<span class="tk">export</span> <span class="tk">const</span> <span class="tx">{</span> <span class="tx">add</span><span class="tx">,</span> <span class="tx">clear</span> <span class="tx">}</span> <span class="to">=</span> <span class="tx">cartSlice</span><span class="tx">.</span><span class="tx">actions</span><span class="tx">;</span>
+<span class="tc">// + нужен store, Provider в корне, useSelector/useDispatch в компонентах</span></code></pre>
+</div><div class="cmp"><div class="ch a">Zustand</div><div class="ch b">Redux Toolkit</div><div class="cc">• один create, и всё
+• нет Provider-обёртки
+• экшены рядом с данными
+• мало кода
+• меняешь стейт напрямую через set</div><div class="cc">• slices + store + Provider
+• action → reducer → стейт
+• строгий однонаправленный поток
+• больше boilerplate
+• мощный DevTools, time-travel</div></div><div class="say ren"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="rFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8893ab"/><stop offset="100%" stop-color="#6e7a94"/></linearGradient></defs><circle cx="70" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="130" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="70" cy="62" r="7.5" fill="#525c70"/><circle cx="130" cy="62" r="7.5" fill="#525c70"/><circle cx="100" cy="102" r="50" fill="url(#rFur__U)"/><ellipse cx="100" cy="116" rx="38" ry="30" fill="#e6eaf2"/><ellipse cx="100" cy="120" rx="30" ry="22" fill="#eef1f7"/><ellipse cx="100" cy="110" rx="11" ry="8" fill="#3e3e48"/><ellipse cx="96" cy="108" rx="3" ry="2" fill="#5e5e68" opacity="0.7"/><path d="M100 117 L100 126" stroke="#3e3e48" stroke-width="2" stroke-linecap="round"/><circle cx="80" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><circle cx="120" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><path d="M96 94 Q100 90 104 94" stroke="#4a5a6a" stroke-width="2.5" fill="none"/><circle cx="80" cy="95" r="8" fill="#3e3e48"/><circle cx="120" cy="95" r="8" fill="#3e3e48"/><circle cx="83" cy="92" r="3" fill="#fff"/><circle cx="123" cy="92" r="3" fill="#fff"/><circle cx="77" cy="97" r="1.5" fill="#fff" opacity="0.7"/><circle cx="117" cy="97" r="1.5" fill="#fff" opacity="0.7"/><path d="M72 88 Q78 84 84 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M112 88 Q118 84 124 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M78 116 Q60 114 52 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M78 122 Q60 124 54 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 116 Q140 114 148 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 122 Q140 124 146 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M90 124 Q100 131 110 124" stroke="#525c70" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg></div>
+    <div class="bubble"><div class="who">Рен</div><p>Выбор по масштабу. Маленькое-среднее, команда хочет скорость — Zustand. Огромное приложение, сложные взаимозависимости, нужен жёсткий аудит каждого изменения и time-travel отладка — тогда дисциплина Redux окупается. Для большинства фронтов сегодня Zustand закрывает потребность.</p></div></div><div class="meme-row"><span class="meme"><span class="mava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#46b877"/><stop offset="100%" stop-color="#359a5e"/></linearGradient><radialGradient id="mCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#f0a890" stop-opacity="0.45"/><stop offset="100%" stop-color="#f0a890" stop-opacity="0"/></radialGradient></defs><path d="M66 56 Q56 18 90 42 Q80 54 72 58 Z" fill="url(#mFur__U)"/><path d="M134 56 Q144 18 110 42 Q120 54 128 58 Z" fill="url(#mFur__U)"/><path d="M70 50 Q64 30 82 44 Z" fill="#1f1f1f"/><path d="M130 50 Q136 30 118 44 Z" fill="#1f1f1f"/><circle cx="100" cy="100" r="50" fill="url(#mFur__U)"/><path d="M100 64 Q66 72 70 112 Q100 128 130 112 Q134 72 100 64 Z" fill="#f2f6f2"/><ellipse cx="100" cy="104" rx="34" ry="26" fill="#f7faf7"/><ellipse cx="74" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="126" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="100" cy="108" rx="6.5" ry="5" fill="#2a2a2a"/><path d="M100 113 L100 120" stroke="#2a2a2a" stroke-width="1.5" stroke-linecap="round"/><ellipse cx="82" cy="96" rx="12" ry="14" fill="#fff"/><ellipse cx="118" cy="96" rx="12" ry="14" fill="#fff"/><circle cx="83" cy="98" r="8.5" fill="#e8a020"/><circle cx="117" cy="98" r="8.5" fill="#e8a020"/><circle cx="83" cy="98" r="4.5" fill="#3a2400"/><circle cx="117" cy="98" r="4.5" fill="#3a2400"/><circle cx="86" cy="93" r="3.2" fill="#fff"/><circle cx="120" cy="93" r="3.2" fill="#fff"/><circle cx="79" cy="100" r="1.6" fill="#fff" opacity="0.8"/><circle cx="113" cy="100" r="1.6" fill="#fff" opacity="0.8"/><path d="M90 119 Q100 127 110 119" stroke="#1f5a32" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M97 124 Q100 129 103 124 Z" fill="#e87a8a"/></svg></span>Redux: 40 строк чтобы поменять одно число. Zustand: set(n =&gt; n+1)</span></div></section><div class="pager"><button onclick="pager(-1)">← Типы и Zod</button><button onclick="pager(1)" class="next">Дальше: FSD и архитектура →</button></div></div>
+<div class="page" id="page-fsd"><div class="phero"><div class="kicker">Раздел 05 · Архитектура</div><h1>FSD: торт, который не разваливается</h1><p>Финал. У нас есть запросы, типы, валидация и сторы. Теперь надо разложить это по проекту так, чтобы через год в нём можно было жить. Это и есть Feature-Sliced Design — разрезаем приложение на слои, как торт на коржи.</p></div><div class="say kyle"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="kFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#b87a48"/><stop offset="100%" stop-color="#9a6238"/></linearGradient><radialGradient id="kCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#e8957a" stop-opacity="0.5"/><stop offset="100%" stop-color="#e8957a" stop-opacity="0"/></radialGradient></defs><ellipse cx="58" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="142" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="64" cy="90" rx="22" ry="26" fill="#6e4426"/><ellipse cx="136" cy="90" rx="22" ry="26" fill="#6e4426"/><path d="M68 58 Q60 22 88 44 Q80 56 72 60 Z" fill="url(#kFur__U)"/><path d="M132 58 Q140 22 112 44 Q120 56 128 60 Z" fill="url(#kFur__U)"/><path d="M71 54 Q67 36 82 48 Z" fill="#3a3230"/><path d="M129 54 Q133 36 118 48 Z" fill="#3a3230"/><circle cx="100" cy="100" r="50" fill="url(#kFur__U)"/><path d="M100 56 Q62 62 60 104 Q100 92 140 104 Q138 62 100 56 Z" fill="#e8cfa8"/><ellipse cx="100" cy="98" rx="40" ry="30" fill="#ecd6b4"/><ellipse cx="100" cy="116" rx="30" ry="24" fill="#f2e1c8"/><ellipse cx="72" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="128" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="100" cy="106" rx="9" ry="7" fill="#3a2a26"/><ellipse cx="97" cy="104" rx="3" ry="2" fill="#5a4a44" opacity="0.7"/><ellipse cx="80" cy="94" rx="13" ry="15" fill="#fff"/><ellipse cx="120" cy="94" rx="13" ry="15" fill="#fff"/><circle cx="81" cy="96" r="9.5" fill="#4a90d9"/><circle cx="119" cy="96" r="9.5" fill="#4a90d9"/><circle cx="81" cy="96" r="5" fill="#1a2f4a"/><circle cx="119" cy="96" r="5" fill="#1a2f4a"/><circle cx="84" cy="91" r="3.5" fill="#fff"/><circle cx="122" cy="91" r="3.5" fill="#fff"/><circle cx="77" cy="98" r="1.8" fill="#fff" opacity="0.8"/><circle cx="115" cy="98" r="1.8" fill="#fff" opacity="0.8"/><path d="M88 120 Q100 130 112 120" stroke="#7a5238" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M74 142 Q100 154 126 142" stroke="#9a4030" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="100" cy="151" r="7" fill="#f0c44e"/><circle cx="100" cy="153" r="1.8" fill="#9a7a1a"/></svg></div>
+    <div class="bubble"><div class="who">Кайл</div><p>Дорогие студенты-Яндексоиды, код без архитектуры — это спагетти: дёрнул одну нитку, размотался весь клубок. Архитектура — это правила, где что лежит и кто кого может звать. FSD — самый популярный такой свод правил во фронте.</p></div></div><section><div class="sec-num">01 · ЗАЧЕМ</div><h2>Почему правильная архитектура — это красиво</h2><p>Можно ведь свалить всё в папки <code>components</code>, <code>utils</code>, <code>api</code> и группировать <strong>по типу файла</strong>. Работает... пока проект маленький. Потом фича размазана по десяти папкам, и чтобы понять одну кнопку, открываешь полпроекта.</p><p>FSD группирует <strong>по смыслу</strong>: всё про авторизацию — в одном месте, всё про корзину — в другом. Удалить фичу = удалить папку. Найти баг = знаешь где искать. Новый человек в команде ориентируется за день.</p><div class="cmp"><div class="ch a">по смыслу (FSD) ✓</div><div class="ch b">по типу (каша) ✗</div><div class="cc">features/
+  auth/
+  cart/
+entities/
+  user/
+  product/</div><div class="cc">components/
+  LoginForm.tsx
+  CartButton.tsx
+  UserCard.tsx
+utils/
+  authApi.ts
+  cartApi.ts</div></div><div class="box info"><div class="bt">Главный профит</div><p>Когда архитектура задаёт чёткие границы, ты держишь в голове один маленький кусок, а не весь проект. Меняешь одно — не ломается другое. Это не эстетика ради эстетики, это скорость и спокойный сон.</p></div></section><section><div class="sec-num">02 · ТОРТИК</div><h2>Слои — это коржи</h2><p class="lead">FSD режет приложение на горизонтальные слои. Сверху — конкретное и зависимое, снизу — общее и независимое. Наведи на корж:</p><div class="cake"><div class="cake-layer cl-app" onclick="cakeInfo('app')"><span class="cl-name">app</span><span class="cl-tag">точка входа, роутер, провайдеры</span></div><div class="cake-layer cl-pages" onclick="cakeInfo('pages')"><span class="cl-name">pages</span><span class="cl-tag">страницы, собранные из виджетов</span></div><div class="cake-layer cl-widgets" onclick="cakeInfo('widgets')"><span class="cl-name">widgets</span><span class="cl-tag">самостоятельные блоки страницы</span></div><div class="cake-layer cl-features" onclick="cakeInfo('features')"><span class="cl-name">features</span><span class="cl-tag">действия пользователя</span></div><div class="cake-layer cl-entities" onclick="cakeInfo('entities')"><span class="cl-name">entities</span><span class="cl-tag">бизнес-сущности</span></div><div class="cake-layer cl-shared" onclick="cakeInfo('shared')"><span class="cl-name">shared</span><span class="cl-tag">фундамент: ui-кит, api, утилиты</span></div></div><div class="cake-detail" id="cake-detail"><div class="cd-t">Нажми на слой</div>Каждый корж — это уровень ответственности. Чем выше, тем ближе к конкретному экрану.</div><div class="say ren"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="rFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8893ab"/><stop offset="100%" stop-color="#6e7a94"/></linearGradient></defs><circle cx="70" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="130" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="70" cy="62" r="7.5" fill="#525c70"/><circle cx="130" cy="62" r="7.5" fill="#525c70"/><circle cx="100" cy="102" r="50" fill="url(#rFur__U)"/><ellipse cx="100" cy="116" rx="38" ry="30" fill="#e6eaf2"/><ellipse cx="100" cy="120" rx="30" ry="22" fill="#eef1f7"/><ellipse cx="100" cy="110" rx="11" ry="8" fill="#3e3e48"/><ellipse cx="96" cy="108" rx="3" ry="2" fill="#5e5e68" opacity="0.7"/><path d="M100 117 L100 126" stroke="#3e3e48" stroke-width="2" stroke-linecap="round"/><circle cx="80" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><circle cx="120" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><path d="M96 94 Q100 90 104 94" stroke="#4a5a6a" stroke-width="2.5" fill="none"/><circle cx="80" cy="95" r="8" fill="#3e3e48"/><circle cx="120" cy="95" r="8" fill="#3e3e48"/><circle cx="83" cy="92" r="3" fill="#fff"/><circle cx="123" cy="92" r="3" fill="#fff"/><circle cx="77" cy="97" r="1.5" fill="#fff" opacity="0.7"/><circle cx="117" cy="97" r="1.5" fill="#fff" opacity="0.7"/><path d="M72 88 Q78 84 84 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M112 88 Q118 84 124 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M78 116 Q60 114 52 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M78 122 Q60 124 54 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 116 Q140 114 148 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 122 Q140 124 146 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M90 124 Q100 131 110 124" stroke="#525c70" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg></div>
+    <div class="bubble"><div class="who">Рен</div><p>Запомни направление: верхние коржи зависят от нижних, никогда наоборот. shared не знает про features, а app знает про всех. Самый общий код — внизу, самый конкретный — сверху.</p></div></div></section><section><div class="sec-num">03 · СЛАЙСЫ И СЕГМЕНТЫ</div><h2>Режем корж дальше</h2><p>Внутри слоя (кроме app и shared) код делится на <strong>слайсы</strong> — это бизнес-домены. В <code>entities</code> слайсы это <code>user</code>, <code>product</code>, <code>order</code>. В <code>features</code> — <code>auth</code>, <code>add-to-cart</code>. Слайс = вертикальный кусок одной темы.</p><p>А внутри каждого слайса — <strong>сегменты</strong>, всегда одни и те же по смыслу:</p><ul class="plain"><li><code>ui</code> — компоненты, как это выглядит.</li><li><code>model</code> — состояние и логика: тут живут <strong>zustand-сторы, типы, zod-схемы</strong>.</li><li><code>api</code> — запросы на сервер: тут живут <strong>fetch/axios</strong>.</li><li><code>lib</code> — вспомогательные функции этого слайса.</li></ul><div class="ftree"><span class="dir">src/</span>
+├─ <span class="dir">entities/</span>          <span class="cm"># бизнес-сущности</span>
+│  └─ <span class="dir">product/</span>        <span class="cm"># ← слайс</span>
+│     ├─ <span class="dir">ui/</span>           <span class="cm"># ProductCard.tsx</span>
+│     ├─ <span class="dir">model/</span>        <span class="cm"># store.ts, types.ts, schema.ts (zod)</span>
+│     └─ <span class="dir">api/</span>          <span class="cm"># getProducts.ts (fetch/axios)</span>
+├─ <span class="dir">features/</span>          <span class="cm"># действия: add-to-cart, auth</span>
+├─ <span class="dir">widgets/</span>           <span class="cm"># Header, ProductList</span>
+├─ <span class="dir">pages/</span>             <span class="cm"># CatalogPage собирает виджеты</span>
+└─ <span class="dir">shared/</span>            <span class="cm"># ui-кит, базовый api-клиент, утилиты</span></div><div class="box tip"><div class="bt">Правило импортов</div><p>Слой может импортировать только из слоёв НИЖЕ себя. features берёт из entities и shared, но никогда из widgets. Это правило в одну строку и есть весь секрет: зависимости текут строго вниз, циклов не возникает, клубок не запутывается.</p></div></section><section><div class="sec-num">04 · ВСЁ ВМЕСТЕ</div><h2>Путь данных через слои</h2><p>А вот ради чего всё затевалось. Смотри, как материал всех пяти разделов встаёт по местам, когда пользователь жмёт кнопку. Запусти поток:</p><div class="pipe"><div class="pipe-track"><div class="pipe-step" id="ps-feat"><div class="ps-ico">🖱️</div><div class="ps-layer">features</div><div class="ps-t">Клик</div><div class="ps-d">Юзер нажал «Загрузить товары»</div></div><div class="pipe-step" id="ps-api"><div class="ps-ico">🌐</div><div class="ps-layer">shared / api</div><div class="ps-t">fetch</div><div class="ps-d">Запрос летит на бэкенд, ждём JSON</div></div><div class="pipe-step" id="ps-zod"><div class="ps-ico">🛡️</div><div class="ps-layer">entities / model</div><div class="ps-t">Zod</div><div class="ps-d">Валидируем ответ сервера схемой</div></div><div class="pipe-step" id="ps-store"><div class="ps-ico">📦</div><div class="ps-layer">entities / model</div><div class="ps-t">Zustand</div><div class="ps-d">Кладём проверенные данные в стор</div></div><div class="pipe-step" id="ps-entity"><div class="ps-ico">🎨</div><div class="ps-layer">widgets / ui</div><div class="ps-t">Render</div><div class="ps-d">Компонент перерисовался сам</div></div></div><div class="net-log" id="pipe-log" style="margin-top:16px;">нажми — увидишь, как данные едут по слоям</div><div style="text-align:center;margin-top:12px;"><button class="minibtn" onclick="runPipe()">▶ Запустить поток данных</button></div></div><div class="say kyle"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="kFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#b87a48"/><stop offset="100%" stop-color="#9a6238"/></linearGradient><radialGradient id="kCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#e8957a" stop-opacity="0.5"/><stop offset="100%" stop-color="#e8957a" stop-opacity="0"/></radialGradient></defs><ellipse cx="58" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="142" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="64" cy="90" rx="22" ry="26" fill="#6e4426"/><ellipse cx="136" cy="90" rx="22" ry="26" fill="#6e4426"/><path d="M68 58 Q60 22 88 44 Q80 56 72 60 Z" fill="url(#kFur__U)"/><path d="M132 58 Q140 22 112 44 Q120 56 128 60 Z" fill="url(#kFur__U)"/><path d="M71 54 Q67 36 82 48 Z" fill="#3a3230"/><path d="M129 54 Q133 36 118 48 Z" fill="#3a3230"/><circle cx="100" cy="100" r="50" fill="url(#kFur__U)"/><path d="M100 56 Q62 62 60 104 Q100 92 140 104 Q138 62 100 56 Z" fill="#e8cfa8"/><ellipse cx="100" cy="98" rx="40" ry="30" fill="#ecd6b4"/><ellipse cx="100" cy="116" rx="30" ry="24" fill="#f2e1c8"/><ellipse cx="72" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="128" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="100" cy="106" rx="9" ry="7" fill="#3a2a26"/><ellipse cx="97" cy="104" rx="3" ry="2" fill="#5a4a44" opacity="0.7"/><ellipse cx="80" cy="94" rx="13" ry="15" fill="#fff"/><ellipse cx="120" cy="94" rx="13" ry="15" fill="#fff"/><circle cx="81" cy="96" r="9.5" fill="#4a90d9"/><circle cx="119" cy="96" r="9.5" fill="#4a90d9"/><circle cx="81" cy="96" r="5" fill="#1a2f4a"/><circle cx="119" cy="96" r="5" fill="#1a2f4a"/><circle cx="84" cy="91" r="3.5" fill="#fff"/><circle cx="122" cy="91" r="3.5" fill="#fff"/><circle cx="77" cy="98" r="1.8" fill="#fff" opacity="0.8"/><circle cx="115" cy="98" r="1.8" fill="#fff" opacity="0.8"/><path d="M88 120 Q100 130 112 120" stroke="#7a5238" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M74 142 Q100 154 126 142" stroke="#9a4030" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="100" cy="151" r="7" fill="#f0c44e"/><circle cx="100" cy="153" r="1.8" fill="#9a7a1a"/></svg></div>
+    <div class="bubble"><div class="who">Кайл</div><p>Вот и вся картина, Яндексоиды. Сеть приносит данные → fetch их забирает → Zod проверяет → Zustand хранит → React рисует. А FSD говорит, в какой папке каждый из этих шагов живёт. Архитектура — это не бюрократия, это карта, по которой не заблудишься.</p></div></div><div class="box info"><div class="bt">Что дальше</div><p>Это был обзорный заход. В следующий раз копаем data-management по-взрослому: TanStack Query для server state, нормализация, кэш-инвалидация, и FSD глубоко — публичные API слоёв, cross-import правила, реальная структура крупного проекта.</p></div></section><div class="pager"><button onclick="pager(-1)">← Состояние</button></div><footer><div class="big">Готово 🔴</div><p>Сеть · fetch/axios · TS &amp; Zod · Zustand vs Redux · FSD<br>Кайл, Макси и Рен прощаются с дорогими студентами-Яндексоидами.</p></footer></div>
+</div></div>
+<script>
+const pageOrder = ['net','tools','types','data','fsd'];
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelector('.tab[data-page="'+id+'"]').classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>showPage(t.dataset.page)));
+function pager(dir){
+  const cur=document.querySelector('.page.active').id.replace('page-','');
+  const i=pageOrder.indexOf(cur), ni=i+dir;
+  if(ni>=0&&ni<pageOrder.length) showPage(pageOrder[ni]);
+}
+window.addEventListener('scroll',()=>{const h=document.documentElement;
+  document.getElementById('prog').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';});
+
+// ===== ASYNC JS RUNNER (supports await + real fetch) =====
+function fmt(v){
+  if(typeof v==='string') return v;
+  if(v===undefined) return 'undefined';
+  if(v===null) return 'null';
+  try{return JSON.stringify(v,null,2);}catch(e){return String(v);}
+}
+async function runJS(btn){
+  const block=btn.closest('.code');
+  const consoleEl=block.querySelector('.console');
+  const inner=consoleEl.querySelector('.console-inner');
+  const src=decodeURIComponent(btn.dataset.src);
+  const logs=[];
+  const fakeConsole={
+    log:(...a)=>logs.push({t:'log',m:a.map(fmt).join(' ')}),
+    error:(...a)=>logs.push({t:'err',m:a.map(fmt).join(' ')}),
+    warn:(...a)=>logs.push({t:'log',m:a.map(fmt).join(' ')}),
+  };
+  inner.querySelectorAll('.cline').forEach(n=>n.remove());
+  const pending=document.createElement('div');pending.className='cline dim';pending.textContent='выполняю…';
+  inner.appendChild(pending); consoleEl.classList.add('show');
+  btn.querySelector('.rlabel').textContent='…';
+  try{
+    const fn=new Function('console','return (async()=>{\n'+src+'\n})();');
+    await fn(fakeConsole);
+  }catch(e){ logs.push({t:'err',m:e.name+': '+e.message}); }
+  pending.remove();
+  if(!logs.length){const d=document.createElement('div');d.className='cline dim';d.textContent='(нет вывода — добавь console.log)';inner.appendChild(d);}
+  else logs.forEach(l=>{const d=document.createElement('div');d.className='cline'+(l.t==='err'?' err':'');d.textContent=l.m;inner.appendChild(d);});
+  btn.querySelector('.rlabel').textContent='Запущено';
+  setTimeout(()=>{btn.querySelector('.rlabel').textContent='Запустить';},1200);
+}
+
+// ===== HTTP STATUS EXPLORER =====
+const STATUS={
+ '200':['c2','OK','Запрос удался. Сервер отдал то, что просили. Самый желанный код.'],
+ '201':['c2','Created','Создан новый ресурс. Обычно ответ на POST: зарегистрировали юзера, создали заказ.'],
+ '301':['c3','Moved Permanently','Адрес переехал навсегда. Браузер запомнит и в следующий раз пойдёт сразу на новый.'],
+ '304':['c3','Not Modified','Ничего не поменялось с прошлого раза — бери из кэша, не качай заново.'],
+ '400':['c4','Bad Request','Ты прислал кривой запрос. Сервер не понял тело или параметры. Чини фронт.'],
+ '401':['c4','Unauthorized','Ты не представился. Нет токена / он протух. Нужно залогиниться.'],
+ '403':['c4','Forbidden','Представился, но сюда нельзя. Прав не хватает. Логин не поможет.'],
+ '404':['c4','Not Found','Ресурса нет. Самый известный код в интернете.'],
+ '429':['c4','Too Many Requests','Ты долбишь сервер слишком часто. Притормози (rate limit).'],
+ '500':['c5','Internal Server Error','Сервер упал на своей стороне. Это не твоя вина — это бэкендеры.'],
+ '503':['c5','Service Unavailable','Сервер жив, но перегружен или на техработах. Зайди позже.'],
+};
+function pickStatus(code){
+  document.querySelectorAll('.stx-chip').forEach(c=>c.classList.toggle('active',c.dataset.code===code));
+  const [cls,name,desc]=STATUS[code];
+  const col={c2:'#2faf6a',c3:'#d6a13a',c4:'#e23b50',c5:'#ff5470'}[cls];
+  document.getElementById('stx-detail').innerHTML=
+    '<div class="stx-code" style="color:'+col+'">'+code+'</div><div class="stx-name">'+name+'</div><div class="stx-desc">'+desc+'</div>';
+}
+
+// ===== JSON formatter helper for output panels =====
+function colorJSON(obj){
+  let s=JSON.stringify(obj,null,2);
+  s=s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  s=s.replace(/"([^"]+)":/g,'<span class="k">"$1"</span>:');
+  s=s.replace(/: "([^"]*)"/g,': <span class="v">"$1"</span>');
+  s=s.replace(/: (\d+\.?\d*)/g,': <span class="num">$1</span>');
+  return s;
+}
+
+// ===== REAL FETCH DEMO =====
+async function realFetch(btn, mode){
+  const out=btn.closest('section').querySelector('.fetchout');
+  out.innerHTML='<span class="muted">лечу на сервер…</span>';
+  const url='https://jsonplaceholder.typicode.com/users/2';
+  try{
+    if(mode==='axios'){
+      // emulate axios surface on top of fetch (axios CDN-free, same idea)
+      const r=await fetch(url);
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const data=await r.json();
+      out.innerHTML='<span class="muted">// axios сам распарсил JSON, статус '+r.status+'</span>\n'+
+        colorJSON({name:data.name,email:data.email,city:data.address.city,company:data.company.name});
+    } else {
+      const r=await fetch(url);
+      out.innerHTML='<span class="muted">// статус ответа: '+r.status+' '+r.statusText+'</span>\n';
+      if(!r.ok){out.innerHTML+='ошибка';return;}
+      const data=await r.json();
+      out.innerHTML+=colorJSON({name:data.name,email:data.email,city:data.address.city,company:data.company.name});
+    }
+  }catch(e){ out.innerHTML='<span style="color:#f0a4b0">сеть недоступна: '+e.message+'</span>\n<span class="muted">(открой лекцию с интернетом — запрос летит на реальный API)</span>'; }
+}
+
+// ===== MINI ZUSTAND-STYLE STORE (faithful vanilla impl) =====
+function createStore(init){
+  let state=init; const subs=new Set();
+  return {
+    getState:()=>state,
+    setState:(patch)=>{state={...state,...(typeof patch==='function'?patch(state):patch)};subs.forEach(f=>f(state));},
+    subscribe:(f)=>{subs.add(f);return ()=>subs.delete(f);}
+  };
+}
+let cartStore;
+function initStore(){
+  cartStore=createStore({items:[],total:0});
+  const renderState=(s)=>{
+    const el=document.getElementById('store-state');
+    el.innerHTML=colorState(s);
+  };
+  const renderBadge=(s)=>{
+    const b=document.getElementById('sub-badge');
+    b.querySelector('.cnt').textContent=s.items.length;
+    b.classList.add('flash');setTimeout(()=>b.classList.remove('flash'),350);
+  };
+  const renderTotal=(s)=>{
+    const t=document.getElementById('sub-total');
+    t.querySelector('.cnt').textContent=s.total+' ₽';
+    t.classList.add('flash');setTimeout(()=>t.classList.remove('flash'),350);
+  };
+  cartStore.subscribe(renderState);
+  cartStore.subscribe(renderBadge);
+  cartStore.subscribe(renderTotal);
+  renderState(cartStore.getState());
+}
+function colorState(s){
+  const items=s.items.map(i=>'    <span class="v">"'+i.n+'"</span>').join(',\n');
+  return '{\n  <span class="k">items</span>: ['+(s.items.length?'\n'+items+'\n  ':'')+'],\n  <span class="k">total</span>: <span class="num">'+s.total+'</span>\n}';
+}
+function cartAdd(name,price){
+  cartStore.setState(s=>({items:[...s.items,{n:name,p:price}],total:s.total+price}));
+}
+function cartClear(){ cartStore.setState({items:[],total:0}); }
+
+// ===== ZOD-STYLE VALIDATION PLAYGROUND (faithful) =====
+const userSchema={
+  name:{type:'string',min:1},
+  age:{type:'number',min:0,max:120},
+  email:{type:'string',email:true},
+};
+function validate(data,schema){
+  const errors=[];
+  for(const key in schema){
+    const rule=schema[key]; const val=data[key];
+    if(val===undefined){errors.push(key+': обязательное поле отсутствует');continue;}
+    if(rule.type==='number'&&typeof val!=='number'){errors.push(key+': ожидалось number, пришло '+typeof val);continue;}
+    if(rule.type==='string'&&typeof val!=='string'){errors.push(key+': ожидалось string, пришло '+typeof val);continue;}
+    if(rule.min!==undefined&&rule.type==='number'&&val<rule.min)errors.push(key+': меньше минимума '+rule.min);
+    if(rule.max!==undefined&&val>rule.max)errors.push(key+': больше максимума '+rule.max);
+    if(rule.min!==undefined&&rule.type==='string'&&val.length<rule.min)errors.push(key+': строка пустая');
+    if(rule.email&&!/^[^@]+@[^@]+\.[^@]+$/.test(val))errors.push(key+': не похоже на email');
+  }
+  return errors;
+}
+function runZod(){
+  const ta=document.getElementById('zod-input');
+  const res=document.getElementById('zod-result');
+  let data;
+  try{ data=JSON.parse(ta.value); }
+  catch(e){ res.className='zod-result bad'; res.textContent='❌ Это даже не валидный JSON: '+e.message; return; }
+  const errs=validate(data,userSchema);
+  if(!errs.length){ res.className='zod-result ok'; res.textContent='✅ safeParse({ success: true })\nДанные прошли схему. Дальше им можно доверять и класть в стор.'; }
+  else{ res.className='zod-result bad'; res.textContent='❌ safeParse({ success: false })\n'+errs.map(e=>'  • '+e).join('\n'); }
+}
+function zodPreset(kind){
+  const ta=document.getElementById('zod-input');
+  if(kind==='good') ta.value='{\n  "name": "Аня",\n  "age": 27,\n  "email": "anya@yandex.ru"\n}';
+  else ta.value='{\n  "name": "",\n  "age": "двадцать семь",\n  "email": "не-почта"\n}';
+  runZod();
+}
+
+// ===== NETWORK FLIGHT ANIMATION =====
+function flyPacket(){
+  const wire=document.getElementById('net-wire');
+  const log=document.getElementById('net-log');
+  wire.querySelectorAll('.net-packet').forEach(p=>p.remove());
+  const req=document.createElement('div');req.className='net-packet req go-req';req.textContent='?';
+  wire.appendChild(req);
+  log.textContent='→ GET /users/2  (летит запрос с заголовками)';
+  setTimeout(()=>{
+    req.remove();
+    const res=document.createElement('div');res.className='net-packet res go-res';res.textContent='✓';
+    wire.appendChild(res);
+    log.textContent='← 200 OK  Content-Type: application/json  (сервер вернул данные)';
+    setTimeout(()=>res.remove(),1100);
+  },1050);
+}
+
+// ===== DATA PIPELINE (the payoff) =====
+const pipeSteps=['ps-feat','ps-api','ps-zod','ps-store','ps-entity'];
+const pipeLog=['feature: пользователь нажал «Загрузить»',
+  'shared/api: fetch летит на бэкенд',
+  'entities/model: zod валидирует ответ сервера',
+  'entities/model: zustand-стор обновляется',
+  'widgets/ui: компонент перерисовался с новыми данными'];
+async function runPipe(){
+  pipeSteps.forEach(id=>document.getElementById(id).classList.remove('lit'));
+  const logEl=document.getElementById('pipe-log');
+  for(let i=0;i<pipeSteps.length;i++){
+    document.getElementById(pipeSteps[i]).classList.add('lit');
+    logEl.textContent='› '+pipeLog[i];
+    await new Promise(r=>setTimeout(r,750));
+  }
+  logEl.textContent='✓ данные проехали весь путь — каждый слой сделал ровно свою работу';
+}
+
+// ===== FSD CAKE LAYER INFO =====
+const CAKE={
+ app:['app — самый верхний корж','Точка входа всего приложения. Тут роутер, глобальные провайдеры, подключение стора и стилей. Знает про всех, его не знает никто.'],
+ pages:['pages — страницы','Каждая страница = один экран по адресу (/catalog, /cart). Сама почти ничего не делает: только собирает виджеты в композицию.'],
+ widgets:['widgets — крупные блоки','Самостоятельные куски страницы: Header, ProductList, Sidebar. Склеивают несколько фич и сущностей в готовый блок.'],
+ features:['features — действия пользователя','То, что юзер ДЕЛАЕТ: залогиниться, добавить в корзину, поставить лайк. Фича = одно осмысленное действие с его логикой и кнопкой.'],
+ entities:['entities — бизнес-сущности','Ключевые объекты предметной области: User, Product, Order. Тут их карточки (ui), их сторы и типы (model), их запросы (api). Сердце данных.'],
+ shared:['shared — фундамент','Код без привязки к бизнесу: ui-кит (Button, Input), базовый api-клиент, хелперы. Самый нижний корж — ни от кого не зависит, нужен всем.'],
+};
+function cakeInfo(id){
+  const [t,d]=CAKE[id];
+  document.getElementById('cake-detail').innerHTML='<div class="cd-t">'+t+'</div>'+d;
+}
+
+// reveal on scroll
+const io=new IntersectionObserver((es)=>es.forEach(e=>{if(e.isIntersecting)e.target.style.opacity=1;}),{threshold:.05});
+window.addEventListener('DOMContentLoaded',()=>{
+  showPage('net');
+  if(document.getElementById('store-state')) initStore();
+  if(document.getElementById('stx-detail')) pickStatus('200');
+});
+</script>
+</body>
+</html>

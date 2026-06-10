@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JS · TS · React · FSD — большая лекция</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700;800&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root{
+    --bg:#0f1422; --bg2:#141a2c; --card:#1a2138; --card2:#222b45;
+    --ink:#e9edf6; --muted:#8a96b8; --line:#2a3450;
+    --kyle:#c08552; --maxi:#46b877; --ren:#8893ab;
+    --yellow:#f7df1e; --blue:#61afef; --react:#61dafb; --ts:#3178c6;
+    --purple:#c678dd; --green:#98c379; --orange:#e5a35a; --red:#e06c75; --cyan:#56b6c2;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--ink);line-height:1.7;}
+  body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-image:radial-gradient(circle, rgba(97,175,239,0.05) 1px, transparent 1px);background-size:34px 34px;}
+
+  /* progress */
+  .progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--yellow),var(--ts),var(--react));z-index:200;width:0;}
+
+  /* ===== TOP NAV (tabs) ===== */
+  .topbar{position:sticky;top:0;z-index:100;background:rgba(15,20,34,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);}
+  .topbar-inner{max-width:1000px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:16px;height:62px;}
+  .brand{font-family:'Unbounded',sans-serif;font-weight:700;font-size:16px;white-space:nowrap;}
+  .brand .d1{color:var(--yellow);}.brand .d2{color:var(--ts);}.brand .d3{color:var(--react);}
+  .tabs{display:flex;gap:4px;margin-left:auto;overflow-x:auto;scrollbar-width:none;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{font-family:'Nunito',sans-serif;font-weight:700;font-size:13.5px;cursor:pointer;white-space:nowrap;
+    background:transparent;border:1px solid transparent;border-radius:10px;padding:8px 14px;color:var(--muted);transition:all .15s;}
+  .tab:hover{color:var(--ink);background:var(--card);}
+  .tab.active{color:var(--ink);background:var(--card2);border-color:var(--line);}
+  .tab .n{font-family:'JetBrains Mono',monospace;font-size:11px;opacity:.6;margin-right:6px;}
+
+  .wrap{max-width:1000px;margin:0 auto;padding:0 20px;position:relative;z-index:1;}
+
+  /* ===== PAGES ===== */
+  .page{display:none;animation:fade .4s;}
+  .page.active{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+  /* page hero */
+  .phero{padding:46px 0 30px;border-bottom:1px solid var(--line);margin-bottom:8px;}
+  .phero .kicker{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:3px;text-transform:uppercase;margin-bottom:14px;}
+  .phero h1{font-family:'Unbounded',sans-serif;font-weight:800;font-size:clamp(30px,6vw,52px);line-height:1.05;margin-bottom:14px;}
+  .phero p{color:var(--muted);font-size:17px;max-width:620px;}
+  .k-js .kicker{color:var(--yellow);} .k-ts .kicker{color:var(--ts);}
+  .k-react .kicker{color:var(--react);} .k-arch .kicker{color:var(--maxi);}
+
+  section{padding:30px 0;}
+  section + section{border-top:1px solid var(--line);}
+  .sec-num{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--blue);letter-spacing:2px;margin-bottom:8px;}
+  h2{font-family:'Unbounded',sans-serif;font-weight:700;font-size:clamp(24px,4vw,34px);margin-bottom:10px;line-height:1.12;}
+  h3{font-family:'Unbounded',sans-serif;font-weight:600;font-size:20px;margin:26px 0 10px;}
+  h4{font-family:'Unbounded',sans-serif;font-weight:600;font-size:16px;margin:18px 0 8px;}
+  p{margin-bottom:14px;color:#ccd5ea;}
+  p strong{color:#fff;}
+  ul.plain{margin:0 0 16px 0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:8px;}
+  ul.plain li{padding-left:24px;position:relative;color:#ccd5ea;}
+  ul.plain li::before{content:"▸";position:absolute;left:4px;color:var(--blue);}
+  .lead{font-size:18px;color:#dbe2f2;}
+  code:not(pre code){font-family:'JetBrains Mono',monospace;font-size:.87em;background:#2a3354;color:var(--orange);padding:2px 7px;border-radius:6px;}
+
+  /* ===== SPEECH ===== */
+  .say{display:flex;gap:13px;align-items:flex-start;margin:20px 0;}
+  .say .ava{flex-shrink:0;width:58px;height:58px;border-radius:15px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .say .ava svg{width:54px;height:54px;}
+  .say.kyle .ava{background:rgba(192,133,82,.16);border:1.5px solid rgba(192,133,82,.42);}
+  .say.maxi .ava{background:rgba(70,184,119,.16);border:1.5px solid rgba(70,184,119,.42);}
+  .say.ren .ava{background:rgba(136,147,171,.16);border:1.5px solid rgba(136,147,171,.42);}
+  .bubble{background:var(--card);border:1px solid var(--line);border-radius:5px 16px 16px 16px;padding:13px 17px;flex:1;}
+  .bubble .who{font-family:'Unbounded',sans-serif;font-weight:600;font-size:12.5px;margin-bottom:3px;}
+  .say.kyle .who{color:var(--kyle);} .say.maxi .who{color:var(--maxi);} .say.ren .who{color:var(--ren);}
+  .bubble p{margin:0;font-size:15px;color:#d4dcee;}
+
+  /* ===== CODE ===== */
+  .code{background:#161c30;border:1px solid var(--line);border-radius:13px;margin:18px 0;overflow:hidden;}
+  .code-top{display:flex;align-items:center;gap:7px;padding:10px 14px;background:#11162a;border-bottom:1px solid var(--line);}
+  .code-top .dot{width:10px;height:10px;border-radius:50%;}
+  .dot.r{background:#ff5f57;}.dot.y{background:#febc2e;}.dot.g{background:#28c840;}
+  .code-top .fn{margin-left:6px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted);flex:1;}
+  .runbtn{font-family:'Nunito',sans-serif;font-weight:700;font-size:12.5px;cursor:pointer;
+    background:var(--maxi);color:#0c2417;border:none;border-radius:8px;padding:6px 14px;display:flex;align-items:center;gap:6px;transition:all .15s;}
+  .runbtn:hover{filter:brightness(1.12);transform:translateY(-1px);}
+  .runbtn:active{transform:translateY(0);}
+  .runbtn.react{background:var(--react);color:#06222a;}
+  pre{margin:0;padding:16px 18px;overflow-x:auto;}
+  pre code{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.62;}
+  .tk{color:var(--purple);}.ts2{color:var(--green);}.tn{color:var(--orange);}.tc{color:#5c6680;font-style:italic;}
+  .tf{color:var(--blue);}.tp{color:var(--red);}.to{color:var(--cyan);}.ty{color:#e5c07b;}.tx{color:#abb2bf;}
+
+  /* console output */
+  .console{background:#0b0f1c;border-top:1px solid var(--line);padding:0;max-height:0;overflow:hidden;transition:max-height .3s ease;}
+  .console.show{max-height:400px;}
+  .console-inner{padding:14px 18px;font-family:'JetBrains Mono',monospace;font-size:12.5px;}
+  .console-label{color:#4a5570;font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+  .console-label::before{content:"▶";color:var(--maxi);font-size:9px;}
+  .cline{color:#b8c2da;white-space:pre-wrap;padding:1px 0;}
+  .cline.err{color:var(--red);}
+  .cline .ctype{color:#5c6680;}
+
+  /* react result preview */
+  .rresult{background:#0d1322;border-top:1px solid var(--line);max-height:0;overflow:hidden;transition:max-height .35s ease;}
+  .rresult.show{max-height:600px;}
+  .rresult-inner{padding:16px 18px;}
+  .rresult-label{color:#4a5570;font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+  .rresult-label::before{content:"▶";color:var(--react);font-size:9px;}
+  .browser{background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.4);}
+  .browser-bar{background:#e8e8ec;padding:8px 12px;display:flex;align-items:center;gap:6px;}
+  .browser-bar .bd{width:9px;height:9px;border-radius:50%;}
+  .browser-bar .url{margin-left:8px;background:#fff;border-radius:6px;padding:3px 12px;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#999;flex:1;}
+  .browser-body{padding:20px;color:#1a1a2e;font-family:'Nunito',sans-serif;min-height:60px;}
+
+  /* ===== CALLOUTS ===== */
+  .box{border-radius:13px;padding:15px 18px;margin:18px 0;border-left:4px solid;}
+  .box .bt{font-family:'Unbounded',sans-serif;font-weight:600;font-size:13.5px;margin-bottom:5px;}
+  .box p{margin:0;font-size:14.5px;}
+  .box.tip{background:rgba(247,223,30,.07);border-color:var(--yellow);} .box.tip .bt{color:var(--yellow);}
+  .box.warn{background:rgba(224,108,117,.08);border-color:var(--red);} .box.warn .bt{color:var(--red);}
+  .box.info{background:rgba(97,175,239,.07);border-color:var(--blue);} .box.info .bt{color:var(--blue);}
+  .box.ts{background:rgba(49,120,198,.1);border-color:var(--ts);} .box.ts .bt{color:#6aa3e0;}
+
+  /* ===== VIZ ===== */
+  .viz{background:linear-gradient(160deg,#181f3a,#13192e);border:1px solid var(--line);border-radius:16px;padding:24px;margin:20px 0;}
+  .viz-title{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;text-align:center;margin-bottom:18px;}
+  .flow{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;}
+  .flow .pill{background:var(--card2);border-radius:11px;padding:11px 14px;font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;}
+  .flow .lbl{font-size:11px;color:var(--muted);margin-top:6px;font-family:'JetBrains Mono',monospace;text-align:center;}
+  .flow .op{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--maxi);background:rgba(70,184,119,.12);border:1px solid rgba(70,184,119,.3);border-radius:100px;padding:5px 11px;white-space:nowrap;}
+  .flow .arr-ico{color:var(--muted);font-size:20px;}
+
+  /* meme */
+  .meme-row{text-align:center;margin:22px 0;}
+  .meme{display:inline-flex;align-items:center;gap:9px;background:var(--card2);border:1px dashed var(--line);border-radius:100px;padding:5px 15px 5px 7px;margin:5px 4px;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--muted);}
+  .meme .mava{width:28px;height:28px;border-radius:50%;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+  .meme .mava svg{width:28px;height:28px;}
+
+  /* tables / comparison */
+  .cmp{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:13px;overflow:hidden;margin:18px 0;}
+  @media(max-width:600px){.cmp{grid-template-columns:1fr;}}
+  .cmp .ch{padding:10px 14px;font-family:'Unbounded',sans-serif;font-weight:600;font-size:13px;}
+  .cmp .ch.js{background:rgba(247,223,30,.12);color:var(--yellow);}
+  .cmp .ch.ts{background:rgba(49,120,198,.16);color:#6aa3e0;}
+  .cmp .cc{padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:12px;background:#161c30;border-top:1px solid var(--line);white-space:pre-wrap;line-height:1.6;}
+
+  /* fsd layers */
+  .fsd{display:flex;flex-direction:column;gap:6px;margin:18px 0;}
+  .layer{border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:14px;border:1px solid var(--line);}
+  .layer .lname{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;min-width:96px;}
+  .layer .ldesc{font-size:13.5px;color:#c4cde2;}
+  .layer.app{background:rgba(224,108,117,.1);} .layer.app .lname{color:var(--red);}
+  .layer.pages{background:rgba(229,163,90,.1);} .layer.pages .lname{color:var(--orange);}
+  .layer.widgets{background:rgba(247,223,30,.08);} .layer.widgets .lname{color:var(--yellow);}
+  .layer.features{background:rgba(70,184,119,.1);} .layer.features .lname{color:var(--maxi);}
+  .layer.entities{background:rgba(97,175,239,.1);} .layer.entities .lname{color:var(--blue);}
+  .layer.shared{background:rgba(136,147,171,.1);} .layer.shared .lname{color:var(--ren);}
+
+  /* file tree */
+  .ftree{background:#11162a;border:1px solid var(--line);border-radius:12px;padding:16px 18px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.8;margin:18px 0;}
+  .ftree .dir{color:var(--blue);}
+  .ftree .fl{color:#b8c2da;}
+  .ftree .cm{color:#5c6680;}
+
+  /* footer */
+  footer{text-align:center;padding:44px 20px 64px;border-top:1px solid var(--line);margin-top:24px;}
+  footer .big{font-family:'Unbounded',sans-serif;font-weight:700;font-size:22px;color:var(--react);margin-bottom:8px;}
+  footer p{color:var(--muted);}
+
+  /* next-prev */
+  .pager{display:flex;justify-content:space-between;gap:12px;padding:24px 0 8px;}
+  .pager button{font-family:'Nunito',sans-serif;font-weight:700;font-size:14px;cursor:pointer;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:12px 20px;transition:all .15s;}
+  .pager button:hover{border-color:var(--blue);color:var(--blue);}
+  .pager button:disabled{opacity:.3;cursor:not-allowed;}
+  .pager button.next{margin-left:auto;}
+</style>
+</head>
+<body>
+<div class="progress" id="prog"></div>
+
+<!-- ===== TOP NAV ===== -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand"><span class="d1">JS</span> · <span class="d2">TS</span> · <span class="d3">React</span></div>
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-page="js"><span class="n">01</span>Функции</button>
+      <button class="tab" data-page="ts"><span class="n">02</span>TypeScript</button>
+      <button class="tab" data-page="react"><span class="n">03</span>React</button>
+      <button class="tab" data-page="arch"><span class="n">04</span>TS + Архитектура</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div id="PAGES">
+
+<div class="page active" id="page-js">
+  <div class="phero k-js">
+    <div class="kicker">Раздел 01 · База</div>
+    <h1>Основы функций</h1>
+    <p>Функции — фундамент всего JavaScript. Разберём, как они устроены, какие бывают, и сразу запустим код прямо здесь. Жми ▶️ под примерами — увидишь реальный вывод.</p>
+  </div>
+
+  <div class="say kyle"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="kFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#b87a48"/><stop offset="100%" stop-color="#9a6238"/></linearGradient><radialGradient id="kCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#e8957a" stop-opacity="0.5"/><stop offset="100%" stop-color="#e8957a" stop-opacity="0"/></radialGradient></defs><ellipse cx="58" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="142" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="64" cy="90" rx="22" ry="26" fill="#6e4426"/><ellipse cx="136" cy="90" rx="22" ry="26" fill="#6e4426"/><path d="M68 58 Q60 22 88 44 Q80 56 72 60 Z" fill="url(#kFur__U)"/><path d="M132 58 Q140 22 112 44 Q120 56 128 60 Z" fill="url(#kFur__U)"/><path d="M71 54 Q67 36 82 48 Z" fill="#3a3230"/><path d="M129 54 Q133 36 118 48 Z" fill="#3a3230"/><circle cx="100" cy="100" r="50" fill="url(#kFur__U)"/><path d="M100 56 Q62 62 60 104 Q100 92 140 104 Q138 62 100 56 Z" fill="#e8cfa8"/><ellipse cx="100" cy="98" rx="40" ry="30" fill="#ecd6b4"/><ellipse cx="100" cy="116" rx="30" ry="24" fill="#f2e1c8"/><ellipse cx="72" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="128" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="100" cy="106" rx="9" ry="7" fill="#3a2a26"/><ellipse cx="97" cy="104" rx="3" ry="2" fill="#5a4a44" opacity="0.7"/><ellipse cx="80" cy="94" rx="13" ry="15" fill="#fff"/><ellipse cx="120" cy="94" rx="13" ry="15" fill="#fff"/><circle cx="81" cy="96" r="9.5" fill="#4a90d9"/><circle cx="119" cy="96" r="9.5" fill="#4a90d9"/><circle cx="81" cy="96" r="5" fill="#1a2f4a"/><circle cx="119" cy="96" r="5" fill="#1a2f4a"/><circle cx="84" cy="91" r="3.5" fill="#fff"/><circle cx="122" cy="91" r="3.5" fill="#fff"/><circle cx="77" cy="98" r="1.8" fill="#fff" opacity="0.8"/><circle cx="115" cy="98" r="1.8" fill="#fff" opacity="0.8"/><path d="M88 120 Q100 130 112 120" stroke="#7a5238" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M74 142 Q100 154 126 142" stroke="#9a4030" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="100" cy="151" r="7" fill="#f0c44e"/><circle cx="100" cy="153" r="1.8" fill="#9a7a1a"/></svg></div>
+    <div class="bubble"><div class="who">Кайл</div><p>Дорогие студенты-Яндексоиды, начинаем с функций. Это не страшно. Функция — просто станок: кладёшь сырьё, получаешь результат. Сейчас всё покажу и дам потыкать.</p></div></div>
+
+  <section>
+    <div class="sec-num">01 · ЧТО ТАКОЕ ФУНКЦИЯ</div>
+    <h2>Функция — это станок</h2>
+    <p class="lead">Берёт что-то на вход, отдаёт что-то на выход. Один раз настроил — пользуешься сколько угодно.</p>
+    <p>Смысл простой. Есть кусок работы, который повторяется. Вместо копирования по всему коду — заворачиваешь в функцию и зовёшь по имени. Поменялась логика — правишь в одном месте.</p>
+
+    <div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">function.js</span><button class="runbtn" onclick="runJS(this)" data-src="//%20%D0%BE%D0%B1%D1%8A%D1%8F%D0%B2%D0%BB%D1%8F%D0%B5%D0%BC%20%D1%84%D1%83%D0%BD%D0%BA%D1%86%D0%B8%D1%8E%0Afunction%20greet%28name%29%20%7B%0A%20%20return%20%27%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82%2C%20%27%20%2B%20name%20%2B%20%27%21%27%3B%0A%7D%0A%0A//%20%D0%B7%D0%BE%D0%B2%D1%91%D0%BC%20%D0%B5%D1%91%20%D1%81%20%D1%80%D0%B0%D0%B7%D0%BD%D1%8B%D0%BC%D0%B8%20%D0%B0%D1%80%D0%B3%D1%83%D0%BC%D0%B5%D0%BD%D1%82%D0%B0%D0%BC%D0%B8%0Aconsole.log%28greet%28%27%D0%90%D0%BD%D1%8F%27%29%29%3B%0Aconsole.log%28greet%28%27%D0%9C%D0%B0%D0%BA%D1%81%27%29%29%3B"><span>▶</span><span class="rlabel">Запустить</span></button></div>
+  <pre><code><span class="tc">// объявляем функцию</span>
+<span class="tk">function</span><span class="tx"> </span><span class="tf">greet</span><span class="tx">(</span><span class="tx">name</span><span class="tx">)</span><span class="tx"> </span><span class="tx">{</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tk">return</span><span class="tx"> </span><span class="ts2">&#x27;Привет, &#x27;</span><span class="tx"> </span><span class="to">+</span><span class="tx"> </span><span class="tx">name</span><span class="tx"> </span><span class="to">+</span><span class="tx"> </span><span class="ts2">&#x27;!&#x27;</span><span class="tx">;</span>
+<span class="tx">}</span>
+ 
+<span class="tc">// зовём её с разными аргументами</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="tf">greet</span><span class="tx">(</span><span class="ts2">&#x27;Аня&#x27;</span><span class="tx">)</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="tf">greet</span><span class="tx">(</span><span class="ts2">&#x27;Макс&#x27;</span><span class="tx">)</span><span class="tx">)</span><span class="tx">;</span></code></pre>
+  <div class="console"><div class="console-inner"><div class="console-label">console</div></div></div>
+</div>
+
+    <div class="say maxi"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#46b877"/><stop offset="100%" stop-color="#359a5e"/></linearGradient><radialGradient id="mCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#f0a890" stop-opacity="0.45"/><stop offset="100%" stop-color="#f0a890" stop-opacity="0"/></radialGradient></defs><path d="M66 56 Q56 18 90 42 Q80 54 72 58 Z" fill="url(#mFur__U)"/><path d="M134 56 Q144 18 110 42 Q120 54 128 58 Z" fill="url(#mFur__U)"/><path d="M70 50 Q64 30 82 44 Z" fill="#1f1f1f"/><path d="M130 50 Q136 30 118 44 Z" fill="#1f1f1f"/><circle cx="100" cy="100" r="50" fill="url(#mFur__U)"/><path d="M100 64 Q66 72 70 112 Q100 128 130 112 Q134 72 100 64 Z" fill="#f2f6f2"/><ellipse cx="100" cy="104" rx="34" ry="26" fill="#f7faf7"/><ellipse cx="74" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="126" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="100" cy="108" rx="6.5" ry="5" fill="#2a2a2a"/><path d="M100 113 L100 120" stroke="#2a2a2a" stroke-width="1.5" stroke-linecap="round"/><ellipse cx="82" cy="96" rx="12" ry="14" fill="#fff"/><ellipse cx="118" cy="96" rx="12" ry="14" fill="#fff"/><circle cx="83" cy="98" r="8.5" fill="#e8a020"/><circle cx="117" cy="98" r="8.5" fill="#e8a020"/><circle cx="83" cy="98" r="4.5" fill="#3a2400"/><circle cx="117" cy="98" r="4.5" fill="#3a2400"/><circle cx="86" cy="93" r="3.2" fill="#fff"/><circle cx="120" cy="93" r="3.2" fill="#fff"/><circle cx="79" cy="100" r="1.6" fill="#fff" opacity="0.8"/><circle cx="113" cy="100" r="1.6" fill="#fff" opacity="0.8"/><path d="M90 119 Q100 127 110 119" stroke="#1f5a32" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M97 124 Q100 129 103 124 Z" fill="#e87a8a"/></svg></div>
+    <div class="bubble"><div class="who">Макси</div><p>Видишь? Нажал ▶️ — код реально выполнился, внизу вывод. Это не картинка, это работающий JavaScript прямо в лекции. Можешь мысленно подставлять свои имена.</p></div></div>
+
+    <h3>Параметры и аргументы</h3>
+    <p><strong>Параметр</strong> — это имя в скобках при объявлении (<code>name</code>). <strong>Аргумент</strong> — конкретное значение, которое передаёшь при вызове (<code>'Аня'</code>). Параметров может быть несколько:</p>
+
+    <div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">params.js</span><button class="runbtn" onclick="runJS(this)" data-src="function%20sum%28a%2C%20b%29%20%7B%0A%20%20return%20a%20%2B%20b%3B%0A%7D%0A%0Aconsole.log%28sum%282%2C%203%29%29%3B%0Aconsole.log%28sum%2810%2C%2025%29%29%3B%0Aconsole.log%28sum%28100%2C%20-40%29%29%3B"><span>▶</span><span class="rlabel">Запустить</span></button></div>
+  <pre><code><span class="tk">function</span><span class="tx"> </span><span class="tf">sum</span><span class="tx">(</span><span class="tx">a</span><span class="tx">,</span><span class="tx"> </span><span class="tx">b</span><span class="tx">)</span><span class="tx"> </span><span class="tx">{</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tk">return</span><span class="tx"> </span><span class="tx">a</span><span class="tx"> </span><span class="to">+</span><span class="tx"> </span><span class="tx">b</span><span class="tx">;</span>
+<span class="tx">}</span>
+ 
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="tf">sum</span><span class="tx">(</span><span class="tn">2</span><span class="tx">,</span><span class="tx"> </span><span class="tn">3</span><span class="tx">)</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="tf">sum</span><span class="tx">(</span><span class="tn">10</span><span class="tx">,</span><span class="tx"> </span><span class="tn">25</span><span class="tx">)</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="tf">sum</span><span class="tx">(</span><span class="tn">100</span><span class="tx">,</span><span class="tx"> </span><span class="to">-</span><span class="tn">40</span><span class="tx">)</span><span class="tx">)</span><span class="tx">;</span></code></pre>
+  <div class="console"><div class="console-inner"><div class="console-label">console</div></div></div>
+</div>
+  </section>
+
+  <section>
+    <div class="sec-num">02 · СТРЕЛОЧНЫЕ ФУНКЦИИ</div>
+    <h2>Стрелочные функции</h2>
+    <p class="lead">Та же идея, короче запись. Сейчас в React и современном коде пишут в основном так.</p>
+
+    <div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">arrow.js</span><button class="runbtn" onclick="runJS(this)" data-src="//%20%D0%BA%D0%BB%D0%B0%D1%81%D1%81%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%B0%D1%8F%0Afunction%20double1%28n%29%20%7B%0A%20%20return%20n%20%2A%202%3B%0A%7D%0A%0A//%20%D1%81%D1%82%D1%80%D0%B5%D0%BB%D0%BE%D1%87%D0%BD%D0%B0%D1%8F%20%E2%80%94%20%D1%82%D0%BE%20%D0%B6%D0%B5%20%D1%81%D0%B0%D0%BC%D0%BE%D0%B5%0Aconst%20double2%20%3D%20%28n%29%20%3D%3E%20%7B%0A%20%20return%20n%20%2A%202%3B%0A%7D%3B%0A%0A//%20%D0%B5%D1%81%D0%BB%D0%B8%20%D1%82%D0%B5%D0%BB%D0%BE%20%D0%BE%D0%B4%D0%BD%D0%BE%20%D0%B2%D1%8B%D1%80%D0%B0%D0%B6%D0%B5%D0%BD%D0%B8%D0%B5%20%E2%80%94%20return%20%D0%BD%D0%B5%20%D0%BD%D1%83%D0%B6%D0%B5%D0%BD%0Aconst%20double3%20%3D%20%28n%29%20%3D%3E%20n%20%2A%202%3B%0A%0Aconsole.log%28double1%2821%29%29%3B%0Aconsole.log%28double2%2821%29%29%3B%0Aconsole.log%28double3%2821%29%29%3B"><span>▶</span><span class="rlabel">Запустить</span></button></div>
+  <pre><code><span class="tc">// классическая</span>
+<span class="tk">function</span><span class="tx"> </span><span class="tf">double1</span><span class="tx">(</span><span class="tx">n</span><span class="tx">)</span><span class="tx"> </span><span class="tx">{</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tk">return</span><span class="tx"> </span><span class="tx">n</span><span class="tx"> </span><span class="to">*</span><span class="tx"> </span><span class="tn">2</span><span class="tx">;</span>
+<span class="tx">}</span>
+ 
+<span class="tc">// стрелочная — то же самое</span>
+<span class="tk">const</span><span class="tx"> </span><span class="tx">double2</span><span class="tx"> </span><span class="to">=</span><span class="tx"> </span><span class="tx">(</span><span class="tx">n</span><span class="tx">)</span><span class="tx"> </span><span class="to">=&gt;</span><span class="tx"> </span><span class="tx">{</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tk">return</span><span class="tx"> </span><span class="tx">n</span><span class="tx"> </span><span class="to">*</span><span class="tx"> </span><span class="tn">2</span><span class="tx">;</span>
+<span class="tx">}</span><span class="tx">;</span>
+ 
+<span class="tc">// если тело одно выражение — return не нужен</span>
+<span class="tk">const</span><span class="tx"> </span><span class="tx">double3</span><span class="tx"> </span><span class="to">=</span><span class="tx"> </span><span class="tx">(</span><span class="tx">n</span><span class="tx">)</span><span class="tx"> </span><span class="to">=&gt;</span><span class="tx"> </span><span class="tx">n</span><span class="tx"> </span><span class="to">*</span><span class="tx"> </span><span class="tn">2</span><span class="tx">;</span>
+ 
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="tf">double1</span><span class="tx">(</span><span class="tn">21</span><span class="tx">)</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="tf">double2</span><span class="tx">(</span><span class="tn">21</span><span class="tx">)</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="tf">double3</span><span class="tx">(</span><span class="tn">21</span><span class="tx">)</span><span class="tx">)</span><span class="tx">;</span></code></pre>
+  <div class="console"><div class="console-inner"><div class="console-label">console</div></div></div>
+</div>
+
+    <div class="say maxi"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#46b877"/><stop offset="100%" stop-color="#359a5e"/></linearGradient><radialGradient id="mCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#f0a890" stop-opacity="0.45"/><stop offset="100%" stop-color="#f0a890" stop-opacity="0"/></radialGradient></defs><path d="M66 56 Q56 18 90 42 Q80 54 72 58 Z" fill="url(#mFur__U)"/><path d="M134 56 Q144 18 110 42 Q120 54 128 58 Z" fill="url(#mFur__U)"/><path d="M70 50 Q64 30 82 44 Z" fill="#1f1f1f"/><path d="M130 50 Q136 30 118 44 Z" fill="#1f1f1f"/><circle cx="100" cy="100" r="50" fill="url(#mFur__U)"/><path d="M100 64 Q66 72 70 112 Q100 128 130 112 Q134 72 100 64 Z" fill="#f2f6f2"/><ellipse cx="100" cy="104" rx="34" ry="26" fill="#f7faf7"/><ellipse cx="74" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="126" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="100" cy="108" rx="6.5" ry="5" fill="#2a2a2a"/><path d="M100 113 L100 120" stroke="#2a2a2a" stroke-width="1.5" stroke-linecap="round"/><ellipse cx="82" cy="96" rx="12" ry="14" fill="#fff"/><ellipse cx="118" cy="96" rx="12" ry="14" fill="#fff"/><circle cx="83" cy="98" r="8.5" fill="#e8a020"/><circle cx="117" cy="98" r="8.5" fill="#e8a020"/><circle cx="83" cy="98" r="4.5" fill="#3a2400"/><circle cx="117" cy="98" r="4.5" fill="#3a2400"/><circle cx="86" cy="93" r="3.2" fill="#fff"/><circle cx="120" cy="93" r="3.2" fill="#fff"/><circle cx="79" cy="100" r="1.6" fill="#fff" opacity="0.8"/><circle cx="113" cy="100" r="1.6" fill="#fff" opacity="0.8"/><path d="M90 119 Q100 127 110 119" stroke="#1f5a32" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M97 124 Q100 129 103 124 Z" fill="#e87a8a"/></svg></div>
+    <div class="bubble"><div class="who">Макси</div><p>Стрелка <code>=&gt;</code> читается как «превращается в». <code>n =&gt; n * 2</code> — «эн превращается в эн умножить на два». Запомнишь так — путаться не будешь.</p></div></div>
+
+    <div class="box info">
+      <div class="bt">▸ Почему это важно для React</div>
+      <p>В React почти все обработчики событий и колбэки пишут стрелками: <code>onClick={() => doSomething()}</code>. Так что привыкай к синтаксису сейчас — дальше встретишь его сотни раз.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-num">03 · ФУНКЦИИ И ДАННЫЕ</div>
+    <h2>Функции работают с массивами</h2>
+    <p class="lead">Самое полезное — прогонять функции по спискам данных. Вот где появляются <code>map</code> и <code>filter</code>.</p>
+
+    <p>Коротко напомню. <strong>filter</strong> отсеивает по условию, <strong>map</strong> преобразует каждый элемент. Обе принимают функцию. Запусти и посмотри разницу:</p>
+
+    <div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">filter-map.js</span><button class="runbtn" onclick="runJS(this)" data-src="const%20numbers%20%3D%20%5B1%2C%202%2C%203%2C%204%2C%205%2C%206%2C%207%2C%208%5D%3B%0A%0A//%20filter%20%E2%80%94%20%D0%BE%D1%81%D1%82%D0%B0%D0%B2%D0%B8%D1%82%D1%8C%20%D1%82%D0%BE%D0%BB%D1%8C%D0%BA%D0%BE%20%D1%87%D1%91%D1%82%D0%BD%D1%8B%D0%B5%0Aconst%20even%20%3D%20numbers.filter%28%28n%29%20%3D%3E%20n%20%25%202%20%3D%3D%3D%200%29%3B%0Aconsole.log%28%27%D1%87%D1%91%D1%82%D0%BD%D1%8B%D0%B5%3A%27%2C%20even%29%3B%0A%0A//%20map%20%E2%80%94%20%D1%83%D0%B4%D0%B2%D0%BE%D0%B8%D1%82%D1%8C%20%D0%BA%D0%B0%D0%B6%D0%B4%D0%BE%D0%B5%0Aconst%20doubled%20%3D%20numbers.map%28%28n%29%20%3D%3E%20n%20%2A%202%29%3B%0Aconsole.log%28%27%D1%83%D0%B4%D0%B2%D0%BE%D0%B5%D0%BD%D0%BD%D1%8B%D0%B5%3A%27%2C%20doubled%29%3B%0A%0A//%20%D1%86%D0%B5%D0%BF%D0%BE%D1%87%D0%BA%D0%B0%20%E2%80%94%20%D1%81%D0%BD%D0%B0%D1%87%D0%B0%D0%BB%D0%B0%20%D0%BE%D1%82%D1%81%D0%B5%D1%8F%D1%82%D1%8C%2C%20%D0%BF%D0%BE%D1%82%D0%BE%D0%BC%20%D0%BF%D1%80%D0%B5%D0%BE%D0%B1%D1%80%D0%B0%D0%B7%D0%BE%D0%B2%D0%B0%D1%82%D1%8C%0Aconst%20result%20%3D%20numbers%0A%20%20.filter%28%28n%29%20%3D%3E%20n%20%25%202%20%3D%3D%3D%200%29%0A%20%20.map%28%28n%29%20%3D%3E%20n%20%2A%2010%29%3B%0Aconsole.log%28%27%D1%86%D0%B5%D0%BF%D0%BE%D1%87%D0%BA%D0%B0%3A%27%2C%20result%29%3B"><span>▶</span><span class="rlabel">Запустить</span></button></div>
+  <pre><code><span class="tk">const</span><span class="tx"> </span><span class="tx">numbers</span><span class="tx"> </span><span class="to">=</span><span class="tx"> </span><span class="tx">[</span><span class="tn">1</span><span class="tx">,</span><span class="tx"> </span><span class="tn">2</span><span class="tx">,</span><span class="tx"> </span><span class="tn">3</span><span class="tx">,</span><span class="tx"> </span><span class="tn">4</span><span class="tx">,</span><span class="tx"> </span><span class="tn">5</span><span class="tx">,</span><span class="tx"> </span><span class="tn">6</span><span class="tx">,</span><span class="tx"> </span><span class="tn">7</span><span class="tx">,</span><span class="tx"> </span><span class="tn">8</span><span class="tx">]</span><span class="tx">;</span>
+ 
+<span class="tc">// filter — оставить только чётные</span>
+<span class="tk">const</span><span class="tx"> </span><span class="tx">even</span><span class="tx"> </span><span class="to">=</span><span class="tx"> </span><span class="tx">numbers</span><span class="tx">.</span><span class="tf">filter</span><span class="tx">(</span><span class="tx">(</span><span class="tx">n</span><span class="tx">)</span><span class="tx"> </span><span class="to">=&gt;</span><span class="tx"> </span><span class="tx">n</span><span class="tx"> </span><span class="to">%</span><span class="tx"> </span><span class="tn">2</span><span class="tx"> </span><span class="to">===</span><span class="tx"> </span><span class="tn">0</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="ts2">&#x27;чётные:&#x27;</span><span class="tx">,</span><span class="tx"> </span><span class="tx">even</span><span class="tx">)</span><span class="tx">;</span>
+ 
+<span class="tc">// map — удвоить каждое</span>
+<span class="tk">const</span><span class="tx"> </span><span class="tx">doubled</span><span class="tx"> </span><span class="to">=</span><span class="tx"> </span><span class="tx">numbers</span><span class="tx">.</span><span class="tf">map</span><span class="tx">(</span><span class="tx">(</span><span class="tx">n</span><span class="tx">)</span><span class="tx"> </span><span class="to">=&gt;</span><span class="tx"> </span><span class="tx">n</span><span class="tx"> </span><span class="to">*</span><span class="tx"> </span><span class="tn">2</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="ts2">&#x27;удвоенные:&#x27;</span><span class="tx">,</span><span class="tx"> </span><span class="tx">doubled</span><span class="tx">)</span><span class="tx">;</span>
+ 
+<span class="tc">// цепочка — сначала отсеять, потом преобразовать</span>
+<span class="tk">const</span><span class="tx"> </span><span class="tx">result</span><span class="tx"> </span><span class="to">=</span><span class="tx"> </span><span class="tx">numbers</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx">.</span><span class="tf">filter</span><span class="tx">(</span><span class="tx">(</span><span class="tx">n</span><span class="tx">)</span><span class="tx"> </span><span class="to">=&gt;</span><span class="tx"> </span><span class="tx">n</span><span class="tx"> </span><span class="to">%</span><span class="tx"> </span><span class="tn">2</span><span class="tx"> </span><span class="to">===</span><span class="tx"> </span><span class="tn">0</span><span class="tx">)</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx">.</span><span class="tf">map</span><span class="tx">(</span><span class="tx">(</span><span class="tx">n</span><span class="tx">)</span><span class="tx"> </span><span class="to">=&gt;</span><span class="tx"> </span><span class="tx">n</span><span class="tx"> </span><span class="to">*</span><span class="tx"> </span><span class="tn">10</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="ts2">&#x27;цепочка:&#x27;</span><span class="tx">,</span><span class="tx"> </span><span class="tx">result</span><span class="tx">)</span><span class="tx">;</span></code></pre>
+  <div class="console"><div class="console-inner"><div class="console-label">console</div></div></div>
+</div>
+
+    <div class="say ren"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="rFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8893ab"/><stop offset="100%" stop-color="#6e7a94"/></linearGradient></defs><circle cx="70" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="130" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="70" cy="62" r="7.5" fill="#525c70"/><circle cx="130" cy="62" r="7.5" fill="#525c70"/><circle cx="100" cy="102" r="50" fill="url(#rFur__U)"/><ellipse cx="100" cy="116" rx="38" ry="30" fill="#e6eaf2"/><ellipse cx="100" cy="120" rx="30" ry="22" fill="#eef1f7"/><ellipse cx="100" cy="110" rx="11" ry="8" fill="#3e3e48"/><ellipse cx="96" cy="108" rx="3" ry="2" fill="#5e5e68" opacity="0.7"/><path d="M100 117 L100 126" stroke="#3e3e48" stroke-width="2" stroke-linecap="round"/><circle cx="80" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><circle cx="120" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><path d="M96 94 Q100 90 104 94" stroke="#4a5a6a" stroke-width="2.5" fill="none"/><circle cx="80" cy="95" r="8" fill="#3e3e48"/><circle cx="120" cy="95" r="8" fill="#3e3e48"/><circle cx="83" cy="92" r="3" fill="#fff"/><circle cx="123" cy="92" r="3" fill="#fff"/><circle cx="77" cy="97" r="1.5" fill="#fff" opacity="0.7"/><circle cx="117" cy="97" r="1.5" fill="#fff" opacity="0.7"/><path d="M72 88 Q78 84 84 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M112 88 Q118 84 124 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M78 116 Q60 114 52 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M78 122 Q60 124 54 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 116 Q140 114 148 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 122 Q140 124 146 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M90 124 Q100 131 110 124" stroke="#525c70" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg></div>
+    <div class="bubble"><div class="who">Рен</div><p>Обрати внимание: длина массива после <code>filter</code> может уменьшиться, а после <code>map</code> — никогда. map всегда возвращает столько же элементов, сколько было. Это инженерное правило, держи в голове.</p></div></div>
+
+    <h3>Функции с объектами</h3>
+    <p>На реальных проектах в массивах лежат объекты — это то, что приходит с сервера. Прогоним по ним функции:</p>
+
+    <div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">objects.js</span><button class="runbtn" onclick="runJS(this)" data-src="const%20products%20%3D%20%5B%0A%20%20%7B%20name%3A%20%27%D0%A2%D0%B5%D0%BB%D0%B5%D1%84%D0%BE%D0%BD%27%2C%20price%3A%2015000%2C%20inStock%3A%20true%20%7D%2C%0A%20%20%7B%20name%3A%20%27%D0%9D%D0%BE%D1%83%D1%82%D0%B1%D1%83%D0%BA%27%2C%20price%3A%2080000%2C%20inStock%3A%20false%20%7D%2C%0A%20%20%7B%20name%3A%20%27%D0%9F%D0%BB%D0%B0%D0%BD%D1%88%D0%B5%D1%82%27%2C%20price%3A%2025000%2C%20inStock%3A%20true%20%7D%2C%0A%5D%3B%0A%0A//%20%D1%82%D0%BE%D0%BB%D1%8C%D0%BA%D0%BE%20%D1%82%D0%BE%2C%20%D1%87%D1%82%D0%BE%20%D0%B2%20%D0%BD%D0%B0%D0%BB%D0%B8%D1%87%D0%B8%D0%B8%0Aconst%20available%20%3D%20products.filter%28%28p%29%20%3D%3E%20p.inStock%29%3B%0Aconsole.log%28%27%D0%B2%20%D0%BD%D0%B0%D0%BB%D0%B8%D1%87%D0%B8%D0%B8%3A%27%2C%20available.map%28%28p%29%20%3D%3E%20p.name%29%29%3B%0A%0A//%20%D0%BF%D0%BE%D0%B4%D0%BD%D1%8F%D1%82%D1%8C%20%D1%86%D0%B5%D0%BD%D1%8B%20%D0%BD%D0%B0%2010%25%0Aconst%20newPrices%20%3D%20products.map%28%28p%29%20%3D%3E%20p.name%20%2B%20%27%3A%20%27%20%2B%20%28p.price%20%2A%201.1%29%29%3B%0Aconsole.log%28newPrices%29%3B"><span>▶</span><span class="rlabel">Запустить</span></button></div>
+  <pre><code><span class="tk">const</span><span class="tx"> </span><span class="tx">products</span><span class="tx"> </span><span class="to">=</span><span class="tx"> </span><span class="tx">[</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx">{</span><span class="tx"> </span><span class="tx">name</span><span class="to">:</span><span class="tx"> </span><span class="ts2">&#x27;Телефон&#x27;</span><span class="tx">,</span><span class="tx"> </span><span class="tx">price</span><span class="to">:</span><span class="tx"> </span><span class="tn">15000</span><span class="tx">,</span><span class="tx"> </span><span class="tx">inStock</span><span class="to">:</span><span class="tx"> </span><span class="tp">true</span><span class="tx"> </span><span class="tx">}</span><span class="tx">,</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx">{</span><span class="tx"> </span><span class="tx">name</span><span class="to">:</span><span class="tx"> </span><span class="ts2">&#x27;Ноутбук&#x27;</span><span class="tx">,</span><span class="tx"> </span><span class="tx">price</span><span class="to">:</span><span class="tx"> </span><span class="tn">80000</span><span class="tx">,</span><span class="tx"> </span><span class="tx">inStock</span><span class="to">:</span><span class="tx"> </span><span class="tp">false</span><span class="tx"> </span><span class="tx">}</span><span class="tx">,</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx">{</span><span class="tx"> </span><span class="tx">name</span><span class="to">:</span><span class="tx"> </span><span class="ts2">&#x27;Планшет&#x27;</span><span class="tx">,</span><span class="tx"> </span><span class="tx">price</span><span class="to">:</span><span class="tx"> </span><span class="tn">25000</span><span class="tx">,</span><span class="tx"> </span><span class="tx">inStock</span><span class="to">:</span><span class="tx"> </span><span class="tp">true</span><span class="tx"> </span><span class="tx">}</span><span class="tx">,</span>
+<span class="tx">]</span><span class="tx">;</span>
+ 
+<span class="tc">// только то, что в наличии</span>
+<span class="tk">const</span><span class="tx"> </span><span class="tx">available</span><span class="tx"> </span><span class="to">=</span><span class="tx"> </span><span class="tx">products</span><span class="tx">.</span><span class="tf">filter</span><span class="tx">(</span><span class="tx">(</span><span class="tx">p</span><span class="tx">)</span><span class="tx"> </span><span class="to">=&gt;</span><span class="tx"> </span><span class="tx">p</span><span class="tx">.</span><span class="tx">inStock</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="ts2">&#x27;в наличии:&#x27;</span><span class="tx">,</span><span class="tx"> </span><span class="tx">available</span><span class="tx">.</span><span class="tf">map</span><span class="tx">(</span><span class="tx">(</span><span class="tx">p</span><span class="tx">)</span><span class="tx"> </span><span class="to">=&gt;</span><span class="tx"> </span><span class="tx">p</span><span class="tx">.</span><span class="tx">name</span><span class="tx">)</span><span class="tx">)</span><span class="tx">;</span>
+ 
+<span class="tc">// поднять цены на 10%</span>
+<span class="tk">const</span><span class="tx"> </span><span class="tx">newPrices</span><span class="tx"> </span><span class="to">=</span><span class="tx"> </span><span class="tx">products</span><span class="tx">.</span><span class="tf">map</span><span class="tx">(</span><span class="tx">(</span><span class="tx">p</span><span class="tx">)</span><span class="tx"> </span><span class="to">=&gt;</span><span class="tx"> </span><span class="tx">p</span><span class="tx">.</span><span class="tx">name</span><span class="tx"> </span><span class="to">+</span><span class="tx"> </span><span class="ts2">&#x27;: &#x27;</span><span class="tx"> </span><span class="to">+</span><span class="tx"> </span><span class="tx">(</span><span class="tx">p</span><span class="tx">.</span><span class="tx">price</span><span class="tx"> </span><span class="to">*</span><span class="tx"> </span><span class="tn">1.1</span><span class="tx">)</span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="tx">newPrices</span><span class="tx">)</span><span class="tx">;</span></code></pre>
+  <div class="console"><div class="console-inner"><div class="console-label">console</div></div></div>
+</div>
+
+    <div class="meme-row">
+      <span class="meme"><span class="mava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#46b877"/><stop offset="100%" stop-color="#359a5e"/></linearGradient><radialGradient id="mCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#f0a890" stop-opacity="0.45"/><stop offset="100%" stop-color="#f0a890" stop-opacity="0"/></radialGradient></defs><path d="M66 56 Q56 18 90 42 Q80 54 72 58 Z" fill="url(#mFur__U)"/><path d="M134 56 Q144 18 110 42 Q120 54 128 58 Z" fill="url(#mFur__U)"/><path d="M70 50 Q64 30 82 44 Z" fill="#1f1f1f"/><path d="M130 50 Q136 30 118 44 Z" fill="#1f1f1f"/><circle cx="100" cy="100" r="50" fill="url(#mFur__U)"/><path d="M100 64 Q66 72 70 112 Q100 128 130 112 Q134 72 100 64 Z" fill="#f2f6f2"/><ellipse cx="100" cy="104" rx="34" ry="26" fill="#f7faf7"/><ellipse cx="74" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="126" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="100" cy="108" rx="6.5" ry="5" fill="#2a2a2a"/><path d="M100 113 L100 120" stroke="#2a2a2a" stroke-width="1.5" stroke-linecap="round"/><ellipse cx="82" cy="96" rx="12" ry="14" fill="#fff"/><ellipse cx="118" cy="96" rx="12" ry="14" fill="#fff"/><circle cx="83" cy="98" r="8.5" fill="#e8a020"/><circle cx="117" cy="98" r="8.5" fill="#e8a020"/><circle cx="83" cy="98" r="4.5" fill="#3a2400"/><circle cx="117" cy="98" r="4.5" fill="#3a2400"/><circle cx="86" cy="93" r="3.2" fill="#fff"/><circle cx="120" cy="93" r="3.2" fill="#fff"/><circle cx="79" cy="100" r="1.6" fill="#fff" opacity="0.8"/><circle cx="113" cy="100" r="1.6" fill="#fff" opacity="0.8"/><path d="M90 119 Q100 127 110 119" stroke="#1f5a32" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M97 124 Q100 129 103 124 Z" fill="#e87a8a"/></svg></span>«filter режет, map красит»</span>
+      <span class="meme"><span class="mava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="rFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8893ab"/><stop offset="100%" stop-color="#6e7a94"/></linearGradient></defs><circle cx="70" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="130" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="70" cy="62" r="7.5" fill="#525c70"/><circle cx="130" cy="62" r="7.5" fill="#525c70"/><circle cx="100" cy="102" r="50" fill="url(#rFur__U)"/><ellipse cx="100" cy="116" rx="38" ry="30" fill="#e6eaf2"/><ellipse cx="100" cy="120" rx="30" ry="22" fill="#eef1f7"/><ellipse cx="100" cy="110" rx="11" ry="8" fill="#3e3e48"/><ellipse cx="96" cy="108" rx="3" ry="2" fill="#5e5e68" opacity="0.7"/><path d="M100 117 L100 126" stroke="#3e3e48" stroke-width="2" stroke-linecap="round"/><circle cx="80" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><circle cx="120" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><path d="M96 94 Q100 90 104 94" stroke="#4a5a6a" stroke-width="2.5" fill="none"/><circle cx="80" cy="95" r="8" fill="#3e3e48"/><circle cx="120" cy="95" r="8" fill="#3e3e48"/><circle cx="83" cy="92" r="3" fill="#fff"/><circle cx="123" cy="92" r="3" fill="#fff"/><circle cx="77" cy="97" r="1.5" fill="#fff" opacity="0.7"/><circle cx="117" cy="97" r="1.5" fill="#fff" opacity="0.7"/><path d="M72 88 Q78 84 84 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M112 88 Q118 84 124 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M78 116 Q60 114 52 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M78 122 Q60 124 54 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 116 Q140 114 148 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 122 Q140 124 146 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M90 124 Q100 131 110 124" stroke="#525c70" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg></span>«map всегда той же длины»</span>
+    </div>
+  </section>
+
+  <div class="pager">
+    <button disabled>← Назад</button>
+    <button class="next" onclick="pager(1)">Дальше: TypeScript →</button>
+  </div>
+</div>
+
+<div class="page" id="page-ts">
+  <div class="phero k-ts">
+    <div class="kicker">Раздел 02 · Типизация</div>
+    <h1>Основы TypeScript</h1>
+    <p>TypeScript — это JavaScript, который требует объяснений. Ты заранее говоришь, что хранит переменная, и редактор ловит ошибки до запуска. Разберём типы, интерфейсы и зачем это всё.</p>
+  </div>
+
+  <div class="say ren"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="rFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8893ab"/><stop offset="100%" stop-color="#6e7a94"/></linearGradient></defs><circle cx="70" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="130" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="70" cy="62" r="7.5" fill="#525c70"/><circle cx="130" cy="62" r="7.5" fill="#525c70"/><circle cx="100" cy="102" r="50" fill="url(#rFur__U)"/><ellipse cx="100" cy="116" rx="38" ry="30" fill="#e6eaf2"/><ellipse cx="100" cy="120" rx="30" ry="22" fill="#eef1f7"/><ellipse cx="100" cy="110" rx="11" ry="8" fill="#3e3e48"/><ellipse cx="96" cy="108" rx="3" ry="2" fill="#5e5e68" opacity="0.7"/><path d="M100 117 L100 126" stroke="#3e3e48" stroke-width="2" stroke-linecap="round"/><circle cx="80" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><circle cx="120" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><path d="M96 94 Q100 90 104 94" stroke="#4a5a6a" stroke-width="2.5" fill="none"/><circle cx="80" cy="95" r="8" fill="#3e3e48"/><circle cx="120" cy="95" r="8" fill="#3e3e48"/><circle cx="83" cy="92" r="3" fill="#fff"/><circle cx="123" cy="92" r="3" fill="#fff"/><circle cx="77" cy="97" r="1.5" fill="#fff" opacity="0.7"/><circle cx="117" cy="97" r="1.5" fill="#fff" opacity="0.7"/><path d="M72 88 Q78 84 84 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M112 88 Q118 84 124 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M78 116 Q60 114 52 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M78 122 Q60 124 54 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 116 Q140 114 148 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 122 Q140 124 146 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M90 124 Q100 131 110 124" stroke="#525c70" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg></div>
+    <div class="bubble"><div class="who">Рен</div><p>Дорогие студенты-Яндексоиды. Я инженер, поэтому скажу прямо: TypeScript экономит часы отладки. Чем раньше поймана ошибка, тем дешевле она стоит. TS ловит их прямо когда пишешь код.</p></div></div>
+
+  <section>
+    <div class="sec-num">01 · ЗАЧЕМ</div>
+    <h2>Проблема, которую решает TS</h2>
+    <p class="lead">В чистом JS переменная может внезапно сменить тип — и всё сломается там, где не ждёшь.</p>
+
+    <p>Запусти этот JS — он «работает», но выдаёт бред. Никто не подсказал, что складывать строку с числом — плохая идея:</p>
+
+    <div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">problem.js</span><button class="runbtn" onclick="runJS(this)" data-src="function%20add%28a%2C%20b%29%20%7B%0A%20%20return%20a%20%2B%20b%3B%0A%7D%0A%0Aconsole.log%28add%282%2C%203%29%29%3B%20%20%20%20%20%20//%205%20%E2%80%94%20%D0%BE%D0%BA%0Aconsole.log%28add%28%272%27%2C%203%29%29%3B%20%20%20%20//%20%2723%27%20%E2%80%94%20%D1%83%D0%BF%D1%81%2C%20%D1%81%D0%BA%D0%BB%D0%B5%D0%B8%D0%BB%D0%BE%20%D1%81%D1%82%D1%80%D0%BE%D0%BA%D0%B8%0Aconsole.log%28add%28%27%D1%86%D0%B5%D0%BD%D0%B0%27%2C%205%29%29%3B%20//%20%27%D1%86%D0%B5%D0%BD%D0%B05%27%20%E2%80%94%20%D0%BF%D0%BE%D0%BB%D0%BD%D1%8B%D0%B9%20%D0%B1%D1%80%D0%B5%D0%B4"><span>▶</span><span class="rlabel">Запустить</span></button></div>
+  <pre><code><span class="tk">function</span><span class="tx"> </span><span class="tf">add</span><span class="tx">(</span><span class="tx">a</span><span class="tx">,</span><span class="tx"> </span><span class="tx">b</span><span class="tx">)</span><span class="tx"> </span><span class="tx">{</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tk">return</span><span class="tx"> </span><span class="tx">a</span><span class="tx"> </span><span class="to">+</span><span class="tx"> </span><span class="tx">b</span><span class="tx">;</span>
+<span class="tx">}</span>
+ 
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="tf">add</span><span class="tx">(</span><span class="tn">2</span><span class="tx">,</span><span class="tx"> </span><span class="tn">3</span><span class="tx">)</span><span class="tx">)</span><span class="tx">;</span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tc">// 5 — ок</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="tf">add</span><span class="tx">(</span><span class="ts2">&#x27;2&#x27;</span><span class="tx">,</span><span class="tx"> </span><span class="tn">3</span><span class="tx">)</span><span class="tx">)</span><span class="tx">;</span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tc">// &#x27;23&#x27; — упс, склеило строки</span>
+<span class="tx">console</span><span class="tx">.</span><span class="tf">log</span><span class="tx">(</span><span class="tf">add</span><span class="tx">(</span><span class="ts2">&#x27;цена&#x27;</span><span class="tx">,</span><span class="tx"> </span><span class="tn">5</span><span class="tx">)</span><span class="tx">)</span><span class="tx">;</span><span class="tx"> </span><span class="tc">// &#x27;цена5&#x27; — полный бред</span></code></pre>
+  <div class="console"><div class="console-inner"><div class="console-label">console</div></div></div>
+</div>
+
+    <div class="say ren"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="rFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8893ab"/><stop offset="100%" stop-color="#6e7a94"/></linearGradient></defs><circle cx="70" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="130" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="70" cy="62" r="7.5" fill="#525c70"/><circle cx="130" cy="62" r="7.5" fill="#525c70"/><circle cx="100" cy="102" r="50" fill="url(#rFur__U)"/><ellipse cx="100" cy="116" rx="38" ry="30" fill="#e6eaf2"/><ellipse cx="100" cy="120" rx="30" ry="22" fill="#eef1f7"/><ellipse cx="100" cy="110" rx="11" ry="8" fill="#3e3e48"/><ellipse cx="96" cy="108" rx="3" ry="2" fill="#5e5e68" opacity="0.7"/><path d="M100 117 L100 126" stroke="#3e3e48" stroke-width="2" stroke-linecap="round"/><circle cx="80" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><circle cx="120" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><path d="M96 94 Q100 90 104 94" stroke="#4a5a6a" stroke-width="2.5" fill="none"/><circle cx="80" cy="95" r="8" fill="#3e3e48"/><circle cx="120" cy="95" r="8" fill="#3e3e48"/><circle cx="83" cy="92" r="3" fill="#fff"/><circle cx="123" cy="92" r="3" fill="#fff"/><circle cx="77" cy="97" r="1.5" fill="#fff" opacity="0.7"/><circle cx="117" cy="97" r="1.5" fill="#fff" opacity="0.7"/><path d="M72 88 Q78 84 84 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M112 88 Q118 84 124 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M78 116 Q60 114 52 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M78 122 Q60 124 54 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 116 Q140 114 148 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 122 Q140 124 146 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M90 124 Q100 131 110 124" stroke="#525c70" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg></div>
+    <div class="bubble"><div class="who">Рен</div><p>Вот ровно из-за этого в больших проектах появляется TypeScript. В TS такой вызов со строкой вместо числа подсветится красным ещё в редакторе — до того, как код вообще запустится.</p></div></div>
+
+    <div class="box ts">
+      <div class="bt">▸ Как это работает технически</div>
+      <p>TypeScript не запускается в браузере напрямую. Ты пишешь <code>.ts</code>, компилятор проверяет типы и превращает код в обычный <code>.js</code>. То есть TS — это слой проверок поверх JavaScript на этапе написания.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-num">02 · БАЗОВЫЕ ТИПЫ</div>
+    <h2>Аннотации типов</h2>
+    <p class="lead">Ты дописываешь после имени <code>: тип</code> — и теперь переменная держит только его.</p>
+
+    <div class="cmp">
+      <div class="ch js">JavaScript — тип не указан</div>
+      <div class="ch ts">TypeScript — тип явный</div>
+      <div class="cc">let name = 'Аня';
+let age = 25;
+let active = true;
+
+// можно случайно сломать:
+name = 42;  // молчит</div>
+      <div class="cc">let name: string = 'Аня';
+let age: number = 25;
+let active: boolean = true;
+
+// поймает сразу:
+name = 42;  // Ошибка! ✗</div>
+    </div>
+
+    <p>Основные типы, которые встретишь каждый день:</p>
+    <ul class="plain">
+      <li><code>string</code> — строки: <code>'привет'</code>, <code>"текст"</code></li>
+      <li><code>number</code> — любые числа: <code>42</code>, <code>3.14</code>, <code>-7</code></li>
+      <li><code>boolean</code> — <code>true</code> или <code>false</code></li>
+      <li><code>string[]</code> — массив строк</li>
+      <li><code>number[]</code> — массив чисел</li>
+    </ul>
+
+    <div class="say maxi"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#46b877"/><stop offset="100%" stop-color="#359a5e"/></linearGradient><radialGradient id="mCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#f0a890" stop-opacity="0.45"/><stop offset="100%" stop-color="#f0a890" stop-opacity="0"/></radialGradient></defs><path d="M66 56 Q56 18 90 42 Q80 54 72 58 Z" fill="url(#mFur__U)"/><path d="M134 56 Q144 18 110 42 Q120 54 128 58 Z" fill="url(#mFur__U)"/><path d="M70 50 Q64 30 82 44 Z" fill="#1f1f1f"/><path d="M130 50 Q136 30 118 44 Z" fill="#1f1f1f"/><circle cx="100" cy="100" r="50" fill="url(#mFur__U)"/><path d="M100 64 Q66 72 70 112 Q100 128 130 112 Q134 72 100 64 Z" fill="#f2f6f2"/><ellipse cx="100" cy="104" rx="34" ry="26" fill="#f7faf7"/><ellipse cx="74" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="126" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="100" cy="108" rx="6.5" ry="5" fill="#2a2a2a"/><path d="M100 113 L100 120" stroke="#2a2a2a" stroke-width="1.5" stroke-linecap="round"/><ellipse cx="82" cy="96" rx="12" ry="14" fill="#fff"/><ellipse cx="118" cy="96" rx="12" ry="14" fill="#fff"/><circle cx="83" cy="98" r="8.5" fill="#e8a020"/><circle cx="117" cy="98" r="8.5" fill="#e8a020"/><circle cx="83" cy="98" r="4.5" fill="#3a2400"/><circle cx="117" cy="98" r="4.5" fill="#3a2400"/><circle cx="86" cy="93" r="3.2" fill="#fff"/><circle cx="120" cy="93" r="3.2" fill="#fff"/><circle cx="79" cy="100" r="1.6" fill="#fff" opacity="0.8"/><circle cx="113" cy="100" r="1.6" fill="#fff" opacity="0.8"/><path d="M90 119 Q100 127 110 119" stroke="#1f5a32" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M97 124 Q100 129 103 124 Z" fill="#e87a8a"/></svg></div>
+    <div class="bubble"><div class="who">Макси</div><p>Запомни просто: двоеточие после имени — это «обещание». <code>age: number</code> значит «обещаю, тут всегда будет число». Нарушишь обещание — TS заметит.</p></div></div>
+
+    <h3>Типы в функциях</h3>
+    <p>Указываем типы параметров и тип того, что функция возвращает (после скобок):</p>
+
+    <div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">typed-fn.ts</span></div>
+  <pre><code><span class="tc">// (параметры с типами): тип результата</span>
+<span class="tk">function</span><span class="tx"> </span><span class="tf">add</span><span class="tx">(</span><span class="tx">a</span><span class="to">:</span><span class="tx"> </span><span class="tk">number</span><span class="tx">,</span><span class="tx"> </span><span class="tx">b</span><span class="to">:</span><span class="tx"> </span><span class="tk">number</span><span class="tx">)</span><span class="to">:</span><span class="tx"> </span><span class="tk">number</span><span class="tx"> </span><span class="tx">{</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tk">return</span><span class="tx"> </span><span class="tx">a</span><span class="tx"> </span><span class="to">+</span><span class="tx"> </span><span class="tx">b</span><span class="tx">;</span>
+<span class="tx">}</span>
+ 
+<span class="tf">add</span><span class="tx">(</span><span class="tn">2</span><span class="tx">,</span><span class="tx"> </span><span class="tn">3</span><span class="tx">)</span><span class="tx">;</span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tc">// ок</span>
+<span class="tf">add</span><span class="tx">(</span><span class="ts2">&#x27;2&#x27;</span><span class="tx">,</span><span class="tx"> </span><span class="tn">3</span><span class="tx">)</span><span class="tx">;</span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tc">// Ошибка! строка вместо числа</span>
+ 
+<span class="tc">// стрелочная с типами</span>
+<span class="tk">const</span><span class="tx"> </span><span class="tx">greet</span><span class="tx"> </span><span class="to">=</span><span class="tx"> </span><span class="tx">(</span><span class="tx">name</span><span class="to">:</span><span class="tx"> </span><span class="tk">string</span><span class="tx">)</span><span class="to">:</span><span class="tx"> </span><span class="tk">string</span><span class="tx"> </span><span class="to">=&gt;</span><span class="tx"> </span><span class="tx">{</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tk">return</span><span class="tx"> </span><span class="ts2">&#x27;Привет, &#x27;</span><span class="tx"> </span><span class="to">+</span><span class="tx"> </span><span class="tx">name</span><span class="tx">;</span>
+<span class="tx">}</span><span class="tx">;</span></code></pre>
+</div>
+
+    <div class="box info">
+      <div class="bt">▸ Почему примеры на этой странице не запускаются</div>
+      <p>TypeScript нельзя выполнить в браузере без компиляции, поэтому тут код показан для чтения. Но логика та же, что в JS с прошлой страницы — добавились только аннотации типов. Сами вычисления идентичны.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-num">03 · ИНТЕРФЕЙСЫ</div>
+    <h2>Интерфейсы — форма объекта</h2>
+    <p class="lead">Интерфейс описывает, какие поля и какого типа должны быть у объекта. Это «договор».</p>
+
+    <div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">interface.ts</span></div>
+  <pre><code><span class="tc">// описываем форму объекта</span>
+<span class="tk">interface</span><span class="tx"> </span><span class="ty">User</span><span class="tx"> </span><span class="tx">{</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx">id</span><span class="to">:</span><span class="tx"> </span><span class="tk">number</span><span class="tx">;</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx">name</span><span class="to">:</span><span class="tx"> </span><span class="tk">string</span><span class="tx">;</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx">email</span><span class="to">:</span><span class="tx"> </span><span class="tk">string</span><span class="tx">;</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx">age</span><span class="to">?</span><span class="to">:</span><span class="tx"> </span><span class="tk">number</span><span class="tx">;</span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tc">// ? — поле необязательное</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tk">readonly</span><span class="tx"> </span><span class="tx">role</span><span class="to">:</span><span class="tx"> </span><span class="tk">string</span><span class="tx">;</span><span class="tx"> </span><span class="tc">// readonly — менять нельзя</span>
+<span class="tx">}</span>
+ 
+<span class="tc">// теперь объект обязан соответствовать</span>
+<span class="tk">const</span><span class="tx"> </span><span class="tx">user</span><span class="to">:</span><span class="tx"> </span><span class="ty">User</span><span class="tx"> </span><span class="to">=</span><span class="tx"> </span><span class="tx">{</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx">id</span><span class="to">:</span><span class="tx"> </span><span class="tn">1</span><span class="tx">,</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx">name</span><span class="to">:</span><span class="tx"> </span><span class="ts2">&#x27;Иван&#x27;</span><span class="tx">,</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx">email</span><span class="to">:</span><span class="tx"> </span><span class="ts2">&#x27;ivan@mail.ru&#x27;</span><span class="tx">,</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx">role</span><span class="to">:</span><span class="tx"> </span><span class="ts2">&#x27;admin&#x27;</span><span class="tx">,</span>
+<span class="tx">}</span><span class="tx">;</span>
+ 
+<span class="tc">// массив таких объектов</span>
+<span class="tk">const</span><span class="tx"> </span><span class="tx">users</span><span class="to">:</span><span class="tx"> </span><span class="ty">User</span><span class="tx">[</span><span class="tx">]</span><span class="tx"> </span><span class="to">=</span><span class="tx"> </span><span class="tx">[</span><span class="tx">user</span><span class="tx">]</span><span class="tx">;</span></code></pre>
+</div>
+
+    <div class="say ren"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="rFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8893ab"/><stop offset="100%" stop-color="#6e7a94"/></linearGradient></defs><circle cx="70" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="130" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="70" cy="62" r="7.5" fill="#525c70"/><circle cx="130" cy="62" r="7.5" fill="#525c70"/><circle cx="100" cy="102" r="50" fill="url(#rFur__U)"/><ellipse cx="100" cy="116" rx="38" ry="30" fill="#e6eaf2"/><ellipse cx="100" cy="120" rx="30" ry="22" fill="#eef1f7"/><ellipse cx="100" cy="110" rx="11" ry="8" fill="#3e3e48"/><ellipse cx="96" cy="108" rx="3" ry="2" fill="#5e5e68" opacity="0.7"/><path d="M100 117 L100 126" stroke="#3e3e48" stroke-width="2" stroke-linecap="round"/><circle cx="80" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><circle cx="120" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><path d="M96 94 Q100 90 104 94" stroke="#4a5a6a" stroke-width="2.5" fill="none"/><circle cx="80" cy="95" r="8" fill="#3e3e48"/><circle cx="120" cy="95" r="8" fill="#3e3e48"/><circle cx="83" cy="92" r="3" fill="#fff"/><circle cx="123" cy="92" r="3" fill="#fff"/><circle cx="77" cy="97" r="1.5" fill="#fff" opacity="0.7"/><circle cx="117" cy="97" r="1.5" fill="#fff" opacity="0.7"/><path d="M72 88 Q78 84 84 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M112 88 Q118 84 124 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M78 116 Q60 114 52 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M78 122 Q60 124 54 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 116 Q140 114 148 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 122 Q140 124 146 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M90 124 Q100 131 110 124" stroke="#525c70" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg></div>
+    <div class="bubble"><div class="who">Рен</div><p>Интерфейс — это контракт. Один раз описал <code>User</code> — и везде, где он используется, редактор знает структуру. Опечатался в имени поля? Подсветит. Забыл обязательное поле? Подсветит. Это страховка от глупых ошибок.</p></div></div>
+
+    <h3>Зачем это в команде</h3>
+    <p>Когда над проектом работают десять человек, интерфейсы становятся общим языком. Один написал функцию, которая ждёт <code>User</code> — остальные сразу видят, что туда передавать. Не надо лезть в чужой код и разбираться.</p>
+
+    <div class="cmp">
+      <div class="ch js">Без типов: что внутри?</div>
+      <div class="ch ts">С интерфейсом: всё ясно</div>
+      <div class="cc">function save(user) {
+  // что у user внутри?
+  // name? имя? username?
+  // надо лезть и искать...
+}</div>
+      <div class="cc">function save(user: User) {
+  // редактор подскажет:
+  // user.id, user.name,
+  // user.email — всё видно
+}</div>
+    </div>
+
+    <div class="meme-row">
+      <span class="meme"><span class="mava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="rFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8893ab"/><stop offset="100%" stop-color="#6e7a94"/></linearGradient></defs><circle cx="70" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="130" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="70" cy="62" r="7.5" fill="#525c70"/><circle cx="130" cy="62" r="7.5" fill="#525c70"/><circle cx="100" cy="102" r="50" fill="url(#rFur__U)"/><ellipse cx="100" cy="116" rx="38" ry="30" fill="#e6eaf2"/><ellipse cx="100" cy="120" rx="30" ry="22" fill="#eef1f7"/><ellipse cx="100" cy="110" rx="11" ry="8" fill="#3e3e48"/><ellipse cx="96" cy="108" rx="3" ry="2" fill="#5e5e68" opacity="0.7"/><path d="M100 117 L100 126" stroke="#3e3e48" stroke-width="2" stroke-linecap="round"/><circle cx="80" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><circle cx="120" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><path d="M96 94 Q100 90 104 94" stroke="#4a5a6a" stroke-width="2.5" fill="none"/><circle cx="80" cy="95" r="8" fill="#3e3e48"/><circle cx="120" cy="95" r="8" fill="#3e3e48"/><circle cx="83" cy="92" r="3" fill="#fff"/><circle cx="123" cy="92" r="3" fill="#fff"/><circle cx="77" cy="97" r="1.5" fill="#fff" opacity="0.7"/><circle cx="117" cy="97" r="1.5" fill="#fff" opacity="0.7"/><path d="M72 88 Q78 84 84 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M112 88 Q118 84 124 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M78 116 Q60 114 52 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M78 122 Q60 124 54 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 116 Q140 114 148 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 122 Q140 124 146 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M90 124 Q100 131 110 124" stroke="#525c70" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg></span>«типы — это страховка, а не бюрократия»</span>
+      <span class="meme"><span class="mava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#46b877"/><stop offset="100%" stop-color="#359a5e"/></linearGradient><radialGradient id="mCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#f0a890" stop-opacity="0.45"/><stop offset="100%" stop-color="#f0a890" stop-opacity="0"/></radialGradient></defs><path d="M66 56 Q56 18 90 42 Q80 54 72 58 Z" fill="url(#mFur__U)"/><path d="M134 56 Q144 18 110 42 Q120 54 128 58 Z" fill="url(#mFur__U)"/><path d="M70 50 Q64 30 82 44 Z" fill="#1f1f1f"/><path d="M130 50 Q136 30 118 44 Z" fill="#1f1f1f"/><circle cx="100" cy="100" r="50" fill="url(#mFur__U)"/><path d="M100 64 Q66 72 70 112 Q100 128 130 112 Q134 72 100 64 Z" fill="#f2f6f2"/><ellipse cx="100" cy="104" rx="34" ry="26" fill="#f7faf7"/><ellipse cx="74" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="126" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="100" cy="108" rx="6.5" ry="5" fill="#2a2a2a"/><path d="M100 113 L100 120" stroke="#2a2a2a" stroke-width="1.5" stroke-linecap="round"/><ellipse cx="82" cy="96" rx="12" ry="14" fill="#fff"/><ellipse cx="118" cy="96" rx="12" ry="14" fill="#fff"/><circle cx="83" cy="98" r="8.5" fill="#e8a020"/><circle cx="117" cy="98" r="8.5" fill="#e8a020"/><circle cx="83" cy="98" r="4.5" fill="#3a2400"/><circle cx="117" cy="98" r="4.5" fill="#3a2400"/><circle cx="86" cy="93" r="3.2" fill="#fff"/><circle cx="120" cy="93" r="3.2" fill="#fff"/><circle cx="79" cy="100" r="1.6" fill="#fff" opacity="0.8"/><circle cx="113" cy="100" r="1.6" fill="#fff" opacity="0.8"/><path d="M90 119 Q100 127 110 119" stroke="#1f5a32" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M97 124 Q100 129 103 124 Z" fill="#e87a8a"/></svg></span>«опечатку поймают до запуска»</span>
+    </div>
+  </section>
+
+  <div class="pager">
+    <button onclick="pager(-1)">← Назад: Функции</button>
+    <button class="next" onclick="pager(1)">Дальше: React →</button>
+  </div>
+</div>
+
+<div class="page" id="page-react">
+  <div class="phero k-react">
+    <div class="kicker">Раздел 03 · Интерфейсы</div>
+    <h1>Основы React</h1>
+    <p>React собирает интерфейсы из компонентов — как из кубиков Lego. Каждый компонент это функция, возвращающая кусок страницы. Жми ▶️ — увидишь, что отрисует код в браузере.</p>
+  </div>
+
+  <div class="say kyle"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="kFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#b87a48"/><stop offset="100%" stop-color="#9a6238"/></linearGradient><radialGradient id="kCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#e8957a" stop-opacity="0.5"/><stop offset="100%" stop-color="#e8957a" stop-opacity="0"/></radialGradient></defs><ellipse cx="58" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="142" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="64" cy="90" rx="22" ry="26" fill="#6e4426"/><ellipse cx="136" cy="90" rx="22" ry="26" fill="#6e4426"/><path d="M68 58 Q60 22 88 44 Q80 56 72 60 Z" fill="url(#kFur__U)"/><path d="M132 58 Q140 22 112 44 Q120 56 128 60 Z" fill="url(#kFur__U)"/><path d="M71 54 Q67 36 82 48 Z" fill="#3a3230"/><path d="M129 54 Q133 36 118 48 Z" fill="#3a3230"/><circle cx="100" cy="100" r="50" fill="url(#kFur__U)"/><path d="M100 56 Q62 62 60 104 Q100 92 140 104 Q138 62 100 56 Z" fill="#e8cfa8"/><ellipse cx="100" cy="98" rx="40" ry="30" fill="#ecd6b4"/><ellipse cx="100" cy="116" rx="30" ry="24" fill="#f2e1c8"/><ellipse cx="72" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="128" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="100" cy="106" rx="9" ry="7" fill="#3a2a26"/><ellipse cx="97" cy="104" rx="3" ry="2" fill="#5a4a44" opacity="0.7"/><ellipse cx="80" cy="94" rx="13" ry="15" fill="#fff"/><ellipse cx="120" cy="94" rx="13" ry="15" fill="#fff"/><circle cx="81" cy="96" r="9.5" fill="#4a90d9"/><circle cx="119" cy="96" r="9.5" fill="#4a90d9"/><circle cx="81" cy="96" r="5" fill="#1a2f4a"/><circle cx="119" cy="96" r="5" fill="#1a2f4a"/><circle cx="84" cy="91" r="3.5" fill="#fff"/><circle cx="122" cy="91" r="3.5" fill="#fff"/><circle cx="77" cy="98" r="1.8" fill="#fff" opacity="0.8"/><circle cx="115" cy="98" r="1.8" fill="#fff" opacity="0.8"/><path d="M88 120 Q100 130 112 120" stroke="#7a5238" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M74 142 Q100 154 126 142" stroke="#9a4030" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="100" cy="151" r="7" fill="#f0c44e"/><circle cx="100" cy="153" r="1.8" fill="#9a7a1a"/></svg></div>
+    <div class="bubble"><div class="who">Кайл</div><p>Помнишь функции-станки с первой страницы? React — это станки, которые выдают не текст, а куски интерфейса. Сейчас покажу, и под каждым примером будет кнопка отрисовки результата.</p></div></div>
+
+  <div class="box info">
+    <div class="bt">▸ Как тут устроен запуск React</div>
+    <p>Настоящий React требует сборщика и не запускается в чистом браузере. Поэтому ▶️ под React-примерами показывает <strong>симуляцию результата</strong> — точно то, что отрисовал бы компонент. Код рядом — настоящий, рабочий React-синтаксис.</p>
+  </div>
+
+  <section>
+    <div class="sec-num">01 · КОМПОНЕНТЫ</div>
+    <h2>Компонент — это функция</h2>
+    <p class="lead">Возвращает разметку (JSX). Используется потом как HTML-тег.</p>
+
+    <div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">Welcome.jsx</span><button class="runbtn react" onclick="runReact(this)" data-demo="welcome"><span>▶</span><span class="rlabel">Запустить</span></button></div>
+  <pre><code><span class="tk">function</span><span class="tx"> </span><span class="tf">Welcome</span><span class="tx">(</span><span class="tx">)</span><span class="tx"> </span><span class="tx">{</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tk">return</span><span class="tx"> </span><span class="to">&lt;</span><span class="tx">h1</span><span class="to">&gt;</span><span class="ty">Привет</span><span class="tx">,</span><span class="tx"> </span><span class="ty">Яндексоиды</span><span class="to">!&lt;/</span><span class="tx">h1</span><span class="to">&gt;</span><span class="tx">;</span>
+<span class="tx">}</span>
+ 
+<span class="tc">// используется как тег:</span>
+<span class="tc">// &lt;Welcome /&gt;</span></code></pre>
+  <div class="rresult"><div class="rresult-inner">
+      <div class="rresult-label">результат в браузере</div>
+      <div class="browser">
+        <div class="browser-bar"><span class="bd" style="background:#ff5f57"></span><span class="bd" style="background:#febc2e"></span><span class="bd" style="background:#28c840"></span><span class="url">localhost:3000</span></div>
+        <div class="browser-body"></div>
+      </div>
+    </div></div>
+</div>
+
+    <div class="say kyle"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="kFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#b87a48"/><stop offset="100%" stop-color="#9a6238"/></linearGradient><radialGradient id="kCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#e8957a" stop-opacity="0.5"/><stop offset="100%" stop-color="#e8957a" stop-opacity="0"/></radialGradient></defs><ellipse cx="58" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="142" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="64" cy="90" rx="22" ry="26" fill="#6e4426"/><ellipse cx="136" cy="90" rx="22" ry="26" fill="#6e4426"/><path d="M68 58 Q60 22 88 44 Q80 56 72 60 Z" fill="url(#kFur__U)"/><path d="M132 58 Q140 22 112 44 Q120 56 128 60 Z" fill="url(#kFur__U)"/><path d="M71 54 Q67 36 82 48 Z" fill="#3a3230"/><path d="M129 54 Q133 36 118 48 Z" fill="#3a3230"/><circle cx="100" cy="100" r="50" fill="url(#kFur__U)"/><path d="M100 56 Q62 62 60 104 Q100 92 140 104 Q138 62 100 56 Z" fill="#e8cfa8"/><ellipse cx="100" cy="98" rx="40" ry="30" fill="#ecd6b4"/><ellipse cx="100" cy="116" rx="30" ry="24" fill="#f2e1c8"/><ellipse cx="72" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="128" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="100" cy="106" rx="9" ry="7" fill="#3a2a26"/><ellipse cx="97" cy="104" rx="3" ry="2" fill="#5a4a44" opacity="0.7"/><ellipse cx="80" cy="94" rx="13" ry="15" fill="#fff"/><ellipse cx="120" cy="94" rx="13" ry="15" fill="#fff"/><circle cx="81" cy="96" r="9.5" fill="#4a90d9"/><circle cx="119" cy="96" r="9.5" fill="#4a90d9"/><circle cx="81" cy="96" r="5" fill="#1a2f4a"/><circle cx="119" cy="96" r="5" fill="#1a2f4a"/><circle cx="84" cy="91" r="3.5" fill="#fff"/><circle cx="122" cy="91" r="3.5" fill="#fff"/><circle cx="77" cy="98" r="1.8" fill="#fff" opacity="0.8"/><circle cx="115" cy="98" r="1.8" fill="#fff" opacity="0.8"/><path d="M88 120 Q100 130 112 120" stroke="#7a5238" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M74 142 Q100 154 126 142" stroke="#9a4030" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="100" cy="151" r="7" fill="#f0c44e"/><circle cx="100" cy="153" r="1.8" fill="#9a7a1a"/></svg></div>
+    <div class="bubble"><div class="who">Кайл</div><p>Две важные вещи. Имя компонента всегда с <strong>большой буквы</strong> — так React отличает его от обычного тега. И вот эта смесь JS с HTML внутри — это JSX. Выглядит странно день, потом привыкаешь намертво.</p></div></div>
+
+    <div class="box info">
+      <div class="bt">▸ Фигурные скобки в JSX</div>
+      <p>Внутри разметки <code>{ }</code> означает «здесь JavaScript». <code>{user.name}</code> вставит значение переменной. Просто текст пишем как есть, динамику — в скобках.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-num">02 · PROPS</div>
+    <h2>Props — данные сверху вниз</h2>
+    <p class="lead">Параметры компонента. Точно как аргументы функции: родитель передаёт, ребёнок показывает.</p>
+
+    <div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">ProductCard.jsx</span><button class="runbtn react" onclick="runReact(this)" data-demo="card"><span>▶</span><span class="rlabel">Запустить</span></button></div>
+  <pre><code><span class="tk">function</span><span class="tx"> </span><span class="tf">ProductCard</span><span class="tx">(</span><span class="tx">props</span><span class="tx">)</span><span class="tx"> </span><span class="tx">{</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tk">return</span><span class="tx"> </span><span class="tx">(</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="to">&lt;</span><span class="tx">div</span><span class="tx"> </span><span class="tx">className</span><span class="to">=</span><span class="ts2">&quot;card&quot;</span><span class="to">&gt;</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="to">&lt;</span><span class="tx">h3</span><span class="to">&gt;</span><span class="tx">{</span><span class="tx">props</span><span class="tx">.</span><span class="tx">name</span><span class="tx">}</span><span class="to">&lt;/</span><span class="tx">h3</span><span class="to">&gt;</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="to">&lt;</span><span class="tx">p</span><span class="to">&gt;</span><span class="tx">{</span><span class="tx">props</span><span class="tx">.</span><span class="tx">price</span><span class="tx">}</span><span class="tx"> </span><span class="tx">₽</span><span class="to">&lt;/</span><span class="tx">p</span><span class="to">&gt;</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="to">&lt;/</span><span class="tx">div</span><span class="to">&gt;</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">}</span>
+ 
+<span class="tc">// родитель передаёт данные:</span>
+<span class="tc">// &lt;ProductCard name=&quot;Телефон&quot; price={15000} /&gt;</span></code></pre>
+  <div class="rresult"><div class="rresult-inner">
+      <div class="rresult-label">результат в браузере</div>
+      <div class="browser">
+        <div class="browser-bar"><span class="bd" style="background:#ff5f57"></span><span class="bd" style="background:#febc2e"></span><span class="bd" style="background:#28c840"></span><span class="url">localhost:3000</span></div>
+        <div class="browser-body"></div>
+      </div>
+    </div></div>
+</div>
+
+    <div class="say ren"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="rFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8893ab"/><stop offset="100%" stop-color="#6e7a94"/></linearGradient></defs><circle cx="70" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="130" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="70" cy="62" r="7.5" fill="#525c70"/><circle cx="130" cy="62" r="7.5" fill="#525c70"/><circle cx="100" cy="102" r="50" fill="url(#rFur__U)"/><ellipse cx="100" cy="116" rx="38" ry="30" fill="#e6eaf2"/><ellipse cx="100" cy="120" rx="30" ry="22" fill="#eef1f7"/><ellipse cx="100" cy="110" rx="11" ry="8" fill="#3e3e48"/><ellipse cx="96" cy="108" rx="3" ry="2" fill="#5e5e68" opacity="0.7"/><path d="M100 117 L100 126" stroke="#3e3e48" stroke-width="2" stroke-linecap="round"/><circle cx="80" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><circle cx="120" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><path d="M96 94 Q100 90 104 94" stroke="#4a5a6a" stroke-width="2.5" fill="none"/><circle cx="80" cy="95" r="8" fill="#3e3e48"/><circle cx="120" cy="95" r="8" fill="#3e3e48"/><circle cx="83" cy="92" r="3" fill="#fff"/><circle cx="123" cy="92" r="3" fill="#fff"/><circle cx="77" cy="97" r="1.5" fill="#fff" opacity="0.7"/><circle cx="117" cy="97" r="1.5" fill="#fff" opacity="0.7"/><path d="M72 88 Q78 84 84 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M112 88 Q118 84 124 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M78 116 Q60 114 52 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M78 122 Q60 124 54 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 116 Q140 114 148 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 122 Q140 124 146 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M90 124 Q100 131 110 124" stroke="#525c70" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg></div>
+    <div class="bubble"><div class="who">Рен</div><p>Данные в React текут только <strong>сверху вниз</strong>. Почему так? Проще искать баги: видишь не то значение — знаешь, что пришло от родителя. Не надо гадать, кто его поменял. Предсказуемость дороже удобства.</p></div></div>
+
+    <h3>Поток данных наглядно</h3>
+    <div class="viz">
+      <div class="viz-title">props текут вниз</div>
+      <div class="flow">
+        <div style="text-align:center;">
+          <div class="pill" style="border:2px solid var(--react);color:var(--react);">&lt;App /&gt;</div>
+          <div class="lbl">родитель</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;color:var(--maxi);font-family:'JetBrains Mono',monospace;font-size:11px;">
+          <div>name="Телефон"</div><div style="font-size:18px;">↓</div>
+        </div>
+        <div style="text-align:center;">
+          <div class="pill" style="border:2px solid var(--green);color:var(--green);">&lt;ProductCard /&gt;</div>
+          <div class="lbl">ребёнок показывает</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-num">03 · MAP РИСУЕТ СПИСКИ</div>
+    <h2>map() превращает данные в интерфейс</h2>
+    <p class="lead">Вот связка всего. Массив данных → массив компонентов через тот самый <code>.map()</code>.</p>
+
+    <p>Логика та же, что на первой странице. Только map теперь превращает не число в число, а <strong>объект — в карточку</strong>. Запусти — увидишь три карточки, отрисованные из массива:</p>
+
+    <div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">ProductList.jsx</span><button class="runbtn react" onclick="runReact(this)" data-demo="list"><span>▶</span><span class="rlabel">Запустить</span></button></div>
+  <pre><code><span class="tk">function</span><span class="tx"> </span><span class="tf">ProductList</span><span class="tx">(</span><span class="tx">)</span><span class="tx"> </span><span class="tx">{</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tk">const</span><span class="tx"> </span><span class="tx">products</span><span class="tx"> </span><span class="to">=</span><span class="tx"> </span><span class="tx">[</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx">{</span><span class="tx"> </span><span class="tx">id</span><span class="to">:</span><span class="tx"> </span><span class="tn">1</span><span class="tx">,</span><span class="tx"> </span><span class="tx">name</span><span class="to">:</span><span class="tx"> </span><span class="ts2">&#x27;Телефон&#x27;</span><span class="tx">,</span><span class="tx"> </span><span class="tx">price</span><span class="to">:</span><span class="tx"> </span><span class="tn">15000</span><span class="tx"> </span><span class="tx">}</span><span class="tx">,</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx">{</span><span class="tx"> </span><span class="tx">id</span><span class="to">:</span><span class="tx"> </span><span class="tn">2</span><span class="tx">,</span><span class="tx"> </span><span class="tx">name</span><span class="to">:</span><span class="tx"> </span><span class="ts2">&#x27;Планшет&#x27;</span><span class="tx">,</span><span class="tx"> </span><span class="tx">price</span><span class="to">:</span><span class="tx"> </span><span class="tn">25000</span><span class="tx"> </span><span class="tx">}</span><span class="tx">,</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx">{</span><span class="tx"> </span><span class="tx">id</span><span class="to">:</span><span class="tx"> </span><span class="tn">3</span><span class="tx">,</span><span class="tx"> </span><span class="tx">name</span><span class="to">:</span><span class="tx"> </span><span class="ts2">&#x27;Часы&#x27;</span><span class="tx">,</span><span class="tx"> </span><span class="tx">price</span><span class="to">:</span><span class="tx"> </span><span class="tn">22000</span><span class="tx"> </span><span class="tx">}</span><span class="tx">,</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx">]</span><span class="tx">;</span>
+ 
+<span class="tx"> </span><span class="tx"> </span><span class="tk">return</span><span class="tx"> </span><span class="tx">(</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="to">&lt;</span><span class="tx">div</span><span class="to">&gt;</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx">{</span><span class="tx">products</span><span class="tx">.</span><span class="tf">map</span><span class="tx">(</span><span class="tx">(</span><span class="tx">p</span><span class="tx">)</span><span class="tx"> </span><span class="to">=&gt;</span><span class="tx"> </span><span class="tx">(</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="to">&lt;</span><span class="ty">ProductCard</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx">key</span><span class="to">=</span><span class="tx">{</span><span class="tx">p</span><span class="tx">.</span><span class="tx">id</span><span class="tx">}</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx">name</span><span class="to">=</span><span class="tx">{</span><span class="tx">p</span><span class="tx">.</span><span class="tx">name</span><span class="tx">}</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx">price</span><span class="to">=</span><span class="tx">{</span><span class="tx">p</span><span class="tx">.</span><span class="tx">price</span><span class="tx">}</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="to">/&gt;</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx">)</span><span class="tx">)</span><span class="tx">}</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="to">&lt;/</span><span class="tx">div</span><span class="to">&gt;</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">}</span></code></pre>
+  <div class="rresult"><div class="rresult-inner">
+      <div class="rresult-label">результат в браузере</div>
+      <div class="browser">
+        <div class="browser-bar"><span class="bd" style="background:#ff5f57"></span><span class="bd" style="background:#febc2e"></span><span class="bd" style="background:#28c840"></span><span class="url">localhost:3000</span></div>
+        <div class="browser-body"></div>
+      </div>
+    </div></div>
+</div>
+
+    <div class="say kyle"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="kFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#b87a48"/><stop offset="100%" stop-color="#9a6238"/></linearGradient><radialGradient id="kCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#e8957a" stop-opacity="0.5"/><stop offset="100%" stop-color="#e8957a" stop-opacity="0"/></radialGradient></defs><ellipse cx="58" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="142" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="64" cy="90" rx="22" ry="26" fill="#6e4426"/><ellipse cx="136" cy="90" rx="22" ry="26" fill="#6e4426"/><path d="M68 58 Q60 22 88 44 Q80 56 72 60 Z" fill="url(#kFur__U)"/><path d="M132 58 Q140 22 112 44 Q120 56 128 60 Z" fill="url(#kFur__U)"/><path d="M71 54 Q67 36 82 48 Z" fill="#3a3230"/><path d="M129 54 Q133 36 118 48 Z" fill="#3a3230"/><circle cx="100" cy="100" r="50" fill="url(#kFur__U)"/><path d="M100 56 Q62 62 60 104 Q100 92 140 104 Q138 62 100 56 Z" fill="#e8cfa8"/><ellipse cx="100" cy="98" rx="40" ry="30" fill="#ecd6b4"/><ellipse cx="100" cy="116" rx="30" ry="24" fill="#f2e1c8"/><ellipse cx="72" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="128" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="100" cy="106" rx="9" ry="7" fill="#3a2a26"/><ellipse cx="97" cy="104" rx="3" ry="2" fill="#5a4a44" opacity="0.7"/><ellipse cx="80" cy="94" rx="13" ry="15" fill="#fff"/><ellipse cx="120" cy="94" rx="13" ry="15" fill="#fff"/><circle cx="81" cy="96" r="9.5" fill="#4a90d9"/><circle cx="119" cy="96" r="9.5" fill="#4a90d9"/><circle cx="81" cy="96" r="5" fill="#1a2f4a"/><circle cx="119" cy="96" r="5" fill="#1a2f4a"/><circle cx="84" cy="91" r="3.5" fill="#fff"/><circle cx="122" cy="91" r="3.5" fill="#fff"/><circle cx="77" cy="98" r="1.8" fill="#fff" opacity="0.8"/><circle cx="115" cy="98" r="1.8" fill="#fff" opacity="0.8"/><path d="M88 120 Q100 130 112 120" stroke="#7a5238" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M74 142 Q100 154 126 142" stroke="#9a4030" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="100" cy="151" r="7" fill="#f0c44e"/><circle cx="100" cy="153" r="1.8" fill="#9a7a1a"/></svg></div>
+    <div class="bubble"><div class="who">Кайл</div><p>Смотри что вышло. Взяли массив <code>products</code>, через <code>.map()</code> каждый объект превратили в карточку, данные прокинули через props. Это связало всё: массивы, map, компоненты, props — в одной конструкции. Так и выглядит реальная разработка.</p></div></div>
+
+    <div class="box warn">
+      <div class="bt">▸ Зачем key={p.id}</div>
+      <p>При отрисовке списка через map React требует уникальный <code>key</code> у каждого элемента — по нему он понимает, что изменилось, и не перерисовывает весь список. Бери <code>id</code>, а не индекс массива.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-num">04 · СОСТОЯНИЕ</div>
+    <h2>Состояние — память компонента</h2>
+    <p class="lead">Props приходят сверху и не меняются. State — собственная память, которая живёт и меняется от действий пользователя.</p>
+
+    <p>Нажал лайк — счётчик вырос. За это отвечает <code>useState</code>. Ключевой момент: <strong>поменял состояние — React сам перерисовал</strong>. Запусти и пожми кнопку в результате:</p>
+
+    <div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">Counter.jsx</span><button class="runbtn react" onclick="runReact(this)" data-demo="counter"><span>▶</span><span class="rlabel">Запустить</span></button></div>
+  <pre><code><span class="tk">import</span><span class="tx"> </span><span class="tx">{</span><span class="tx"> </span><span class="tx">useState</span><span class="tx"> </span><span class="tx">}</span><span class="tx"> </span><span class="tk">from</span><span class="tx"> </span><span class="ts2">&#x27;react&#x27;</span><span class="tx">;</span>
+ 
+<span class="tk">function</span><span class="tx"> </span><span class="tf">Counter</span><span class="tx">(</span><span class="tx">)</span><span class="tx"> </span><span class="tx">{</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tc">// [значение, функция-меняла] = useState(старт)</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tk">const</span><span class="tx"> </span><span class="tx">[</span><span class="tx">count</span><span class="tx">,</span><span class="tx"> </span><span class="tx">setCount</span><span class="tx">]</span><span class="tx"> </span><span class="to">=</span><span class="tx"> </span><span class="tf">useState</span><span class="tx">(</span><span class="tn">0</span><span class="tx">)</span><span class="tx">;</span>
+ 
+<span class="tx"> </span><span class="tx"> </span><span class="tk">return</span><span class="tx"> </span><span class="tx">(</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="to">&lt;</span><span class="tx">button</span><span class="tx"> </span><span class="tx">onClick</span><span class="to">=</span><span class="tx">{</span><span class="tx">(</span><span class="tx">)</span><span class="tx"> </span><span class="to">=&gt;</span><span class="tx"> </span><span class="tf">setCount</span><span class="tx">(</span><span class="tx">count</span><span class="tx"> </span><span class="to">+</span><span class="tx"> </span><span class="tn">1</span><span class="tx">)</span><span class="tx">}</span><span class="to">&gt;</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="ty">Лайков</span><span class="to">:</span><span class="tx"> </span><span class="tx">{</span><span class="tx">count</span><span class="tx">}</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="to">&lt;/</span><span class="tx">button</span><span class="to">&gt;</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">}</span></code></pre>
+  <div class="rresult"><div class="rresult-inner">
+      <div class="rresult-label">результат в браузере</div>
+      <div class="browser">
+        <div class="browser-bar"><span class="bd" style="background:#ff5f57"></span><span class="bd" style="background:#febc2e"></span><span class="bd" style="background:#28c840"></span><span class="url">localhost:3000</span></div>
+        <div class="browser-body"></div>
+      </div>
+    </div></div>
+</div>
+
+    <div class="say maxi"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#46b877"/><stop offset="100%" stop-color="#359a5e"/></linearGradient><radialGradient id="mCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#f0a890" stop-opacity="0.45"/><stop offset="100%" stop-color="#f0a890" stop-opacity="0"/></radialGradient></defs><path d="M66 56 Q56 18 90 42 Q80 54 72 58 Z" fill="url(#mFur__U)"/><path d="M134 56 Q144 18 110 42 Q120 54 128 58 Z" fill="url(#mFur__U)"/><path d="M70 50 Q64 30 82 44 Z" fill="#1f1f1f"/><path d="M130 50 Q136 30 118 44 Z" fill="#1f1f1f"/><circle cx="100" cy="100" r="50" fill="url(#mFur__U)"/><path d="M100 64 Q66 72 70 112 Q100 128 130 112 Q134 72 100 64 Z" fill="#f2f6f2"/><ellipse cx="100" cy="104" rx="34" ry="26" fill="#f7faf7"/><ellipse cx="74" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="126" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="100" cy="108" rx="6.5" ry="5" fill="#2a2a2a"/><path d="M100 113 L100 120" stroke="#2a2a2a" stroke-width="1.5" stroke-linecap="round"/><ellipse cx="82" cy="96" rx="12" ry="14" fill="#fff"/><ellipse cx="118" cy="96" rx="12" ry="14" fill="#fff"/><circle cx="83" cy="98" r="8.5" fill="#e8a020"/><circle cx="117" cy="98" r="8.5" fill="#e8a020"/><circle cx="83" cy="98" r="4.5" fill="#3a2400"/><circle cx="117" cy="98" r="4.5" fill="#3a2400"/><circle cx="86" cy="93" r="3.2" fill="#fff"/><circle cx="120" cy="93" r="3.2" fill="#fff"/><circle cx="79" cy="100" r="1.6" fill="#fff" opacity="0.8"/><circle cx="113" cy="100" r="1.6" fill="#fff" opacity="0.8"/><path d="M90 119 Q100 127 110 119" stroke="#1f5a32" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M97 124 Q100 129 103 124 Z" fill="#e87a8a"/></svg></div>
+    <div class="bubble"><div class="who">Макси</div><p>Разбор <code>const [count, setCount] = useState(0)</code>: <code>count</code> — текущее значение, <code>setCount</code> — функция чтобы менять, <code>0</code> — старт. Менять count напрямую нельзя, только через setCount — иначе React не заметит и не перерисует.</p></div></div>
+
+    <div class="meme-row">
+      <span class="meme"><span class="mava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="rFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8893ab"/><stop offset="100%" stop-color="#6e7a94"/></linearGradient></defs><circle cx="70" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="130" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="70" cy="62" r="7.5" fill="#525c70"/><circle cx="130" cy="62" r="7.5" fill="#525c70"/><circle cx="100" cy="102" r="50" fill="url(#rFur__U)"/><ellipse cx="100" cy="116" rx="38" ry="30" fill="#e6eaf2"/><ellipse cx="100" cy="120" rx="30" ry="22" fill="#eef1f7"/><ellipse cx="100" cy="110" rx="11" ry="8" fill="#3e3e48"/><ellipse cx="96" cy="108" rx="3" ry="2" fill="#5e5e68" opacity="0.7"/><path d="M100 117 L100 126" stroke="#3e3e48" stroke-width="2" stroke-linecap="round"/><circle cx="80" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><circle cx="120" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><path d="M96 94 Q100 90 104 94" stroke="#4a5a6a" stroke-width="2.5" fill="none"/><circle cx="80" cy="95" r="8" fill="#3e3e48"/><circle cx="120" cy="95" r="8" fill="#3e3e48"/><circle cx="83" cy="92" r="3" fill="#fff"/><circle cx="123" cy="92" r="3" fill="#fff"/><circle cx="77" cy="97" r="1.5" fill="#fff" opacity="0.7"/><circle cx="117" cy="97" r="1.5" fill="#fff" opacity="0.7"/><path d="M72 88 Q78 84 84 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M112 88 Q118 84 124 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M78 116 Q60 114 52 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M78 122 Q60 124 54 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 116 Q140 114 148 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 122 Q140 124 146 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M90 124 Q100 131 110 124" stroke="#525c70" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg></span>«поменял state — UI обновился сам»</span>
+      <span class="meme"><span class="mava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="kFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#b87a48"/><stop offset="100%" stop-color="#9a6238"/></linearGradient><radialGradient id="kCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#e8957a" stop-opacity="0.5"/><stop offset="100%" stop-color="#e8957a" stop-opacity="0"/></radialGradient></defs><ellipse cx="58" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="142" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="64" cy="90" rx="22" ry="26" fill="#6e4426"/><ellipse cx="136" cy="90" rx="22" ry="26" fill="#6e4426"/><path d="M68 58 Q60 22 88 44 Q80 56 72 60 Z" fill="url(#kFur__U)"/><path d="M132 58 Q140 22 112 44 Q120 56 128 60 Z" fill="url(#kFur__U)"/><path d="M71 54 Q67 36 82 48 Z" fill="#3a3230"/><path d="M129 54 Q133 36 118 48 Z" fill="#3a3230"/><circle cx="100" cy="100" r="50" fill="url(#kFur__U)"/><path d="M100 56 Q62 62 60 104 Q100 92 140 104 Q138 62 100 56 Z" fill="#e8cfa8"/><ellipse cx="100" cy="98" rx="40" ry="30" fill="#ecd6b4"/><ellipse cx="100" cy="116" rx="30" ry="24" fill="#f2e1c8"/><ellipse cx="72" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="128" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="100" cy="106" rx="9" ry="7" fill="#3a2a26"/><ellipse cx="97" cy="104" rx="3" ry="2" fill="#5a4a44" opacity="0.7"/><ellipse cx="80" cy="94" rx="13" ry="15" fill="#fff"/><ellipse cx="120" cy="94" rx="13" ry="15" fill="#fff"/><circle cx="81" cy="96" r="9.5" fill="#4a90d9"/><circle cx="119" cy="96" r="9.5" fill="#4a90d9"/><circle cx="81" cy="96" r="5" fill="#1a2f4a"/><circle cx="119" cy="96" r="5" fill="#1a2f4a"/><circle cx="84" cy="91" r="3.5" fill="#fff"/><circle cx="122" cy="91" r="3.5" fill="#fff"/><circle cx="77" cy="98" r="1.8" fill="#fff" opacity="0.8"/><circle cx="115" cy="98" r="1.8" fill="#fff" opacity="0.8"/><path d="M88 120 Q100 130 112 120" stroke="#7a5238" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M74 142 Q100 154 126 142" stroke="#9a4030" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="100" cy="151" r="7" fill="#f0c44e"/><circle cx="100" cy="153" r="1.8" fill="#9a7a1a"/></svg></span>«это уже мини-приложение»</span>
+    </div>
+  </section>
+
+  <div class="pager">
+    <button onclick="pager(-1)">← Назад: TypeScript</button>
+    <button class="next" onclick="pager(1)">Дальше: TS + Архитектура →</button>
+  </div>
+</div>
+
+<div class="page" id="page-arch">
+  <div class="phero k-arch">
+    <div class="kicker">Раздел 04 · TS + Архитектура</div>
+    <h1>TypeScript в React + архитектура</h1>
+    <p>Соединяем TS и React, а потом смотрим, как организовать растущее приложение, чтобы оно не превратилось в кашу. И знакомимся с FSD — поверхностно, для старта.</p>
+  </div>
+
+  <div class="say ren"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="rFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8893ab"/><stop offset="100%" stop-color="#6e7a94"/></linearGradient></defs><circle cx="70" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="130" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="70" cy="62" r="7.5" fill="#525c70"/><circle cx="130" cy="62" r="7.5" fill="#525c70"/><circle cx="100" cy="102" r="50" fill="url(#rFur__U)"/><ellipse cx="100" cy="116" rx="38" ry="30" fill="#e6eaf2"/><ellipse cx="100" cy="120" rx="30" ry="22" fill="#eef1f7"/><ellipse cx="100" cy="110" rx="11" ry="8" fill="#3e3e48"/><ellipse cx="96" cy="108" rx="3" ry="2" fill="#5e5e68" opacity="0.7"/><path d="M100 117 L100 126" stroke="#3e3e48" stroke-width="2" stroke-linecap="round"/><circle cx="80" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><circle cx="120" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><path d="M96 94 Q100 90 104 94" stroke="#4a5a6a" stroke-width="2.5" fill="none"/><circle cx="80" cy="95" r="8" fill="#3e3e48"/><circle cx="120" cy="95" r="8" fill="#3e3e48"/><circle cx="83" cy="92" r="3" fill="#fff"/><circle cx="123" cy="92" r="3" fill="#fff"/><circle cx="77" cy="97" r="1.5" fill="#fff" opacity="0.7"/><circle cx="117" cy="97" r="1.5" fill="#fff" opacity="0.7"/><path d="M72 88 Q78 84 84 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M112 88 Q118 84 124 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M78 116 Q60 114 52 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M78 122 Q60 124 54 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 116 Q140 114 148 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 122 Q140 124 146 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M90 124 Q100 131 110 124" stroke="#525c70" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg></div>
+    <div class="bubble"><div class="who">Рен</div><p>Дорогие студенты-Яндексоиды. Сейчас самое полезное для работы: типизированный React и то, как раскладывать файлы по полочкам. Без этого большой проект быстро становится болотом.</p></div></div>
+
+  <section>
+    <div class="sec-num">01 · TS + REACT</div>
+    <h2>Типизируем компоненты</h2>
+    <p class="lead">Props — это объект, а значит для него можно описать интерфейс. Тогда React-компонент станет типобезопасным.</p>
+
+    <div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">ProductCard.tsx</span></div>
+  <pre><code><span class="tc">// описываем форму props через интерфейс</span>
+<span class="tk">interface</span><span class="tx"> </span><span class="ty">ProductCardProps</span><span class="tx"> </span><span class="tx">{</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx">name</span><span class="to">:</span><span class="tx"> </span><span class="tk">string</span><span class="tx">;</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx">price</span><span class="to">:</span><span class="tx"> </span><span class="tk">number</span><span class="tx">;</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx">inStock</span><span class="to">?</span><span class="to">:</span><span class="tx"> </span><span class="tk">boolean</span><span class="tx">;</span><span class="tx"> </span><span class="tx"> </span><span class="tc">// необязательное</span>
+<span class="tx">}</span>
+ 
+<span class="tc">// компонент принимает типизированные props</span>
+<span class="tk">function</span><span class="tx"> </span><span class="tf">ProductCard</span><span class="tx">(</span><span class="tx">{</span><span class="tx"> </span><span class="tx">name</span><span class="tx">,</span><span class="tx"> </span><span class="tx">price</span><span class="tx"> </span><span class="tx">}</span><span class="to">:</span><span class="tx"> </span><span class="ty">ProductCardProps</span><span class="tx">)</span><span class="tx"> </span><span class="tx">{</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tk">return</span><span class="tx"> </span><span class="tx">(</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="to">&lt;</span><span class="tx">div</span><span class="tx"> </span><span class="tx">className</span><span class="to">=</span><span class="ts2">&quot;card&quot;</span><span class="to">&gt;</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="to">&lt;</span><span class="tx">h3</span><span class="to">&gt;</span><span class="tx">{</span><span class="tx">name</span><span class="tx">}</span><span class="to">&lt;/</span><span class="tx">h3</span><span class="to">&gt;</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="to">&lt;</span><span class="tx">p</span><span class="to">&gt;</span><span class="tx">{</span><span class="tx">price</span><span class="tx">}</span><span class="tx"> </span><span class="tx">₽</span><span class="to">&lt;/</span><span class="tx">p</span><span class="to">&gt;</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="to">&lt;/</span><span class="tx">div</span><span class="to">&gt;</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">}</span></code></pre>
+</div>
+
+    <div class="say maxi"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#46b877"/><stop offset="100%" stop-color="#359a5e"/></linearGradient><radialGradient id="mCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#f0a890" stop-opacity="0.45"/><stop offset="100%" stop-color="#f0a890" stop-opacity="0"/></radialGradient></defs><path d="M66 56 Q56 18 90 42 Q80 54 72 58 Z" fill="url(#mFur__U)"/><path d="M134 56 Q144 18 110 42 Q120 54 128 58 Z" fill="url(#mFur__U)"/><path d="M70 50 Q64 30 82 44 Z" fill="#1f1f1f"/><path d="M130 50 Q136 30 118 44 Z" fill="#1f1f1f"/><circle cx="100" cy="100" r="50" fill="url(#mFur__U)"/><path d="M100 64 Q66 72 70 112 Q100 128 130 112 Q134 72 100 64 Z" fill="#f2f6f2"/><ellipse cx="100" cy="104" rx="34" ry="26" fill="#f7faf7"/><ellipse cx="74" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="126" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="100" cy="108" rx="6.5" ry="5" fill="#2a2a2a"/><path d="M100 113 L100 120" stroke="#2a2a2a" stroke-width="1.5" stroke-linecap="round"/><ellipse cx="82" cy="96" rx="12" ry="14" fill="#fff"/><ellipse cx="118" cy="96" rx="12" ry="14" fill="#fff"/><circle cx="83" cy="98" r="8.5" fill="#e8a020"/><circle cx="117" cy="98" r="8.5" fill="#e8a020"/><circle cx="83" cy="98" r="4.5" fill="#3a2400"/><circle cx="117" cy="98" r="4.5" fill="#3a2400"/><circle cx="86" cy="93" r="3.2" fill="#fff"/><circle cx="120" cy="93" r="3.2" fill="#fff"/><circle cx="79" cy="100" r="1.6" fill="#fff" opacity="0.8"/><circle cx="113" cy="100" r="1.6" fill="#fff" opacity="0.8"/><path d="M90 119 Q100 127 110 119" stroke="#1f5a32" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M97 124 Q100 129 103 124 Z" fill="#e87a8a"/></svg></div>
+    <div class="bubble"><div class="who">Макси</div><p>Заметь две вещи. Файл теперь <code>.tsx</code>, а не <code>.jsx</code> — буква t значит TypeScript. И <code>{{ name, price }}</code> — это «деструктуризация», достаём поля из props сразу, чтобы не писать <code>props.</code> каждый раз.</p></div></div>
+
+    <h3>Состояние тоже типизируется</h3>
+    <div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">Counter.tsx</span></div>
+  <pre><code><span class="tk">import</span><span class="tx"> </span><span class="tx">{</span><span class="tx"> </span><span class="tx">useState</span><span class="tx"> </span><span class="tx">}</span><span class="tx"> </span><span class="tk">from</span><span class="tx"> </span><span class="ts2">&#x27;react&#x27;</span><span class="tx">;</span>
+ 
+<span class="tk">function</span><span class="tx"> </span><span class="tf">Counter</span><span class="tx">(</span><span class="tx">)</span><span class="tx"> </span><span class="tx">{</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tc">// &lt;number&gt; — говорим, что состояние это число</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tk">const</span><span class="tx"> </span><span class="tx">[</span><span class="tx">count</span><span class="tx">,</span><span class="tx"> </span><span class="tx">setCount</span><span class="tx">]</span><span class="tx"> </span><span class="to">=</span><span class="tx"> </span><span class="tx">useState</span><span class="to">&lt;</span><span class="tk">number</span><span class="to">&gt;</span><span class="tx">(</span><span class="tn">0</span><span class="tx">)</span><span class="tx">;</span>
+ 
+<span class="tx"> </span><span class="tx"> </span><span class="tk">return</span><span class="tx"> </span><span class="tx">(</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="to">&lt;</span><span class="tx">button</span><span class="tx"> </span><span class="tx">onClick</span><span class="to">=</span><span class="tx">{</span><span class="tx">(</span><span class="tx">)</span><span class="tx"> </span><span class="to">=&gt;</span><span class="tx"> </span><span class="tf">setCount</span><span class="tx">(</span><span class="tx">count</span><span class="tx"> </span><span class="to">+</span><span class="tx"> </span><span class="tn">1</span><span class="tx">)</span><span class="tx">}</span><span class="to">&gt;</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="ty">Лайков</span><span class="to">:</span><span class="tx"> </span><span class="tx">{</span><span class="tx">count</span><span class="tx">}</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="to">&lt;/</span><span class="tx">button</span><span class="to">&gt;</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">}</span></code></pre>
+</div>
+
+    <p>Запустим типизированный пример — список пользователей, где у каждого свой тип роли:</p>
+
+    <div class="code">
+  <div class="code-top"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="fn">UserList.tsx</span><button class="runbtn react" onclick="runReact(this)" data-demo="typedcard"><span>▶</span><span class="rlabel">Запустить</span></button></div>
+  <pre><code><span class="tk">interface</span><span class="tx"> </span><span class="ty">User</span><span class="tx"> </span><span class="tx">{</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx">id</span><span class="to">:</span><span class="tx"> </span><span class="tk">number</span><span class="tx">;</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx">name</span><span class="to">:</span><span class="tx"> </span><span class="tk">string</span><span class="tx">;</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx">role</span><span class="to">:</span><span class="tx"> </span><span class="ts2">&#x27;admin&#x27;</span><span class="tx"> </span><span class="to">|</span><span class="tx"> </span><span class="ts2">&#x27;user&#x27;</span><span class="tx">;</span><span class="tx"> </span><span class="tx"> </span><span class="tc">// только эти два значения!</span>
+<span class="tx">}</span>
+ 
+<span class="tk">function</span><span class="tx"> </span><span class="tf">UserList</span><span class="tx">(</span><span class="tx">)</span><span class="tx"> </span><span class="tx">{</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tk">const</span><span class="tx"> </span><span class="tx">users</span><span class="to">:</span><span class="tx"> </span><span class="ty">User</span><span class="tx">[</span><span class="tx">]</span><span class="tx"> </span><span class="to">=</span><span class="tx"> </span><span class="tx">[</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx">{</span><span class="tx"> </span><span class="tx">id</span><span class="to">:</span><span class="tx"> </span><span class="tn">1</span><span class="tx">,</span><span class="tx"> </span><span class="tx">name</span><span class="to">:</span><span class="tx"> </span><span class="ts2">&#x27;Иван&#x27;</span><span class="tx">,</span><span class="tx"> </span><span class="tx">role</span><span class="to">:</span><span class="tx"> </span><span class="ts2">&#x27;admin&#x27;</span><span class="tx"> </span><span class="tx">}</span><span class="tx">,</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx">{</span><span class="tx"> </span><span class="tx">id</span><span class="to">:</span><span class="tx"> </span><span class="tn">2</span><span class="tx">,</span><span class="tx"> </span><span class="tx">name</span><span class="to">:</span><span class="tx"> </span><span class="ts2">&#x27;Аня&#x27;</span><span class="tx">,</span><span class="tx"> </span><span class="tx">role</span><span class="to">:</span><span class="tx"> </span><span class="ts2">&#x27;user&#x27;</span><span class="tx"> </span><span class="tx">}</span><span class="tx">,</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx">]</span><span class="tx">;</span>
+ 
+<span class="tx"> </span><span class="tx"> </span><span class="tk">return</span><span class="tx"> </span><span class="tx">(</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="to">&lt;</span><span class="tx">div</span><span class="to">&gt;</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx">{</span><span class="tx">users</span><span class="tx">.</span><span class="tf">map</span><span class="tx">(</span><span class="tx">(</span><span class="tx">u</span><span class="tx">)</span><span class="tx"> </span><span class="to">=&gt;</span><span class="tx"> </span><span class="tx">(</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="to">&lt;</span><span class="tx">div</span><span class="tx"> </span><span class="tx">key</span><span class="to">=</span><span class="tx">{</span><span class="tx">u</span><span class="tx">.</span><span class="tx">id</span><span class="tx">}</span><span class="to">&gt;</span><span class="tx">{</span><span class="tx">u</span><span class="tx">.</span><span class="tx">name</span><span class="tx">}</span><span class="tx"> </span><span class="tx">—</span><span class="tx"> </span><span class="tx">{</span><span class="tx">u</span><span class="tx">.</span><span class="tx">role</span><span class="tx">}</span><span class="to">&lt;/</span><span class="tx">div</span><span class="to">&gt;</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx">)</span><span class="tx">)</span><span class="tx">}</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="tx"> </span><span class="to">&lt;/</span><span class="tx">div</span><span class="to">&gt;</span>
+<span class="tx"> </span><span class="tx"> </span><span class="tx">)</span><span class="tx">;</span>
+<span class="tx">}</span></code></pre>
+  <div class="rresult"><div class="rresult-inner">
+      <div class="rresult-label">результат в браузере</div>
+      <div class="browser">
+        <div class="browser-bar"><span class="bd" style="background:#ff5f57"></span><span class="bd" style="background:#febc2e"></span><span class="bd" style="background:#28c840"></span><span class="url">localhost:3000</span></div>
+        <div class="browser-body"></div>
+      </div>
+    </div></div>
+</div>
+
+    <div class="box ts">
+      <div class="bt">▸ Что за role: 'admin' | 'user'</div>
+      <p>Это «union-тип» — поле может быть только одной из перечисленных строк. Напишешь <code>role: 'moderator'</code> — TS подсветит ошибку. Так типы защищают от опечаток в значениях, а не только в названиях полей.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-num">02 · АРХИТЕКТУРА</div>
+    <h2>Как не утонуть в файлах</h2>
+    <p class="lead">Пока компонентов три — порядок не нужен. Когда их триста — без структуры наступает хаос.</p>
+
+    <p>Сначала все пишут просто: папка <code>components</code>, и туда сваливается всё подряд. Работает ровно до момента, когда ты не можешь найти нужный файл и не понимаешь, что от чего зависит.</p>
+
+    <div class="say ren"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="rFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8893ab"/><stop offset="100%" stop-color="#6e7a94"/></linearGradient></defs><circle cx="70" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="130" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="70" cy="62" r="7.5" fill="#525c70"/><circle cx="130" cy="62" r="7.5" fill="#525c70"/><circle cx="100" cy="102" r="50" fill="url(#rFur__U)"/><ellipse cx="100" cy="116" rx="38" ry="30" fill="#e6eaf2"/><ellipse cx="100" cy="120" rx="30" ry="22" fill="#eef1f7"/><ellipse cx="100" cy="110" rx="11" ry="8" fill="#3e3e48"/><ellipse cx="96" cy="108" rx="3" ry="2" fill="#5e5e68" opacity="0.7"/><path d="M100 117 L100 126" stroke="#3e3e48" stroke-width="2" stroke-linecap="round"/><circle cx="80" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><circle cx="120" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><path d="M96 94 Q100 90 104 94" stroke="#4a5a6a" stroke-width="2.5" fill="none"/><circle cx="80" cy="95" r="8" fill="#3e3e48"/><circle cx="120" cy="95" r="8" fill="#3e3e48"/><circle cx="83" cy="92" r="3" fill="#fff"/><circle cx="123" cy="92" r="3" fill="#fff"/><circle cx="77" cy="97" r="1.5" fill="#fff" opacity="0.7"/><circle cx="117" cy="97" r="1.5" fill="#fff" opacity="0.7"/><path d="M72 88 Q78 84 84 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M112 88 Q118 84 124 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M78 116 Q60 114 52 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M78 122 Q60 124 54 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 116 Q140 114 148 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 122 Q140 124 146 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M90 124 Q100 131 110 124" stroke="#525c70" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg></div>
+    <div class="bubble"><div class="who">Рен</div><p>Я это называю «папка-помойка». Сто файлов в одном месте, всё импортит всё, поменял одно — сломалось другое в неожиданном месте. Архитектура нужна именно чтобы этого не было.</p></div></div>
+
+    <h3>Базовый принцип: группируй по смыслу</h3>
+    <p>Первый шаг — раскладывать не по типу файла, а по <strong>смыслу</strong>. Не «все кнопки в одну кучу», а «всё про товары вместе, всё про пользователя вместе»:</p>
+
+    <div class="cmp">
+      <div class="ch js">✗ по типу файла</div>
+      <div class="ch ts">✓ по смыслу</div>
+      <div class="cc">components/
+  Button.tsx
+  ProductCard.tsx
+  UserAvatar.tsx
+  CartItem.tsx
+hooks/
+  useUser.ts
+  useCart.ts
+  useProduct.ts</div>
+      <div class="cc">product/
+  ProductCard.tsx
+  useProduct.ts
+user/
+  UserAvatar.tsx
+  useUser.ts
+cart/
+  CartItem.tsx
+  useCart.ts</div>
+    </div>
+
+    <p>В правом варианте всё про товар лежит рядом. Работаешь с товарами — открыл одну папку, всё под рукой. Это уже половина пути к нормальной архитектуре.</p>
+  </section>
+
+  <section>
+    <div class="sec-num">03 · FSD</div>
+    <h2>Feature-Sliced Design</h2>
+    <p class="lead">FSD — популярная методология раскладки кода для фронтенда. Сегодня только знакомимся: что это и зачем.</p>
+
+    <div class="say kyle"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="kFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#b87a48"/><stop offset="100%" stop-color="#9a6238"/></linearGradient><radialGradient id="kCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#e8957a" stop-opacity="0.5"/><stop offset="100%" stop-color="#e8957a" stop-opacity="0"/></radialGradient></defs><ellipse cx="58" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="142" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="64" cy="90" rx="22" ry="26" fill="#6e4426"/><ellipse cx="136" cy="90" rx="22" ry="26" fill="#6e4426"/><path d="M68 58 Q60 22 88 44 Q80 56 72 60 Z" fill="url(#kFur__U)"/><path d="M132 58 Q140 22 112 44 Q120 56 128 60 Z" fill="url(#kFur__U)"/><path d="M71 54 Q67 36 82 48 Z" fill="#3a3230"/><path d="M129 54 Q133 36 118 48 Z" fill="#3a3230"/><circle cx="100" cy="100" r="50" fill="url(#kFur__U)"/><path d="M100 56 Q62 62 60 104 Q100 92 140 104 Q138 62 100 56 Z" fill="#e8cfa8"/><ellipse cx="100" cy="98" rx="40" ry="30" fill="#ecd6b4"/><ellipse cx="100" cy="116" rx="30" ry="24" fill="#f2e1c8"/><ellipse cx="72" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="128" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="100" cy="106" rx="9" ry="7" fill="#3a2a26"/><ellipse cx="97" cy="104" rx="3" ry="2" fill="#5a4a44" opacity="0.7"/><ellipse cx="80" cy="94" rx="13" ry="15" fill="#fff"/><ellipse cx="120" cy="94" rx="13" ry="15" fill="#fff"/><circle cx="81" cy="96" r="9.5" fill="#4a90d9"/><circle cx="119" cy="96" r="9.5" fill="#4a90d9"/><circle cx="81" cy="96" r="5" fill="#1a2f4a"/><circle cx="119" cy="96" r="5" fill="#1a2f4a"/><circle cx="84" cy="91" r="3.5" fill="#fff"/><circle cx="122" cy="91" r="3.5" fill="#fff"/><circle cx="77" cy="98" r="1.8" fill="#fff" opacity="0.8"/><circle cx="115" cy="98" r="1.8" fill="#fff" opacity="0.8"/><path d="M88 120 Q100 130 112 120" stroke="#7a5238" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M74 142 Q100 154 126 142" stroke="#9a4030" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="100" cy="151" r="7" fill="#f0c44e"/><circle cx="100" cy="153" r="1.8" fill="#9a7a1a"/></svg></div>
+    <div class="bubble"><div class="who">Кайл</div><p>FSD — это, по сути, набор правил «что куда класть и что от чего может зависеть». Звучит занудно, но именно это спасает большие проекты. Сейчас пройдёмся по верхам, в следующий раз разберём глубоко.</p></div></div>
+
+    <h3>Слои FSD</h3>
+    <p>Код делится на слои. Сверху — самое общее (всё приложение), снизу — самое переиспользуемое (мелкие кирпичики):</p>
+
+    <div class="fsd">
+      <div class="layer app"><span class="lname">app</span><span class="ldesc">вход в приложение: роутинг, провайдеры, глобальные стили</span></div>
+      <div class="layer pages"><span class="lname">pages</span><span class="ldesc">страницы целиком — то, что видит пользователь по адресу</span></div>
+      <div class="layer widgets"><span class="lname">widgets</span><span class="ldesc">крупные самостоятельные блоки: шапка, лента, сайдбар</span></div>
+      <div class="layer features"><span class="lname">features</span><span class="ldesc">действия пользователя: «лайкнуть», «добавить в корзину»</span></div>
+      <div class="layer entities"><span class="lname">entities</span><span class="ldesc">бизнес-сущности: товар, пользователь, заказ</span></div>
+      <div class="layer shared"><span class="lname">shared</span><span class="ldesc">переиспользуемое без привязки к бизнесу: кнопки, утилиты, API</span></div>
+    </div>
+
+    <div class="say ren"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="rFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8893ab"/><stop offset="100%" stop-color="#6e7a94"/></linearGradient></defs><circle cx="70" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="130" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="70" cy="62" r="7.5" fill="#525c70"/><circle cx="130" cy="62" r="7.5" fill="#525c70"/><circle cx="100" cy="102" r="50" fill="url(#rFur__U)"/><ellipse cx="100" cy="116" rx="38" ry="30" fill="#e6eaf2"/><ellipse cx="100" cy="120" rx="30" ry="22" fill="#eef1f7"/><ellipse cx="100" cy="110" rx="11" ry="8" fill="#3e3e48"/><ellipse cx="96" cy="108" rx="3" ry="2" fill="#5e5e68" opacity="0.7"/><path d="M100 117 L100 126" stroke="#3e3e48" stroke-width="2" stroke-linecap="round"/><circle cx="80" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><circle cx="120" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><path d="M96 94 Q100 90 104 94" stroke="#4a5a6a" stroke-width="2.5" fill="none"/><circle cx="80" cy="95" r="8" fill="#3e3e48"/><circle cx="120" cy="95" r="8" fill="#3e3e48"/><circle cx="83" cy="92" r="3" fill="#fff"/><circle cx="123" cy="92" r="3" fill="#fff"/><circle cx="77" cy="97" r="1.5" fill="#fff" opacity="0.7"/><circle cx="117" cy="97" r="1.5" fill="#fff" opacity="0.7"/><path d="M72 88 Q78 84 84 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M112 88 Q118 84 124 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M78 116 Q60 114 52 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M78 122 Q60 124 54 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 116 Q140 114 148 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 122 Q140 124 146 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M90 124 Q100 131 110 124" stroke="#525c70" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg></div>
+    <div class="bubble"><div class="who">Рен</div><p>Логика слоёв простая: чем выше — тем «конкретнее и про этот проект», чем ниже — тем «универсальнее». Кнопка в shared не знает ничего про товары. А страница в pages знает про всё, что ниже.</p></div></div>
+
+    <h3>Главное правило: импорты только вниз</h3>
+    <p>Это сердце FSD. <strong>Слой может использовать только то, что лежит ниже него</strong>. Никогда наоборот.</p>
+
+    <div class="viz">
+      <div class="viz-title">направление зависимостей</div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:13px;">
+        <div style="color:var(--red);">pages</div>
+        <div style="color:var(--maxi);font-size:18px;">↓ можно</div>
+        <div style="color:var(--blue);">entities</div>
+        <div style="color:var(--maxi);font-size:18px;">↓ можно</div>
+        <div style="color:var(--ren);">shared</div>
+        <div style="color:var(--red);font-size:13px;margin-top:10px;">↑ наверх — НЕЛЬЗЯ</div>
+      </div>
+    </div>
+
+    <p>Почему так строго? Потому что это убирает запутанные связи. <code>shared</code> ничего не знает о том, кто его использует, поэтому его можно менять спокойно. А зависимости всегда текут в одну сторону — как и данные в React.</p>
+
+    <h3>Как это выглядит в папках</h3>
+    <div class="ftree">
+<span class="dir">src/</span>
+  <span class="dir">app/</span>          <span class="cm"># провайдеры, роутинг</span>
+  <span class="dir">pages/</span>        <span class="cm"># страницы</span>
+    <span class="dir">product/</span>
+  <span class="dir">widgets/</span>      <span class="cm"># крупные блоки</span>
+    <span class="dir">header/</span>
+  <span class="dir">features/</span>     <span class="cm"># действия</span>
+    <span class="dir">add-to-cart/</span>
+  <span class="dir">entities/</span>     <span class="cm"># сущности</span>
+    <span class="dir">product/</span>
+    <span class="dir">user/</span>
+  <span class="dir">shared/</span>       <span class="cm"># кирпичики</span>
+    <span class="dir">ui/</span>         <span class="cm"># кнопки, инпуты</span>
+    <span class="dir">api/</span>        <span class="cm"># запросы к серверу</span>
+    </div>
+
+    <div class="box info">
+      <div class="bt">▸ Что разберём в следующий раз</div>
+      <p>Сегодня это обзор для общего понимания. В следующей лекции углубимся: сегменты внутри слоёв (ui / model / api), правила публичного API через index-файлы, и data-management — как данные ходят по приложению. Пока достаточно уловить идею слоёв и правило «импорт только вниз».</p>
+    </div>
+
+    <div class="say kyle"><div class="ava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="kFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#b87a48"/><stop offset="100%" stop-color="#9a6238"/></linearGradient><radialGradient id="kCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#e8957a" stop-opacity="0.5"/><stop offset="100%" stop-color="#e8957a" stop-opacity="0"/></radialGradient></defs><ellipse cx="58" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="142" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="64" cy="90" rx="22" ry="26" fill="#6e4426"/><ellipse cx="136" cy="90" rx="22" ry="26" fill="#6e4426"/><path d="M68 58 Q60 22 88 44 Q80 56 72 60 Z" fill="url(#kFur__U)"/><path d="M132 58 Q140 22 112 44 Q120 56 128 60 Z" fill="url(#kFur__U)"/><path d="M71 54 Q67 36 82 48 Z" fill="#3a3230"/><path d="M129 54 Q133 36 118 48 Z" fill="#3a3230"/><circle cx="100" cy="100" r="50" fill="url(#kFur__U)"/><path d="M100 56 Q62 62 60 104 Q100 92 140 104 Q138 62 100 56 Z" fill="#e8cfa8"/><ellipse cx="100" cy="98" rx="40" ry="30" fill="#ecd6b4"/><ellipse cx="100" cy="116" rx="30" ry="24" fill="#f2e1c8"/><ellipse cx="72" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="128" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="100" cy="106" rx="9" ry="7" fill="#3a2a26"/><ellipse cx="97" cy="104" rx="3" ry="2" fill="#5a4a44" opacity="0.7"/><ellipse cx="80" cy="94" rx="13" ry="15" fill="#fff"/><ellipse cx="120" cy="94" rx="13" ry="15" fill="#fff"/><circle cx="81" cy="96" r="9.5" fill="#4a90d9"/><circle cx="119" cy="96" r="9.5" fill="#4a90d9"/><circle cx="81" cy="96" r="5" fill="#1a2f4a"/><circle cx="119" cy="96" r="5" fill="#1a2f4a"/><circle cx="84" cy="91" r="3.5" fill="#fff"/><circle cx="122" cy="91" r="3.5" fill="#fff"/><circle cx="77" cy="98" r="1.8" fill="#fff" opacity="0.8"/><circle cx="115" cy="98" r="1.8" fill="#fff" opacity="0.8"/><path d="M88 120 Q100 130 112 120" stroke="#7a5238" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M74 142 Q100 154 126 142" stroke="#9a4030" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="100" cy="151" r="7" fill="#f0c44e"/><circle cx="100" cy="153" r="1.8" fill="#9a7a1a"/></svg></div>
+    <div class="bubble"><div class="who">Кайл</div><p>Дорогие студенты-Яндексоиды, на сегодня всё. Если уловили, что архитектура — это просто «что куда класть и кто от кого зависит», то базу вы взяли. Остальное — практика и следующая лекция. Открывайте редактор.</p></div></div>
+
+    <div class="meme-row">
+      <span class="meme"><span class="mava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="rFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8893ab"/><stop offset="100%" stop-color="#6e7a94"/></linearGradient></defs><circle cx="70" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="130" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="70" cy="62" r="7.5" fill="#525c70"/><circle cx="130" cy="62" r="7.5" fill="#525c70"/><circle cx="100" cy="102" r="50" fill="url(#rFur__U)"/><ellipse cx="100" cy="116" rx="38" ry="30" fill="#e6eaf2"/><ellipse cx="100" cy="120" rx="30" ry="22" fill="#eef1f7"/><ellipse cx="100" cy="110" rx="11" ry="8" fill="#3e3e48"/><ellipse cx="96" cy="108" rx="3" ry="2" fill="#5e5e68" opacity="0.7"/><path d="M100 117 L100 126" stroke="#3e3e48" stroke-width="2" stroke-linecap="round"/><circle cx="80" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><circle cx="120" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><path d="M96 94 Q100 90 104 94" stroke="#4a5a6a" stroke-width="2.5" fill="none"/><circle cx="80" cy="95" r="8" fill="#3e3e48"/><circle cx="120" cy="95" r="8" fill="#3e3e48"/><circle cx="83" cy="92" r="3" fill="#fff"/><circle cx="123" cy="92" r="3" fill="#fff"/><circle cx="77" cy="97" r="1.5" fill="#fff" opacity="0.7"/><circle cx="117" cy="97" r="1.5" fill="#fff" opacity="0.7"/><path d="M72 88 Q78 84 84 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M112 88 Q118 84 124 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M78 116 Q60 114 52 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M78 122 Q60 124 54 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 116 Q140 114 148 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 122 Q140 124 146 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M90 124 Q100 131 110 124" stroke="#525c70" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg></span>«импорты текут только вниз»</span>
+      <span class="meme"><span class="mava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#46b877"/><stop offset="100%" stop-color="#359a5e"/></linearGradient><radialGradient id="mCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#f0a890" stop-opacity="0.45"/><stop offset="100%" stop-color="#f0a890" stop-opacity="0"/></radialGradient></defs><path d="M66 56 Q56 18 90 42 Q80 54 72 58 Z" fill="url(#mFur__U)"/><path d="M134 56 Q144 18 110 42 Q120 54 128 58 Z" fill="url(#mFur__U)"/><path d="M70 50 Q64 30 82 44 Z" fill="#1f1f1f"/><path d="M130 50 Q136 30 118 44 Z" fill="#1f1f1f"/><circle cx="100" cy="100" r="50" fill="url(#mFur__U)"/><path d="M100 64 Q66 72 70 112 Q100 128 130 112 Q134 72 100 64 Z" fill="#f2f6f2"/><ellipse cx="100" cy="104" rx="34" ry="26" fill="#f7faf7"/><ellipse cx="74" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="126" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="100" cy="108" rx="6.5" ry="5" fill="#2a2a2a"/><path d="M100 113 L100 120" stroke="#2a2a2a" stroke-width="1.5" stroke-linecap="round"/><ellipse cx="82" cy="96" rx="12" ry="14" fill="#fff"/><ellipse cx="118" cy="96" rx="12" ry="14" fill="#fff"/><circle cx="83" cy="98" r="8.5" fill="#e8a020"/><circle cx="117" cy="98" r="8.5" fill="#e8a020"/><circle cx="83" cy="98" r="4.5" fill="#3a2400"/><circle cx="117" cy="98" r="4.5" fill="#3a2400"/><circle cx="86" cy="93" r="3.2" fill="#fff"/><circle cx="120" cy="93" r="3.2" fill="#fff"/><circle cx="79" cy="100" r="1.6" fill="#fff" opacity="0.8"/><circle cx="113" cy="100" r="1.6" fill="#fff" opacity="0.8"/><path d="M90 119 Q100 127 110 119" stroke="#1f5a32" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M97 124 Q100 129 103 124 Z" fill="#e87a8a"/></svg></span>«группируй по смыслу, не по типу»</span>
+      <span class="meme"><span class="mava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="kFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#b87a48"/><stop offset="100%" stop-color="#9a6238"/></linearGradient><radialGradient id="kCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#e8957a" stop-opacity="0.5"/><stop offset="100%" stop-color="#e8957a" stop-opacity="0"/></radialGradient></defs><ellipse cx="58" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="142" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="64" cy="90" rx="22" ry="26" fill="#6e4426"/><ellipse cx="136" cy="90" rx="22" ry="26" fill="#6e4426"/><path d="M68 58 Q60 22 88 44 Q80 56 72 60 Z" fill="url(#kFur__U)"/><path d="M132 58 Q140 22 112 44 Q120 56 128 60 Z" fill="url(#kFur__U)"/><path d="M71 54 Q67 36 82 48 Z" fill="#3a3230"/><path d="M129 54 Q133 36 118 48 Z" fill="#3a3230"/><circle cx="100" cy="100" r="50" fill="url(#kFur__U)"/><path d="M100 56 Q62 62 60 104 Q100 92 140 104 Q138 62 100 56 Z" fill="#e8cfa8"/><ellipse cx="100" cy="98" rx="40" ry="30" fill="#ecd6b4"/><ellipse cx="100" cy="116" rx="30" ry="24" fill="#f2e1c8"/><ellipse cx="72" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="128" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="100" cy="106" rx="9" ry="7" fill="#3a2a26"/><ellipse cx="97" cy="104" rx="3" ry="2" fill="#5a4a44" opacity="0.7"/><ellipse cx="80" cy="94" rx="13" ry="15" fill="#fff"/><ellipse cx="120" cy="94" rx="13" ry="15" fill="#fff"/><circle cx="81" cy="96" r="9.5" fill="#4a90d9"/><circle cx="119" cy="96" r="9.5" fill="#4a90d9"/><circle cx="81" cy="96" r="5" fill="#1a2f4a"/><circle cx="119" cy="96" r="5" fill="#1a2f4a"/><circle cx="84" cy="91" r="3.5" fill="#fff"/><circle cx="122" cy="91" r="3.5" fill="#fff"/><circle cx="77" cy="98" r="1.8" fill="#fff" opacity="0.8"/><circle cx="115" cy="98" r="1.8" fill="#fff" opacity="0.8"/><path d="M88 120 Q100 130 112 120" stroke="#7a5238" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M74 142 Q100 154 126 142" stroke="#9a4030" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="100" cy="151" r="7" fill="#f0c44e"/><circle cx="100" cy="153" r="1.8" fill="#9a7a1a"/></svg></span>«папка-помойка — путь в ад»</span>
+    </div>
+  </section>
+
+  <footer>
+    <div class="big">Конец большой лекции 🚀</div>
+    <p>Четыре раздела позади: функции, TypeScript, React и архитектура.<br>Дальше — глубокое погружение в FSD и data-management.</p>
+    <div class="meme-row" style="margin-top:20px;">
+      <span class="meme"><span class="mava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="kFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#b87a48"/><stop offset="100%" stop-color="#9a6238"/></linearGradient><radialGradient id="kCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#e8957a" stop-opacity="0.5"/><stop offset="100%" stop-color="#e8957a" stop-opacity="0"/></radialGradient></defs><ellipse cx="58" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="142" cy="115" rx="26" ry="32" fill="#6e4426"/><ellipse cx="64" cy="90" rx="22" ry="26" fill="#6e4426"/><ellipse cx="136" cy="90" rx="22" ry="26" fill="#6e4426"/><path d="M68 58 Q60 22 88 44 Q80 56 72 60 Z" fill="url(#kFur__U)"/><path d="M132 58 Q140 22 112 44 Q120 56 128 60 Z" fill="url(#kFur__U)"/><path d="M71 54 Q67 36 82 48 Z" fill="#3a3230"/><path d="M129 54 Q133 36 118 48 Z" fill="#3a3230"/><circle cx="100" cy="100" r="50" fill="url(#kFur__U)"/><path d="M100 56 Q62 62 60 104 Q100 92 140 104 Q138 62 100 56 Z" fill="#e8cfa8"/><ellipse cx="100" cy="98" rx="40" ry="30" fill="#ecd6b4"/><ellipse cx="100" cy="116" rx="30" ry="24" fill="#f2e1c8"/><ellipse cx="72" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="128" cy="112" rx="13" ry="10" fill="url(#kCheek__U)"/><ellipse cx="100" cy="106" rx="9" ry="7" fill="#3a2a26"/><ellipse cx="97" cy="104" rx="3" ry="2" fill="#5a4a44" opacity="0.7"/><ellipse cx="80" cy="94" rx="13" ry="15" fill="#fff"/><ellipse cx="120" cy="94" rx="13" ry="15" fill="#fff"/><circle cx="81" cy="96" r="9.5" fill="#4a90d9"/><circle cx="119" cy="96" r="9.5" fill="#4a90d9"/><circle cx="81" cy="96" r="5" fill="#1a2f4a"/><circle cx="119" cy="96" r="5" fill="#1a2f4a"/><circle cx="84" cy="91" r="3.5" fill="#fff"/><circle cx="122" cy="91" r="3.5" fill="#fff"/><circle cx="77" cy="98" r="1.8" fill="#fff" opacity="0.8"/><circle cx="115" cy="98" r="1.8" fill="#fff" opacity="0.8"/><path d="M88 120 Q100 130 112 120" stroke="#7a5238" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M74 142 Q100 154 126 142" stroke="#9a4030" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="100" cy="151" r="7" fill="#f0c44e"/><circle cx="100" cy="153" r="1.8" fill="#9a7a1a"/></svg></span>Кайл</span>
+      <span class="meme"><span class="mava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#46b877"/><stop offset="100%" stop-color="#359a5e"/></linearGradient><radialGradient id="mCheek__U" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#f0a890" stop-opacity="0.45"/><stop offset="100%" stop-color="#f0a890" stop-opacity="0"/></radialGradient></defs><path d="M66 56 Q56 18 90 42 Q80 54 72 58 Z" fill="url(#mFur__U)"/><path d="M134 56 Q144 18 110 42 Q120 54 128 58 Z" fill="url(#mFur__U)"/><path d="M70 50 Q64 30 82 44 Z" fill="#1f1f1f"/><path d="M130 50 Q136 30 118 44 Z" fill="#1f1f1f"/><circle cx="100" cy="100" r="50" fill="url(#mFur__U)"/><path d="M100 64 Q66 72 70 112 Q100 128 130 112 Q134 72 100 64 Z" fill="#f2f6f2"/><ellipse cx="100" cy="104" rx="34" ry="26" fill="#f7faf7"/><ellipse cx="74" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="126" cy="108" rx="12" ry="9" fill="url(#mCheek__U)"/><ellipse cx="100" cy="108" rx="6.5" ry="5" fill="#2a2a2a"/><path d="M100 113 L100 120" stroke="#2a2a2a" stroke-width="1.5" stroke-linecap="round"/><ellipse cx="82" cy="96" rx="12" ry="14" fill="#fff"/><ellipse cx="118" cy="96" rx="12" ry="14" fill="#fff"/><circle cx="83" cy="98" r="8.5" fill="#e8a020"/><circle cx="117" cy="98" r="8.5" fill="#e8a020"/><circle cx="83" cy="98" r="4.5" fill="#3a2400"/><circle cx="117" cy="98" r="4.5" fill="#3a2400"/><circle cx="86" cy="93" r="3.2" fill="#fff"/><circle cx="120" cy="93" r="3.2" fill="#fff"/><circle cx="79" cy="100" r="1.6" fill="#fff" opacity="0.8"/><circle cx="113" cy="100" r="1.6" fill="#fff" opacity="0.8"/><path d="M90 119 Q100 127 110 119" stroke="#1f5a32" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M97 124 Q100 129 103 124 Z" fill="#e87a8a"/></svg></span>Макси</span>
+      <span class="meme"><span class="mava"><svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="rFur__U" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8893ab"/><stop offset="100%" stop-color="#6e7a94"/></linearGradient></defs><circle cx="70" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="130" cy="62" r="15" fill="url(#rFur__U)"/><circle cx="70" cy="62" r="7.5" fill="#525c70"/><circle cx="130" cy="62" r="7.5" fill="#525c70"/><circle cx="100" cy="102" r="50" fill="url(#rFur__U)"/><ellipse cx="100" cy="116" rx="38" ry="30" fill="#e6eaf2"/><ellipse cx="100" cy="120" rx="30" ry="22" fill="#eef1f7"/><ellipse cx="100" cy="110" rx="11" ry="8" fill="#3e3e48"/><ellipse cx="96" cy="108" rx="3" ry="2" fill="#5e5e68" opacity="0.7"/><path d="M100 117 L100 126" stroke="#3e3e48" stroke-width="2" stroke-linecap="round"/><circle cx="80" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><circle cx="120" cy="94" r="16" fill="#c4e8f4" stroke="#4a5a6a" stroke-width="2.5" opacity="0.92"/><path d="M96 94 Q100 90 104 94" stroke="#4a5a6a" stroke-width="2.5" fill="none"/><circle cx="80" cy="95" r="8" fill="#3e3e48"/><circle cx="120" cy="95" r="8" fill="#3e3e48"/><circle cx="83" cy="92" r="3" fill="#fff"/><circle cx="123" cy="92" r="3" fill="#fff"/><circle cx="77" cy="97" r="1.5" fill="#fff" opacity="0.7"/><circle cx="117" cy="97" r="1.5" fill="#fff" opacity="0.7"/><path d="M72 88 Q78 84 84 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M112 88 Q118 84 124 87" stroke="#fff" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M78 116 Q60 114 52 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M78 122 Q60 124 54 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 116 Q140 114 148 118" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M122 122 Q140 124 146 128" stroke="#a8b2c4" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M90 124 Q100 131 110 124" stroke="#525c70" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg></span>Рен</span>
+    </div>
+  </footer>
+
+  <div class="pager">
+    <button onclick="pager(-1)">← Назад: React</button>
+    <button class="next" onclick="showPage('js')">↑ В начало</button>
+  </div>
+</div>
+
+</div>
+</div>
+
+<script>
+// ============ TAB NAVIGATION ============
+const pageOrder = ['js','ts','react','arch'];
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelector(`.tab[data-page="${id}"]`).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>showPage(t.dataset.page));
+});
+function pager(dir){
+  const cur = document.querySelector('.page.active').id.replace('page-','');
+  const i = pageOrder.indexOf(cur);
+  const ni = i+dir;
+  if(ni>=0 && ni<pageOrder.length) showPage(pageOrder[ni]);
+}
+
+// progress bar
+window.addEventListener('scroll', () => {
+  const h=document.documentElement;
+  document.getElementById('prog').style.width = (h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';
+});
+
+// ============ REAL JS RUNNER ============
+// Executes the data-src code, captures console.log, shows in the console panel
+function runJS(btn){
+  const block = btn.closest('.code');
+  const consoleEl = block.querySelector('.console');
+  const inner = consoleEl.querySelector('.console-inner');
+  const src = decodeURIComponent(btn.dataset.src);
+
+  // build capture
+  const logs = [];
+  const fmt = (v)=>{
+    if(typeof v==='string') return v;
+    if(v===undefined) return 'undefined';
+    if(v===null) return 'null';
+    try { return JSON.stringify(v, null, 0)
+      .replace(/"([^"]+)":/g,'$1:')
+      .replace(/,/g,', '); }
+    catch(e){ return String(v); }
+  };
+  const fakeConsole = {
+    log:(...a)=>logs.push({t:'log',m:a.map(fmt).join(' ')}),
+    error:(...a)=>logs.push({t:'err',m:a.map(fmt).join(' ')}),
+    warn:(...a)=>logs.push({t:'log',m:a.map(fmt).join(' ')}),
+  };
+  try{
+    const fn = new Function('console', src);
+    fn(fakeConsole);
+  }catch(e){
+    logs.push({t:'err',m:e.name+': '+e.message});
+  }
+  // render
+  inner.querySelectorAll('.cline').forEach(n=>n.remove());
+  if(logs.length===0){
+    const d=document.createElement('div');d.className='cline ctype';d.textContent='(нет вывода — добавь console.log)';inner.appendChild(d);
+  } else {
+    logs.forEach(l=>{
+      const d=document.createElement('div');
+      d.className='cline'+(l.t==='err'?' err':'');
+      d.textContent=l.m;
+      inner.appendChild(d);
+    });
+  }
+  consoleEl.classList.add('show');
+  btn.querySelector('.rlabel').textContent='Запущено';
+  setTimeout(()=>{btn.querySelector('.rlabel').textContent='Запустить';},1200);
+}
+
+// ============ REACT RESULT SIMULATOR ============
+// Each react demo has an id; we render a real DOM preview of what the component would output
+const reactDemos = {};
+
+function runReact(btn){
+  const block = btn.closest('.code');
+  const res = block.querySelector('.rresult');
+  const body = res.querySelector('.browser-body');
+  const id = btn.dataset.demo;
+  if(reactDemos[id]) reactDemos[id](body);
+  res.classList.add('show');
+  btn.querySelector('.rlabel').textContent='Отрисовано';
+  setTimeout(()=>{btn.querySelector('.rlabel').textContent='Запустить';},1200);
+}
+
+// --- demo: Welcome ---
+reactDemos['welcome']=(el)=>{
+  el.innerHTML=`<h1 style="font-family:Unbounded,sans-serif;font-size:24px;color:#1a1a2e;margin:0;">Привет, Яндексоиды!</h1>`;
+};
+
+// --- demo: ProductCard with props ---
+reactDemos['card']=(el)=>{
+  el.innerHTML=`<div style="border:1px solid #e0e0e8;border-radius:12px;padding:16px;max-width:200px;">
+    <h3 style="margin:0 0 6px;font-family:Unbounded,sans-serif;font-size:17px;color:#1a1a2e;">Телефон</h3>
+    <p style="margin:0;color:#3a9a5e;font-weight:700;font-size:15px;">15000 ₽</p>
+  </div>`;
+};
+
+// --- demo: ProductList via map ---
+reactDemos['list']=(el)=>{
+  const data=[{n:'Телефон',p:15000,e:'📱'},{n:'Планшет',p:25000,e:'📲'},{n:'Часы',p:22000,e:'⌚'}];
+  el.innerHTML=`<div style="display:flex;gap:10px;flex-wrap:wrap;">`+
+    data.map(d=>`<div style="border:1px solid #e0e0e8;border-radius:12px;padding:14px;text-align:center;min-width:90px;">
+      <div style="font-size:28px;">${d.e}</div>
+      <div style="font-weight:700;font-size:13px;color:#1a1a2e;margin-top:4px;">${d.n}</div>
+      <div style="color:#3a9a5e;font-size:12px;font-family:monospace;">${d.p} ₽</div>
+    </div>`).join('')+`</div>`;
+};
+
+// --- demo: live counter (stateful) ---
+reactDemos['counter']=(el)=>{
+  let c=0;
+  el.innerHTML=`<button id="rc" style="font-family:Nunito;font-weight:700;font-size:15px;background:#61dafb;color:#06222a;border:none;border-radius:10px;padding:12px 22px;cursor:pointer;">❤️ Лайков: <span>0</span></button>
+  <p style="color:#888;font-size:13px;margin:10px 0 0;">состояние живёт прямо здесь — жми</p>`;
+  const b=el.querySelector('#rc');const span=b.querySelector('span');
+  b.onclick=()=>{c++;span.textContent=c;};
+};
+
+// --- demo: typed greet (TS in React) ---
+reactDemos['typedcard']=(el)=>{
+  const users=[{name:'Иван',role:'admin'},{name:'Аня',role:'user'}];
+  el.innerHTML=users.map(u=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #eee;">
+    <div style="width:34px;height:34px;border-radius:50%;background:${u.role==='admin'?'#e06c75':'#61afef'};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;">${u.name[0]}</div>
+    <div><b style="color:#1a1a2e;">${u.name}</b> <span style="font-size:12px;color:#999;font-family:monospace;">${u.role}</span></div>
+  </div>`).join('');
+};
+
+// ============ EXTRA INTERACTIVE (todo from earlier, kept) ============
+window.addEventListener('DOMContentLoaded',()=>{
+  showPage('js');
+});
+</script>
+
+</body>
+</html>
